@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -45,9 +46,8 @@ public class Transaction {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "ocurred_at", nullable = false)
-    @CreationTimestamp
-    private OffsetDateTime ocurredAt;
+    @Column(name = "occurred_at", nullable = false)
+    private LocalDate occurredAt;
 
     @Column(length = 200)
     private String description;
