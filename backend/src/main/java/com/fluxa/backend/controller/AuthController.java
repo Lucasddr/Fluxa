@@ -4,22 +4,17 @@ import com.fluxa.backend.dto.LoginDTO;
 import com.fluxa.backend.dto.LoginResponseDTO;
 import com.fluxa.backend.dto.RegisterDTO;
 import com.fluxa.backend.service.AuthService;
-import org.apache.coyote.Response;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sound.midi.VoiceStatus;
-
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService){
-        this.authService = authService;
-    }
 
     @PostMapping("/test")
     public ResponseEntity<?> registerTest(@RequestBody RegisterDTO dto){

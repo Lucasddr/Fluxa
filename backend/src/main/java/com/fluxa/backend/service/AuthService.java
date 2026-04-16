@@ -7,6 +7,8 @@ import com.fluxa.backend.dto.RegisterDTO;
 import com.fluxa.backend.exception.EmailAlreadyExistsException;
 import com.fluxa.backend.exception.InvalidCredentialsException;
 import com.fluxa.backend.repository.UserRepository;
+import com.fluxa.backend.security.JwtService;
+import io.jsonwebtoken.Jwt;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,11 +19,13 @@ public class AuthService {
 
     public final UserRepository userRepository;
     public final PasswordEncoder passwordEncoder;
+    public final JwtService jwtService;
 
     public AuthService(UserRepository userRepository,
-                          PasswordEncoder passwordEncoder){
+                       PasswordEncoder passwordEncoder, JwtService jwtService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
 
@@ -62,9 +66,10 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
         log.info("[LOGIN_SUCESS] email: {}", dto.email());
-        return new LoginResponseDTO(
-                user.getPasswordHash() //provisório enquanto não fiz o JWT
-        );
+
+        String token = jwtService.generateJwt(user);
+
+        return new LoginResponseDTO(token);
     }
 
 }
