@@ -1,82 +1,50 @@
-export default function Home() {
+import Link from "next/link";
+
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen flex flex-col bg-linear-to-br from-white via-slate-50 to-teal-50">
 
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-slate-200 p-6">
+      {/* CONTEÚDO CENTRAL */}
+      <main className="flex flex-1 items-center justify-center px-6">
+        <div className="max-w-2xl text-center">
 
-        <h1 className="text-2xl font-bold text-slate-800 mb-8">
-          Fluxa
-        </h1>
+          {/* LOGO / NOME */}
+          <h1 className="text-5xl font-bold text-teal-900 mb-4">
+            Fluxa
+          </h1>
 
-        <nav className="flex flex-col gap-4 text-slate-600">
+          {/* SLOGAN */}
+          <p className="text-lg text-slate-600 mb-8">
+            Um sistema inteligente para organizar, conectar e acelerar seus fluxos de trabalho.
+            Simples. Rápido. E feito pra escalar com você 🚀
+          </p>
 
-          <button className="text-left hover:text-slate-900">
-            Dashboard
-          </button>
+          {/* BOTÃO LOGIN */}
+          <Link href="/login">
+            <button className="px-6 py-3 rounded-xl bg-teal-700 text-white font-semibold hover:bg-teal-800 transition shadow-md">
+              Entrar no sistema
+            </button>
+          </Link>
 
-          <button className="text-left hover:text-slate-900">
-            Transações
-          </button>
-
-          <button className="text-left hover:text-slate-900">
-            Categorias
-          </button>
-
-        </nav>
-
-      </aside>
-
-
-      {/* CONTENT */}
-      <section className="flex-1 p-10">
-
-        <h2 className="text-3xl font-bold text-slate-800 mb-6">
-          Dashboard
-        </h2>
-
-
-        {/* CARDS */}
-        <div className="grid grid-cols-3 gap-6">
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <p className="text-slate-500">
-              Saldo total
-            </p>
-
-            <h3 className="text-2xl font-bold text-slate-800">
-              R$ 0,00
-            </h3>
-          </div>
-
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <p className="text-slate-500">
-              Receitas
-            </p>
-
-            <h3 className="text-2xl font-bold text-green-600">
-              R$ 0,00
-            </h3>
-          </div>
-
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <p className="text-slate-500">
-              Despesas
-            </p>
-
-            <h3 className="text-2xl font-bold text-red-600">
-              R$ 0,00
-            </h3>
-          </div>
-
+          {/* CTA CADASTRO */}
+          <p className="mt-6 text-sm text-slate-500">
+            Não tem uma conta?{" "}
+            <Link
+              href="/register"
+              className="text-teal-700 font-medium hover:underline"
+            >
+              Cadastre-se
+            </Link>
+          </p>
 
         </div>
+      </main>
 
+      {/* FOOTER */}
+      <footer className="py-6 text-center text-xs text-slate-400">
+        © {new Date().getFullYear()} Fluxa — todos os direitos reservados
+      </footer>
 
-      </section>
-
-    </main>
-  )
+    </div>
+  );
 }
