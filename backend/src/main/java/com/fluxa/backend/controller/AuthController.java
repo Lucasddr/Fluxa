@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/auth")
@@ -25,11 +27,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody RegisterDTO dto){
+    public ResponseEntity<?> register(@RequestBody RegisterDTO dto){
 
         authService.register(dto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body( Map.of(
+                "message", "Conta criada com sucesso",
+                "email", dto.email())
+        );
     }
 
     @PostMapping("/login")
@@ -38,5 +43,16 @@ public class AuthController {
         LoginResponseDTO response = authService.login(dto);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/registerAdmin")
+    public ResponseEntity<?> registerAdmin(@RequestBody RegisterDTO dto){
+
+        authService.registerAdmin(dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body( Map.of(
+                "message", "Conta criada com sucesso",
+                "email", dto.email())
+        );
     }
 }

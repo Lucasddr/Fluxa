@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -41,11 +42,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         jwt = authHeader.substring(7);
 
-        final String userId;
+        final UUID userId;
         try {
-            userId = jwtService.extractUserId(jwt);
+            userId = UUID.fromString(jwtService.extractUserId(jwt));
         } catch (Exception e) {
-            log.info("Token inválido: " + e.getMessage());
+            log.info("Invalid token: {}", e.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
