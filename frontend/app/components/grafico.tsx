@@ -19,13 +19,13 @@ export default function Grafico() {
   ];
 
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-lg w-full h-full border-2 border-[#EDEDED]">
+    <div className="bg-white p-4 rounded-2xl shadow-lg w-full h-full border-2 border-(--color-border)-">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
-          <Line type="monotone" dataKey="valor" stroke="#5260BA" />
+          <Line type="monotone" dataKey="valor" stroke="var(--color-text-secondary)" />
         </LineChart>
       </ResponsiveContainer>
     </div>
