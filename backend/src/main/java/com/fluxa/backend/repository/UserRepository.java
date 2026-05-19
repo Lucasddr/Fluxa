@@ -2,6 +2,8 @@ package com.fluxa.backend.repository;
 
 import com.fluxa.backend.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -13,4 +15,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    @Query("SELECT u.name FROM User u Where u.id = :id")
+    String findNameById(@Param("id") UUID userId);
 }

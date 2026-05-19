@@ -1,4 +1,11 @@
 package com.fluxa.backend.dto;
 
-public record DashboardDTO() {
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDate;
+
+public record DashboardDTO(
+        LocalDate start,
+        LocalDate end
+) {
 }
