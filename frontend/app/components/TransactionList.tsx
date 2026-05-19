@@ -2,20 +2,23 @@
 
 import TransactionItem from "./TransactionItem";
 
-type TransactionProps = {
-id: string;
-title: string;
-amount: number;
-date: string;
-};
+type Transaction = {
+    id: string;
+    amount: number;
+    title: string;
+    kind: string;
+    date: string;
+    account: string;
+    categoryName: string;
+}
 
-type Props = {
-data: TransactionProps[];
-};
+type Props= {
+    data: Transaction[];
+}
 
 export default function TransactionList({ data }: Props) {
 return (
-    <div className="flex flex-col gap-2 rounded-xl shadow-lg py-2">
+    <div className="flex flex-col gap-2 rounded-xl py-2">
     {data.map((t) => (
         <TransactionItem
         key={t.id}
@@ -23,7 +26,9 @@ return (
         title={t.title}
         amount={t.amount}
         date={t.date}
+        kind={t.kind}
         />
+        
     ))}
     </div>
 );

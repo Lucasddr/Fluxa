@@ -153,8 +153,8 @@ export default function LoginPage() {
             type="submit"
             disabled={!formValid || loading}
             className="w-full p-3 rounded-lg font-semibold text-white
-                       bg-teal-700 hover:bg-teal-800 transition
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+                      bg-teal-700 hover:bg-teal-800 transition
+                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

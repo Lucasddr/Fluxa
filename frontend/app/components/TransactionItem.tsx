@@ -6,10 +6,27 @@ type TransactionProps ={
     title: string;
     amount: number;
     date: string;
+    kind: string;
 }
 
-export default function TransactionItem({id, title, amount, date}: TransactionProps) {
-const isIncome = amount > 0;
+export default function TransactionItem({id, title, amount, date, kind}: TransactionProps) {
+
+const isIncome = kind === "INCOME";
+
+const transactionStyle = isIncome ? {
+        icon: (
+            <ArrowUpRight className = "w-4 h-4 text-(--color-positive)"/>
+        ),
+        signal: "+",
+        color: "text-(--color-positive)",
+    } : {
+        icon: (
+            <ArrowDownLeft className = "w-4 h-4 text-(--color-alert)"/>
+        ),
+        signal: "-",
+        color: "text-(--color-alert)"
+    };
+
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -29,18 +46,12 @@ return (
     {/* direita */}
     <div className="flex items-center gap-2">
     
-    {isIncome ? (
-    <ArrowUpRight className="w-4 h-4 text-(--color-positive)" />
-    ) : (
-    <ArrowDownLeft className="w-4 h-4 text-(--color-alert)" />
-    )}
-
+    {transactionStyle.icon}
     <p
     className={`
-        text-sm font-semibold
-        ${isIncome ? "text-(--color-positive)" : "text-(--color-alert)"}
-    `}
+        text-sm font-semibold ${transactionStyle.color}`}
     >
+    {transactionStyle.signal}
     {formatCurrency(amount)}
     </p>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Home, Receipt, Settings, Settings2, SettingsIcon } from "lucide-react";
+import { ArrowLeftRight, Home, Receipt, Settings, Tag } from "lucide-react";
 
 import AppLink from "../components/AppLink";
 
@@ -20,6 +20,7 @@ children: React.ReactNode;
                     <AppLink href="/home/dashboard" icon={Home} slug="dashboard"> Dashboard </AppLink>
                     <AppLink href="/home/transactions" icon={ArrowLeftRight} slug="transactions"> Transações </AppLink>
                     <AppLink href="/home/reports" icon={Receipt} slug="reports">Relatórios</AppLink>
+                    <AppLink href="/home/categories" icon={Tag}  slug="categorias">   Categorias   </AppLink>
                 </nav>
 
                 <div>
