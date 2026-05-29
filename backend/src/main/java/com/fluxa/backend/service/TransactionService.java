@@ -4,20 +4,23 @@ import com.fluxa.backend.domain.entity.Account;
 import com.fluxa.backend.domain.entity.Category;
 import com.fluxa.backend.domain.entity.Transaction;
 import com.fluxa.backend.domain.entity.User;
-import com.fluxa.backend.dto.CreateTransactionDTO;
-import com.fluxa.backend.dto.TransactionResponseDTO;
+import com.fluxa.backend.dto.request.CreateTransactionDTO;
+import com.fluxa.backend.dto.response.DashboardRecentTransactionResponseDTO;
+import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
 import com.fluxa.backend.repository.AccountRepository;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.TransactionRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.context.UserContext;
+import com.fluxa.backend.util.Formatters;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
@@ -36,6 +39,8 @@ public class TransactionService {
         UUID userId = UserContext.getUserId();
 
         log.info("USER ID CONTEXT: {}", userId);
+
+        log.info("PAYMENT METHOD DTO: {}", dto.paymentMethod());
 
         Account account = accountRepository.findByIdAndUserId(dto.accountId(),userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -57,6 +62,9 @@ public class TransactionService {
         transaction.setOccurredAt(
                 LocalDate.from(dto.occurredAt().atStartOfDay())
         );
+        transaction.setPaymentMethod(dto.paymentMethod());
+        transaction.setObservation(dto.observation());
+        transaction.setRecurrent(dto.recurring());
 
         transactionRepository.save(transaction);
 
@@ -67,25 +75,54 @@ public class TransactionService {
         );
     }
 
-    public Page <TransactionResponseDTO> findLastTransactions(
-            UUID userId,
-            Pageable pageable
-    ){
-        return transactionRepository
-                .findLastTransactions(userId, pageable)
-                .map(this::toDTO);
+    public Page<?> listRecentTransactions(){
+
+        UUID userId = UserContext.getUserId();
+
+        Page<DashboardRecentTransactionResponseDTO> transactionsList =
+                transactionRepository
+                        .findLastTransactions(userId, PageRequest.of(0, 10))
+                        .map(transaction -> new DashboardRecentTransactionResponseDTO(
+                                transaction.getId(),
+                                transaction.getAmount(),
+                                transaction.getDescription(),
+                                transaction.getKind(),
+                                transaction.getOccurredAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                        ));
+
+        return transactionsList;
     }
 
-    private TransactionResponseDTO toDTO (Transaction transaction) {
+    public Page<?> listTransactions() {
 
-        return new TransactionResponseDTO(
-                transaction.getId(),
-                transaction.getAmount(),
-                transaction.getDescription(),
-                transaction.getKind(),
-                transaction.getOccurredAt(),
-                transaction.getAccount().getName(),
-                transaction.getCategory().getName()
-        );
+        UUID userId = UserContext.getUserId();
+
+        Page<ListTransactionResponseDTO> transactionsList =
+                transactionRepository
+                        .findLastTransactions(userId, PageRequest.of(0, 10))
+                        .map(transaction -> {
+
+                            String dataLabel = Formatters.formatRelativeDate(transaction.getOccurredAt());
+
+
+                            return new ListTransactionResponseDTO(
+                                    transaction.getId(),
+                                    transaction.getAmount(),
+                                    transaction.getDescription(),
+                                    transaction.getObservation(),
+                                    transaction.getKind(),
+                                    transaction.getOccurredAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                                    transaction.getCategory().getName(),
+                                    transaction.getPaymentMethod(),
+                                    dataLabel,
+                                    transaction.getCategory().getColor()
+                            );
+
+
+
+                        });
+
+
+                  return transactionsList;
     }
 }

@@ -42,4 +42,27 @@ public class Category {
     @Column(name = "updated_at", nullable = false)
     @UpdateTimestamp
     private OffsetDateTime updatedAt;
+
+    @Column (name = "icon", nullable = false)
+    private String icon;
+
+    @Column (name = "color", nullable = false)
+    private String color;
+
+    @Column (name = "status", nullable = false)
+    private boolean active;
+
+    @Column (name = "description")
+    private String description;
+
+    public Category (User user, String name, CategoryKind kind, String icon, String color, boolean active, String description){
+
+        this.user = user;
+        this.name = name;
+        this.kind = kind;
+        this.icon = icon;
+        this.color = color;
+        this.active = active;
+        this.description = description;
+    }
 }

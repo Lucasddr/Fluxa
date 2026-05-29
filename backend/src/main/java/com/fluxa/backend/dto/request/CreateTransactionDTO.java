@@ -1,6 +1,7 @@
-package com.fluxa.backend.dto;
+package com.fluxa.backend.dto.request;
 
 import com.fluxa.backend.domain.enums.CategoryKind;
+import com.fluxa.backend.domain.enums.PaymentMethods;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,6 +13,9 @@ public record CreateTransactionDTO(
     CategoryKind kind,
     BigDecimal amount,
     String description,
-    LocalDate occurredAt
+    LocalDate occurredAt,
+    String observation,
+    PaymentMethods paymentMethod,
+    Boolean recurring
 ) {
 }

@@ -1,4 +1,5 @@
 package com.fluxa.backend.dto.request;
 
-public record CreateAccountDTO() {
-}
+public record CreateAccountDTO(
+        String name
+) {}

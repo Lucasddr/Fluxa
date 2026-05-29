@@ -2,11 +2,12 @@ package com.fluxa.backend.service;
 
 import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.domain.enums.Role;
-import com.fluxa.backend.dto.LoginDTO;
-import com.fluxa.backend.dto.LoginResponseDTO;
-import com.fluxa.backend.dto.RegisterDTO;
+import com.fluxa.backend.dto.request.LoginDTO;
+import com.fluxa.backend.dto.response.LoginResponseDTO;
+import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.exception.EmailAlreadyExistsException;
 import com.fluxa.backend.exception.InvalidCredentialsException;
+import com.fluxa.backend.repository.AccountRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,8 @@ public class AuthService {
     public final PasswordEncoder passwordEncoder;
     public final JwtService jwtService;
     public final AccountService accountService;
+    public final AccountRepository accountRepository;
+    public final CategoriesService categoriesService;
 
 
     public void test(RegisterDTO dto){
@@ -50,11 +53,14 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(dto.password()));
         long end = System.currentTimeMillis();
 
-        log.info("[REGISTER] email: {}, hashtime: {}ms", user.getEmail(), (end - start));
 
         userRepository.save(user);
 
+        log.info("[REGISTER] email: {}, hashtime: {}ms", user.getEmail(), (end - start));
+
         accountService.createDefaultAccount(user);
+
+        categoriesService.createDefaultCategories(user);
 
         return ResponseEntity.ok("ok");
     }
@@ -72,8 +78,10 @@ public class AuthService {
         log.info("[LOGIN_SUCESS] email: {}", dto.email());
 
         String token = jwtService.generateJwt(user);
+        String accountId = accountRepository.findByUserId(user.getId());
 
-        return new LoginResponseDTO(token);
+
+        return new LoginResponseDTO(token, accountId);
     }
 
     public ResponseEntity<?> registerAdmin(RegisterDTO dto){

@@ -1,4 +1,9 @@
 package com.fluxa.backend.dto.request;
 
-public record DashboardDTO() {
+import java.time.LocalDate;
+
+public record DashboardDTO(
+        LocalDate start,
+        LocalDate end
+) {
 }

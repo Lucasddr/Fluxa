@@ -1,4 +1,7 @@
 package com.fluxa.backend.dto.response;
 
-public record ErroResponseDTO() {
+public record ErrorResponseDTO(
+        int status,
+        String message
+) {
 }

@@ -1,8 +1,8 @@
 package com.fluxa.backend.controller;
 
-import com.fluxa.backend.dto.LoginDTO;
-import com.fluxa.backend.dto.LoginResponseDTO;
-import com.fluxa.backend.dto.RegisterDTO;
+import com.fluxa.backend.dto.request.LoginDTO;
+import com.fluxa.backend.dto.response.LoginResponseDTO;
+import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

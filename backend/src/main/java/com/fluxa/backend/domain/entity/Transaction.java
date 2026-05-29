@@ -1,6 +1,7 @@
 package com.fluxa.backend.domain.entity;
 
 import com.fluxa.backend.domain.enums.CategoryKind;
+import com.fluxa.backend.domain.enums.PaymentMethods;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -64,4 +65,13 @@ public class Transaction {
     @UpdateTimestamp
     private OffsetDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column (name = "payment_method")
+    private PaymentMethods paymentMethod;
+
+    @Column (name = "recurrent", nullable = false)
+    private boolean recurrent;
+
+    @Column (name = "observation")
+    private String observation;
 }

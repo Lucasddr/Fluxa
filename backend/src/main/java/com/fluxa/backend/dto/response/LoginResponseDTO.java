@@ -1,4 +1,4 @@
-package com.fluxa.backend.dto;
+package com.fluxa.backend.dto.response;
 
 public record LoginResponseDTO(
         String token,

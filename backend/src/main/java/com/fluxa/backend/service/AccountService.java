@@ -2,8 +2,7 @@ package com.fluxa.backend.service;
 
 import com.fluxa.backend.domain.entity.Account;
 import com.fluxa.backend.domain.entity.User;
-import com.fluxa.backend.dto.CreateAccountDTO;
-import com.fluxa.backend.dto.RegisterDTO;
+import com.fluxa.backend.dto.request.CreateAccountDTO;
 import com.fluxa.backend.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

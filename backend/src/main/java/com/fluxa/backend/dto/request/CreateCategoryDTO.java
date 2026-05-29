@@ -1,4 +1,4 @@
-package com.fluxa.backend.dto;
+package com.fluxa.backend.dto.request;
 
 import com.fluxa.backend.domain.enums.CategoryKind;
 
