@@ -15,12 +15,12 @@ children: React.ReactNode;
             {/* Sidebar */}
             <aside className="w-60 bg-(--color-primary) text-white p-5 flex flex-col justify-between">
                 <h2 className="mb-5">Fluxa</h2>
-
+                
                 <nav className="flex flex-col gap-2.5 align-middle">
                     <AppLink href="/home/dashboard" icon={Home} slug="dashboard"> Dashboard </AppLink>
                     <AppLink href="/home/transactions" icon={ArrowLeftRight} slug="transactions"> Transações </AppLink>
                     <AppLink href="/home/reports" icon={Receipt} slug="reports">Relatórios</AppLink>
-                    <AppLink href="/home/categories" icon={Tag}  slug="categorias">   Categorias   </AppLink>
+                    <AppLink href="/home/categories" icon={Tag}  slug="categories">   Categorias   </AppLink>
                 </nav>
 
                 <div>

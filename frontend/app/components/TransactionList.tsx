@@ -8,8 +8,6 @@ type Transaction = {
     title: string;
     kind: string;
     date: string;
-    account: string;
-    categoryName: string;
 }
 
 type Props= {

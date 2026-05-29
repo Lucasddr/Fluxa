@@ -3,6 +3,12 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
+type loginResponse = {
+  token: string;
+  accountId: string;
+  message: string;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -51,7 +57,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data : loginResponse = await res.json();
 
       if (!res.ok) {
         throw new Error(data?.message || "Email ou senha inválidos");
@@ -62,6 +68,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("accountId", data.accountId);
 
 
       router.push("/home");

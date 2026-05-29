@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PieChart, Pie, ResponsiveContainer } from "recharts";
 import { getPercentage } from "../utils/math";
+import { formatCurrency } from "../utils/Formatters";
 
 type ChartProps = {
 entry?: number;
@@ -52,12 +53,6 @@ const total = useMemo(
 );
 
 const activeItem = data[activeIndex] ?? data[0];
-
-const formatCurrency = (value: number) =>
-    (value ?? 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    });
 
 const handlePieEnter = (_: unknown, index: number) => {
     setVisible(false);
