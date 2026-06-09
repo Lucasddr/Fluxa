@@ -118,4 +118,16 @@ public class CategoriesService {
 
         return categoryRepository.findAllProjectedByUserId(userId);
     }
+
+    public void deleteCategory(UUID categoryId) {
+
+        Boolean exists = categoryRepository.existsById(categoryId);
+
+        if(exists){
+            categoryRepository.deleteById(categoryId);
+        } else {
+            throw new RuntimeException("Categoria não encontrada");
+        }
+
+    }
 }

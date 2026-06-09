@@ -1,6 +1,7 @@
 package com.fluxa.backend.controller;
 
 import com.fluxa.backend.dto.request.CreateCategoryDTO;
+import com.fluxa.backend.dto.request.DeleteCategoryDTO;
 import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.service.CategoriesService;
 import lombok.RequiredArgsConstructor;
@@ -44,5 +45,15 @@ public class CategoryController {
                 categoriesService.listSelectCategories()
 
         );
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteCategories(@RequestBody DeleteCategoryDTO dto) {
+        categoriesService.deleteCategory(dto.categoryId());
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                "message", "Categoria deletada com sucesso",
+                    "categoryId", dto.categoryId()
+        ));
     }
 }

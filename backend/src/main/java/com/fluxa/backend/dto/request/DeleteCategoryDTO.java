@@ -1,4 +1,8 @@
 package com.fluxa.backend.dto.request;
 
-public record DeleteCategoryDTO() {
+import java.util.UUID;
+
+public record DeleteCategoryDTO(
+        UUID categoryId
+) {
 }

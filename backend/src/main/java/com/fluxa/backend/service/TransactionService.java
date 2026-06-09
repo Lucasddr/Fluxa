@@ -38,10 +38,6 @@ public class TransactionService {
 
         UUID userId = UserContext.getUserId();
 
-        log.info("USER ID CONTEXT: {}", userId);
-
-        log.info("PAYMENT METHOD DTO: {}", dto.paymentMethod());
-
         Account account = accountRepository.findByIdAndUserId(dto.accountId(),userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
@@ -87,7 +83,7 @@ public class TransactionService {
                                 transaction.getAmount(),
                                 transaction.getDescription(),
                                 transaction.getKind(),
-                                transaction.getOccurredAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                Formatters.formatRelativeDate(transaction.getOccurredAt())
                         ));
 
         return transactionsList;

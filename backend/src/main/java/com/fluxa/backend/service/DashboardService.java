@@ -24,11 +24,12 @@ public class DashboardService {
     public final AccountRepository accountRepository;
     public final TransactionRepository transactionRepository;
     public final InstallmentRepository installmentRepository;
-    public final TransactionService transactionService;
 
     public BuildDashboardResponseDTO buildDashboardDTO(DashboardDTO dto){
 
         UUID userId = UserContext.getUserId();
+
+        log.info("[DTO DEBUG] start: {} | end: {}", dto.start(), dto.end());
 
         String user = userRepository.findNameById(userId);
         String accountName = accountRepository.findAccountNameByUserId(userId);

@@ -30,12 +30,28 @@ public class SecurityConfig {
         return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
     }
 
+    //@Bean
+    //public CorsConfigurationSource corsConfigurationSource() {
+    //    CorsConfiguration config = new CorsConfiguration();
+
+    //    config.setAllowedOrigins(List.of("http://localhost:3000", "http://26.220.230.81:3000")); //em produção restringe isso
+    //    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    //    config.setAllowedHeaders(List.of("*"));
+    //    config.setExposedHeaders(List.of("Authorization"));
+    //    config.setAllowCredentials(true);
+
+    //    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    //    source.registerCorsConfiguration("/**", config);
+
+    //    return source;
+    //}
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:3000")); //em produção restringe isso
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
