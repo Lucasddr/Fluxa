@@ -6,6 +6,7 @@ import ValueCard from "@/app/components/ValueCard";
 import Grafico from "@/app/components/Grafico";
 import GraficoDonut from "@/app/components/GraficoDonut";
 import TransactionList from "@/app/components/TransactionList";
+import { useRouter } from "next/navigation";
 
 import {
   ArrowDownLeft,
@@ -13,11 +14,14 @@ import {
   DollarSign,
   User,
   Wallet,
+  LogOut,
 } from "lucide-react";
 
 import { api } from "@/services/api";
 
 import { formatCurrency } from "@/app/utils/Formatters";
+
+import MenuListModal from "@/app/components/modals/MenuListmodal";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -49,11 +53,13 @@ type PageResponse<T> = {
 // ─── período mockado ───────────────────────────────────────────
 
 const start = "2026-04-01";
-const end = "2026-05-30";
+const end = "2026-06-30";
 
 // ─── página ────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+
+    const router = useRouter();
 
   const [cardsData, setCardsData] =
     useState<DashboardDTO | null>(null);
@@ -63,6 +69,33 @@ export default function DashboardPage() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [openMenu, setOpenMenu] = useState<Boolean>(false);
+
+  const [menuPosition, setMenuPosition] = useState({
+  top: 0,
+  left: 0,
+});
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    router.push("../login");
+};
+
+  const handleOpenMenu = (
+  event: React.MouseEvent<HTMLDivElement>,
+) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+
+  setMenuPosition({
+    top: rect.bottom + window.scrollY,
+    left: rect.right + window.scrollX - 20,
+  });
+
+  setOpenMenu(prev => !prev);
+};
 
   // ─── fetch dashboard ────────────────────────────────────────
 
@@ -162,7 +195,9 @@ export default function DashboardPage() {
             </h3>
           </div>
 
-          <div className="flex items-center justify-center border-2 border-(--color-border) rounded-full w-12 h-12 shadow-lg cursor-pointer">
+          <div className="relative flex items-center justify-center border-2 border-(--color-border) rounded-full w-12 h-12 shadow-lg cursor-pointer" onClick={(e) => {
+            handleOpenMenu(e)
+          }}>
 
             <User className="w-5 h-5" />
           </div>
@@ -253,18 +288,43 @@ export default function DashboardPage() {
 
         {/* transações */}
 
-        <div className="border-2 border-(--color-border) rounded-xl shadow-lg overflow-y-auto">
+        <div className="border-2 border-(--color-border) rounded-xl shadow-lg">
+            <div className="flex justify-start py-3 px-3 ml-4">
 
-          <div className="flex justify-start pt-3 px-3 ml-4">
+              <span className="text-md text-(--color-text-primary) font-semibold">
+                Últimas transações
+              </span>
+            </div>
+          <div className="border-t-2 border-(--color-border) max-h-[440px] overflow-y-auto">
 
-            <span className="text-md text-(--color-text-primary) font-semibold">
-              Últimas transações
-            </span>
+
+            <TransactionList
+              data={transactionList.content}
+            />
+
+            {openMenu && (
+              <div
+                className="fixed z-50"
+                style={{
+                  top: menuPosition.top,
+                  left: menuPosition.left,
+                }}
+              >
+                <MenuListModal
+                  actions={[
+                    {
+                      label: "Logout",
+                      icon: LogOut,
+                      onClick: () => {
+                        handleLogout();
+                        setOpenMenu(false);
+                      },
+                    }
+                  ]}
+                />
+              </div>
+            )}
           </div>
-
-          <TransactionList
-            data={transactionList.content}
-          />
         </div>
       </div>
     </div>

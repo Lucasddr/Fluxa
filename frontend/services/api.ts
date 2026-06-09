@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "http://26.220.230.81:8080";
 
 export async function api(path : string, options : RequestInit = {}) {
 

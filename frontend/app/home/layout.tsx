@@ -19,12 +19,12 @@ children: React.ReactNode;
                 <nav className="flex flex-col gap-2.5 align-middle">
                     <AppLink href="/home/dashboard" icon={Home} slug="dashboard"> Dashboard </AppLink>
                     <AppLink href="/home/transactions" icon={ArrowLeftRight} slug="transactions"> Transações </AppLink>
-                    <AppLink href="/home/reports" icon={Receipt} slug="reports">Relatórios</AppLink>
                     <AppLink href="/home/categories" icon={Tag}  slug="categories">   Categorias   </AppLink>
+                {/* <AppLink href="/home/reports" icon={Receipt} slug="reports">Relatórios</AppLink> */} {/*Retirar comentário quando a página de reports estiver pronta*/}
                 </nav>
 
                 <div>
-                    <AppLink href="/home/configurations" icon={Settings} slug="configurations">Configurações</AppLink>
+                    {/*<AppLink href="/home/configurations" icon={Settings} slug="configurations">Configurações</AppLink>*/}
                 </div>
             </aside>
 

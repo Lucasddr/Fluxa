@@ -342,6 +342,9 @@ export default function CategoryModal({
                 style={{
                   backgroundColor: form.color + "22",
                 }}
+                onClick={() =>
+                    setIconDropdownOpen((o) => !o)
+                  }
               >
                 <SelectedIconComponent
                   className="w-5 h-5"

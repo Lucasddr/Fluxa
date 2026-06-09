@@ -22,8 +22,12 @@ import {
   Zap,
   Coffee,
   DollarSign,
+  Utensils,
+  Trash2,
+  Eye,
 } from "lucide-react";
 
+import MenuListModal from "@/app/components/modals/MenuListmodal";
 import CategoryModal from "@/app/components/modals/CategoryModal";
 import { api } from "@/services/api";
 
@@ -61,6 +65,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Zap,
   Coffee,
   DollarSign,
+  Utensils,
 };
 
 function CategoryIcon({
@@ -149,7 +154,6 @@ function FilterSelect({
 }
 
 // ─── page ──────────────────────────────────────────────────────
-
 export default function CategoriasPage() {
   const [categories, setCategories] =
     useState<PageResponse<Category> | null>(null);
@@ -161,6 +165,13 @@ export default function CategoriasPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const [menuPosition, setMenuPosition] = useState({
+  top: 0,
+  left: 0,
+});
 
   // ─── fetch ───────────────────────────────────────────────────
 
@@ -189,6 +200,37 @@ export default function CategoriasPage() {
     }
   }, [page, itemsPerPage]);
 
+  // ─── delete ─────────────────────────────────────────────────
+
+  const handleDelete = async (id: string) => {
+    const response = await api("/categories/delete", {
+      method: "DELETE",
+      body: JSON.stringify({
+        categoryId: id
+      })
+    });
+
+    if (response.ok) {
+      await fetchCategories();
+    }
+};
+
+const handleOpenMenu = (
+  event: React.MouseEvent<HTMLButtonElement>,
+  categoryId: string
+) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+
+  setMenuPosition({
+    top: rect.bottom + window.scrollY + 0,
+    left: rect.right + window.scrollX - 20,
+  });
+
+  setOpenMenuId(
+    openMenuId === categoryId ? null : categoryId
+  );
+};
+
   // ─── effects ─────────────────────────────────────────────────
 
   useEffect(() => {
@@ -211,7 +253,10 @@ export default function CategoriasPage() {
         </div>
 
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setModalOpen(true);
+            setOpenMenuId(null);
+          }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md"
           style={{
             backgroundColor: "var(--color-interactive)",
@@ -290,7 +335,7 @@ export default function CategoriasPage() {
           categories?.content.map((cat) => (
             <div
               key={cat.id}
-              className="grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/60 transition items-center"
+              className="grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/80 hover:bg-gray-50/60 transition items-center"
             >
               <div className="flex items-center gap-3">
                 <CategoryIcon
@@ -313,12 +358,13 @@ export default function CategoriasPage() {
 
               <StatusBadge status={cat.status} />
 
-              <div className="flex items-center gap-1">
-                <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-                  <Pencil className="w-4 h-4" />
-                </button>
-
-                <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+              <div className="relative">
+                <button
+                    onClick={(e) =>
+                    handleOpenMenu(e, cat.id)
+                  }
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+                >
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </div>
@@ -387,7 +433,58 @@ export default function CategoriasPage() {
           }}
         />
       )}
+      {openMenuId && (
+        <div
+          className="fixed z-50"
+          style={{
+            top: menuPosition.top,
+            left: menuPosition.left,
+          }}
+        >
+          <MenuListModal
+            actions={[
+              {
+                label: "Ver detalhes",
+                icon: Eye,
+                onClick: () => {
+                  const cat = categories?.content.find(
+                    (c) => c.id === openMenuId
+                  );
+
+                  console.log(cat);
+
+                  setOpenMenuId(null);
+                },
+              },
+              {
+                label: "Editar",
+                icon: Pencil,
+                onClick: () => {
+                  console.log("editar", openMenuId);
+
+                  setOpenMenuId(null);
+                },
+              },
+              {
+                label: "Excluir",
+                icon: Trash2,
+                danger: true,
+                onClick: async () => {
+                  const id = openMenuId;
+
+                  setOpenMenuId(null);
+
+                  if (id) {
+                    
+                  }
+                },
+              },
+            ]}
+          />
+        </div>
+      )}
     </div>
+    
   );
 }
 

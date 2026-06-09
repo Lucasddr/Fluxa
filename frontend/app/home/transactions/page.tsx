@@ -568,7 +568,7 @@ export default function TransactionsPage() {
 
             <div
               key={t.id}
-              className="grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-gray-50 hover:bg-gray-50/60 transition items-center"
+              className="grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/70 hover:bg-gray-50/60 transition items-center"
             >
 
               {/* Descrição */}
