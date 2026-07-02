@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import ValueCard from "@/app/components/ValueCard";
-import Grafico from "@/app/components/Grafico";
+import InsightCards from "@/app/components/InsightCards";
 import GraficoDonut from "@/app/components/GraficoDonut";
 import TransactionList from "@/app/components/TransactionList";
 import { useRouter } from "next/navigation";
@@ -50,10 +50,38 @@ type PageResponse<T> = {
   number: number;
 };
 
+type EconomyCardDTO = {
+  type: "economy";
+  savingsPercentage: number;       // ex: 18
+  savedAmount: number;             // ex: 2340.00
+  totalIncome: number;             // ex: 13000.00
+  goalPercentage: number;          // ex: 20
+};
+
+type MostExpenseCategoryDTO = {
+  type: "most_expense_category";
+  categoryName: string;            // ex: "Mercado"
+  totalSpent: number;              // ex: 820.00
+  percentageOfExpenses: number;    // ex: 40
+  suggestedReduction: number;      // ex: 10  (%)
+  savingIfReduced: number;        // ex: 82.00
+};
+
+type InstallmentsAmountDTO = {
+  type: "installments_amount";
+  totalAmount: number;             // ex: 0.00
+  hasInstallments: boolean;
+};
+
+type InsightCardDTO =
+  | EconomyCardDTO
+  | MostExpenseCategoryDTO
+  | InstallmentsAmountDTO;
+
 // ─── período mockado ───────────────────────────────────────────
 
 const start = "2026-04-01";
-const end = "2026-06-30";
+const end = "2026-07-30";
 
 // ─── página ────────────────────────────────────────────────────
 
@@ -66,6 +94,9 @@ export default function DashboardPage() {
 
   const [transactionList, setTransactionList] =
     useState<PageResponse<Transaction> | null>(null);
+
+  const [insightCards, setInsightCards] =
+  useState<InsightCardDTO[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -97,6 +128,7 @@ export default function DashboardPage() {
   setOpenMenu(prev => !prev);
 };
 
+
   // ─── fetch dashboard ────────────────────────────────────────
 
   const fetchDashboard =
@@ -109,16 +141,17 @@ export default function DashboardPage() {
         const [
           dashboardResponse,
           transactionResponse,
+          insightsResponse,
         ] = await Promise.all([
-          api(
-            `/dashboard/buildDashboard?start=${start}&end=${end}`
-          ),
+          api(`/dashboard/buildDashboard?start=${start}&end=${end}`),
           api("/dashboard/recentTransactions"),
+          api("/dashboard/insightCards"),
         ]);
 
-        if (
+      if (
           !dashboardResponse.ok ||
-          !transactionResponse.ok
+          !transactionResponse.ok ||
+          !insightsResponse.ok
         ) {
           throw new Error(
             "Erro ao carregar dashboard"
@@ -133,9 +166,14 @@ export default function DashboardPage() {
           PageResponse<Transaction> =
           await transactionResponse.json();
 
+        const insightsData: InsightCardDTO[] =
+          await insightsResponse.json();
+
         setCardsData(dashboardData);
 
         setTransactionList(transactionsData);
+
+        setInsightCards(insightsData);
 
       } catch (error) {
 
@@ -162,7 +200,8 @@ export default function DashboardPage() {
   if (
     loading ||
     !cardsData ||
-    !transactionList
+    !transactionList ||
+    insightCards.length === 0
   ) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px] text-gray-400">
@@ -174,7 +213,7 @@ export default function DashboardPage() {
   // ─── render ─────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-4 w-full">
 
       {/* Header */}
 
@@ -280,10 +319,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="border-2 border-(--color-border) rounded-xl shadow-lg">
-
-            <Grafico />
-          </div>
+              <InsightCards cards={insightCards} />
         </div>
 
         {/* transações */}
