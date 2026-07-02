@@ -1,4 +1,13 @@
 package com.fluxa.backend.dto.response;
 
-public record BiggestExpenseDTO() {
+import java.math.BigDecimal;
+
+public record BiggestExpenseDTO(
+        String type,
+        String categoryName,
+        BigDecimal totalSpent,
+        Integer percentageOfExpenses,
+        Integer suggestedReduction,
+        BigDecimal savingIfReduced
+) {
 }
