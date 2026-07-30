@@ -2,22 +2,14 @@
 
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
-import { ReactNode } from "react";
-import { LucideIcon } from "lucide-react";
+import type { NavItem } from "./types";
 
-type AppLinkProps = {
-href: string;
-slug?: string;
-children: ReactNode;
-icon?: LucideIcon;
-};
-
-export default function AppLink({
+export default function NavLink({
 href,
 slug,
-children,
 icon: Icon,
-}: AppLinkProps) {
+label,
+}: NavItem) {
 const segment = useSelectedLayoutSegment();
 
 const isActive = slug
@@ -37,7 +29,7 @@ return (
     `}
     >
     {Icon && <Icon className="w-4 h-4" />}
-    {children}
+    {label}
     </Link>
 );
 }
