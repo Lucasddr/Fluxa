@@ -22,9 +22,9 @@ import java.util.List;
 @RequestMapping("/dashboard")
 public class DashboardController {
 
-    public final DashboardService dashboardService;
-    public final TransactionService transactionService;
-    public final InsightAggregatorService insightAggregatorService;
+    private final DashboardService dashboardService;
+    private final TransactionService transactionService;
+    private final InsightAggregatorService insightAggregatorService;
 
     @GetMapping("/buildDashboard")
     public ResponseEntity<BuildDashboardResponseDTO> buildDashboard (

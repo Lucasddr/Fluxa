@@ -4,6 +4,7 @@ import com.fluxa.backend.dto.request.CreateCategoryDTO;
 import com.fluxa.backend.dto.request.DeleteCategoryDTO;
 import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.service.CategoriesService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,10 @@ import java.util.Map;
 @RestController
 public class CategoryController {
 
-    public final CategoriesService categoriesService;
+    private final CategoriesService categoriesService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createCategory(@RequestBody CreateCategoryDTO dto){
+    public ResponseEntity<?> createCategory(@Valid @RequestBody CreateCategoryDTO dto){
 
         categoriesService.createCategory(dto);
 
@@ -48,7 +49,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteCategories(@RequestBody DeleteCategoryDTO dto) {
+    public ResponseEntity<?> deleteCategories(@Valid @RequestBody DeleteCategoryDTO dto) {
         categoriesService.deleteCategory(dto.categoryId());
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(

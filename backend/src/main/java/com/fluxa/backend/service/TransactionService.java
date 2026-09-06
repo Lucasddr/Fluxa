@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -89,18 +90,13 @@ public class TransactionService {
         return transactionsList;
     }
 
-    public Page<?> listTransactions() {
+    public Page<?> listTransactions(Pageable pageable) {
 
         UUID userId = UserContext.getUserId();
 
-        Page<ListTransactionResponseDTO> transactionsList =
-                transactionRepository
-                        .findLastTransactions(userId, PageRequest.of(0, 10))
+        return transactionRepository.findLastTransactions(userId, pageable)
                         .map(transaction -> {
-
                             String dataLabel = Formatters.formatRelativeDate(transaction.getOccurredAt());
-
-
                             return new ListTransactionResponseDTO(
                                     transaction.getId(),
                                     transaction.getAmount(),
@@ -113,12 +109,6 @@ public class TransactionService {
                                     dataLabel,
                                     transaction.getCategory().getColor()
                             );
-
-
-
                         });
-
-
-                  return transactionsList;
     }
 }

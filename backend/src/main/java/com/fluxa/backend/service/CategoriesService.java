@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -121,13 +122,11 @@ public class CategoriesService {
 
     public void deleteCategory(UUID categoryId) {
 
-        Boolean exists = categoryRepository.existsById(categoryId);
+        UUID userId = UserContext.getUserId();
 
-        if(exists){
-            categoryRepository.deleteById(categoryId);
-        } else {
-            throw new RuntimeException("Categoria não encontrada");
-        }
+        Category category = categoryRepository.findByIdAndUserId(categoryId, userId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
+        categoryRepository.delete(category);
     }
 }

@@ -4,6 +4,7 @@ import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.response.LoginResponseDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +19,8 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/test")
-    public ResponseEntity<?> registerTest(@RequestBody RegisterDTO dto){
-
-        authService.test(dto);
-
-        return ResponseEntity.ok(dto);
-    }
-
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterDTO dto){
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto){
 
         authService.register(dto);
 
@@ -38,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginDTO dto){
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginDTO dto){
 
         LoginResponseDTO response = authService.login(dto);
 
@@ -46,7 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/registerAdmin")
-    public ResponseEntity<?> registerAdmin(@RequestBody RegisterDTO dto){
+    public ResponseEntity<?> registerAdmin(@Valid @RequestBody RegisterDTO dto){
 
         authService.registerAdmin(dto);
 

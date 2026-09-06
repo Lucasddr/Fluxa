@@ -2,7 +2,9 @@ package com.fluxa.backend.controller;
 
 import com.fluxa.backend.dto.request.CreateTransactionDTO;
 import com.fluxa.backend.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +16,10 @@ import java.util.Map;
 @RequestMapping("/transactions")
 public class TransactionController {
 
-    public final TransactionService transactionService;
+    private final TransactionService transactionService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createTransaction (@RequestBody CreateTransactionDTO dto){
+    public ResponseEntity<?> createTransaction (@Valid @RequestBody CreateTransactionDTO dto){
 
         transactionService.createTransaction(dto);
 
@@ -26,10 +28,10 @@ public class TransactionController {
     }
 
     @GetMapping("/list")
-    public  ResponseEntity<?> listTransactions () {
+    public  ResponseEntity<?> listTransactions (Pageable pageable) {
 
         return ResponseEntity.ok(
-            transactionService.listTransactions()
+            transactionService.listTransactions(pageable)
         );
     }
 }

@@ -30,14 +30,6 @@ public class AuthService {
     public final AccountRepository accountRepository;
     public final CategoriesService categoriesService;
 
-
-    public void test(RegisterDTO dto){
-        log.info("===ENDPOINT-TEST===");
-        log.info("Email: " + dto.email());
-        log.info("Senha: " + dto.password());
-        log.info("===================");
-    }
-
     @Transactional
     public ResponseEntity<?> register(RegisterDTO dto){
         if (userRepository.existsByEmail(dto.email())){

@@ -19,24 +19,20 @@ import java.util.UUID;
 @RequestMapping("/user")
 public class UserController {
 
-    public final UserService userService;
+    private final UserService userService;
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal String userId){
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UUID userId){
 
-        userService.deleteUser(UUID.fromString(userId));
+        userService.deleteUser(userId);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 
     @GetMapping
-            ("/user/me")
-    public ResponseEntity<?> me(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(Map.of(
-                "id", user.getId(),
-                "email", user.getEmail(),
-                "name", user.getName()
-        ));
+            ("/me")
+    public ResponseEntity<?> me(@AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(Map.of("id", userId));
     }
 
 }
