@@ -39,7 +39,9 @@ public class TransactionService {
 
         UUID userId = UserContext.getUserId();
 
-        Account account = accountRepository.findByIdAndUserId(dto.accountId(),userId)
+        UUID accountId = accountRepository.findByUserId(userId);
+
+        Account account = accountRepository.findByIdAndUserId(accountId,userId)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)

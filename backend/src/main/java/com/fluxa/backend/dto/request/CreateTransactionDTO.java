@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record CreateTransactionDTO(
-        @NotNull(message = "accountId é obrigatório")
         UUID accountId,
 
         @NotNull(message = "categoryId é obrigatório")

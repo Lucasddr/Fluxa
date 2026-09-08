@@ -2,8 +2,8 @@ package com.fluxa.backend.service;
 
 import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.domain.enums.Role;
+import com.fluxa.backend.dto.internal.LoginResult;
 import com.fluxa.backend.dto.request.LoginDTO;
-import com.fluxa.backend.dto.response.LoginResponseDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.exception.EmailAlreadyExistsException;
 import com.fluxa.backend.exception.InvalidCredentialsException;
@@ -57,7 +57,7 @@ public class AuthService {
         return ResponseEntity.ok("ok");
     }
 
-    public LoginResponseDTO login(LoginDTO dto){
+    public LoginResult login(LoginDTO dto){
 
         log.info("[LOGIN_ATTEMPT] email: {}", dto.email());
         User user = userRepository.findByEmail(dto.email())
@@ -70,10 +70,9 @@ public class AuthService {
         log.info("[LOGIN_SUCESS] email: {}", dto.email());
 
         String token = jwtService.generateJwt(user);
-        String accountId = accountRepository.findByUserId(user.getId());
 
 
-        return new LoginResponseDTO(token, accountId);
+        return new LoginResult(token);
     }
 
     public ResponseEntity<?> registerAdmin(RegisterDTO dto){
