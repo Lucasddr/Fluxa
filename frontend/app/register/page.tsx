@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { api } from "@/services/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://26.220.230.81:8080/auth/register", {
+      const res = await api("/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,12 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
-type loginResponse = {
-  token: string;
-  accountId: string;
-  message: string;
-}
+import { api } from "@/services/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,32 +44,28 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://26.220.230.81:8080/auth/login", {
+      const res = await api("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password: password.trim()
+        }),
+        headers: {"Content-Type": "application/json"},
       });
 
-      const data : loginResponse = await res.json();
-
       if (!res.ok) {
-        throw new Error(data?.message || "Email ou senha inválidos");
+        if (res.status === 401) {
+          setErrorMessage("Credenciais inválidas")
+        } else {
+          setErrorMessage("Erro ao conectar com o servidor. Tente novamente mais tarde")
+        }
+        return
       }
-
-      if (!data?.token) {
-        throw new Error("Token não retornado pelo backend");
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("accountId", data.accountId);
-
 
       router.push("/home");
 
     } catch (err: any) {
-      setErrorMessage(err.message);
+      setErrorMessage(err.message || "Erro ao concetar com o servidor");
     } finally {
       setLoading(false);
     }

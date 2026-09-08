@@ -15,6 +15,7 @@ import {
   User,
   Wallet,
   LogOut,
+  AwardIcon,
 } from "lucide-react";
 
 import { api } from "@/services/api";
@@ -108,11 +109,19 @@ export default function DashboardPage() {
   left: 0,
 });
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  async function handleLogout() {
+    try{
+        const res = await api("/auth/logout", {method: "POST"});
 
-    router.push("../login");
+        if (!res.ok){
+          console.error("Houve um erro ao realizar o logout, tente novamente em breve")
+          return;
+        }
+
+      router.push("/login");
+    } catch {
+      console.error("Houve um erro ao realizar o logout, tente novamente em breve")
+    }
 };
 
   const handleOpenMenu = (
@@ -217,7 +226,7 @@ export default function DashboardPage() {
 
       {/* Header */}
 
-      <div className="grid grid-cols-2 h-16 text-black justify-between">
+      <div className="grid grid-rows-2 gap-1.5 lg:grid-cols-2 h-16 text-black justify-between">
 
         <div>
           <h2 className="text-2xl">
@@ -245,7 +254,7 @@ export default function DashboardPage() {
 
       {/* Cards */}
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 ">
 
         <ValueCard
           title="Saldo do Mês"
@@ -302,7 +311,7 @@ export default function DashboardPage() {
 
       {/* Conteúdo */}
 
-      <div className="grid grid-cols-[1.2fr_0.8fr] gap-4 min-h-[480px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4 min-h-[480px]">
 
         {/* gráficos */}
 

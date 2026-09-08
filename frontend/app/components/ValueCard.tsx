@@ -18,7 +18,7 @@ export default function ValueCard({
         }: ValueCardProps) {
 
     return (
-        <div className={`flex items-center justify-between p-4 rounded-xl shadow ${bgColor} shadow-lg border-2 border-(--color-border)`}>
+        <div className={`flex items-center justify-between p-4 rounded-xl shadow ${bgColor} shadow-xl border-2 border-(--color-border)`}>
         
         <div className="flex flex-col">
             <span className="text-sm text-gray-500">{title}</span>

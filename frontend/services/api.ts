@@ -1,14 +1,19 @@
-const BASE_URL = "http://26.220.230.81:8080";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export async function api(path : string, options : RequestInit = {}) {
+if (!BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_URL não foi definida no .env.local")
+}
 
-    const token = localStorage.getItem("token");
-
-    return fetch (`${BASE_URL}${path}`,{
+export async function api(
+    path: string,
+    options: RequestInit = {}
+) {
+    return fetch(`${BASE_URL}${path}`, {
         ...options,
-    headers: {
+        credentials: "include",
+        headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...options.headers
-    }})
+        ...options.headers,
+        },
+    });
 }

@@ -12,7 +12,6 @@ type TransactionModalProps = {
 };
 
 export type TransactionFormData = {
-  accountId: string;
   categoryId: string;
   kind: "EXPENSE" | "INCOME";
   amount: number;
@@ -54,11 +53,6 @@ const TODAY =
     .toISOString()
     .split("T")[0];
 
-const AccountId =
-  localStorage.getItem(
-    "accountId"
-  ) ?? "";
-
 export default function TransactionModal({
   onClose,
   onSave,
@@ -75,7 +69,6 @@ export default function TransactionModal({
 
   const [form, setForm] =
     useState<TransactionFormData>({
-      accountId: AccountId,
       categoryId: "",
       kind: "INCOME",
       amount: 0,
