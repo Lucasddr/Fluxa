@@ -33,7 +33,6 @@ public class JwtFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String jwt = null;
-        log.info("[JWT] Request: {}", request.getRequestURI());
 
         Cookie[] cookies = request.getCookies();
 
@@ -41,23 +40,17 @@ public class JwtFilter extends OncePerRequestFilter {
             log.info("[JWT] Nenhum cookie recebido");
         } else {
             for (Cookie cookie : cookies) {
-                log.info("[JWT] Cookie recebido: {}", cookie.getName());
-
                 if ("access_token".equals(cookie.getName())) {
                     jwt = cookie.getValue();
-                    log.info("[JWT] access_token encontrado");
                     break;
                 }
             }
         }
 
         if (jwt == null || jwt.isBlank()) {
-            log.info("[JWT] Token não encontrado, seguindo sem autenticação");
             filterChain.doFilter(request, response);
             return;
         }
-
-        log.info("[JWT] Token encontrado, tentando extrair userId");
 
         final UUID userId;
 
@@ -65,8 +58,6 @@ public class JwtFilter extends OncePerRequestFilter {
             userId = UUID.fromString(
                     jwtService.extractUserId(jwt)
             );
-
-            log.info("[JWT] UserId extraído: {}", userId);
 
         } catch (Exception e) {
             log.warn("[JWT] Token inválido: {}", e.getMessage());
@@ -76,11 +67,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            log.info("[JWT] Criando Authentication");
-
             String role = jwtService.extractRole(jwt);
-
-            log.info("[JWT] Role: {}", role);
 
             List<SimpleGrantedAuthority> authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + role)
@@ -101,8 +88,6 @@ public class JwtFilter extends OncePerRequestFilter {
             SecurityContextHolder
                     .getContext()
                     .setAuthentication(authToken);
-
-            log.info("[JWT] Authentication criada com sucesso");
         }
 
         filterChain.doFilter(request, response);

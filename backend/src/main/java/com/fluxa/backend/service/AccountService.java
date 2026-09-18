@@ -2,13 +2,16 @@ package com.fluxa.backend.service;
 
 import com.fluxa.backend.domain.entity.Account;
 import com.fluxa.backend.domain.entity.User;
-import com.fluxa.backend.dto.request.CreateAccountDTO;
+import com.fluxa.backend.dto.request.create.CreateAccountDTO;
 import com.fluxa.backend.repository.AccountRepository;
+import com.fluxa.backend.security.context.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,4 +51,18 @@ public class AccountService {
 
         accountRepository.save(account);
     }
+
+    public BigDecimal getAccountCurrentBalance(){
+        UUID userID = UserContext.getUserId();
+
+        return accountRepository.findAccountCurrentBalanceByUserId(userID);
+    }
+
+    @Transactional
+    public void updateAccountCurrentBalance(BigDecimal amount) {
+        UUID userId = UserContext.getUserId();
+
+        accountRepository.updateAccountBalance(amount, userId);
+    }
+
 }

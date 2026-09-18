@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -93,4 +94,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
     """)
     BigDecimal sumAllIncomes(
             @Param("userId") UUID userID);
+
+    Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 }

@@ -1,4 +1,4 @@
-package com.fluxa.backend.dto.request;
+package com.fluxa.backend.dto.request.update;
 
 import com.fluxa.backend.domain.enums.CategoryKind;
 import com.fluxa.backend.domain.enums.PaymentMethods;
@@ -10,9 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record CreateTransactionDTO(
-        UUID accountId,
-
+public record UpdateTransactionDTO(
         @NotNull(message = "categoryId é obrigatório")
         UUID categoryId,
 

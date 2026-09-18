@@ -3,8 +3,10 @@ package com.fluxa.backend.service;
 import com.fluxa.backend.domain.entity.Category;
 import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.domain.enums.CategoryKind;
+import com.fluxa.backend.dto.request.update.UpdateCategoryDTO;
 import com.fluxa.backend.dto.response.CategoryResponseDTO;
-import com.fluxa.backend.dto.request.CreateCategoryDTO;
+import com.fluxa.backend.dto.request.create.CreateCategoryDTO;
+import com.fluxa.backend.exception.CategoryNotFoundException;
 import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.UserRepository;
@@ -15,9 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -93,12 +95,10 @@ public class CategoriesService {
         );
     }
 
-    public Page<?> ListCategories (){
+    public Page<?> listCategories (){
 
         UUID userId = UserContext.getUserId();
-
-        Page<CategoryResponseDTO> categoriesList =
-        this.categoryRepository
+        return  categoryRepository
                 .findCategoryByUserId(userId, PageRequest.of(0, 10))
                 .map(category -> new CategoryResponseDTO(
                         category.getId(),
@@ -109,15 +109,13 @@ public class CategoriesService {
                         category.getDescription(),
                         category.isActive()
                 ));
-
-        return categoriesList;
     }
 
     public List<CategoriesSelectProjection> listSelectCategories() {
 
         UUID userId = UserContext.getUserId();
 
-        return categoryRepository.findAllProjectedByUserId(userId);
+        return categoryRepository.findAllProjectedByUserIdAndActiveTrue(userId);
     }
 
     public void deleteCategory(UUID categoryId) {
@@ -125,8 +123,23 @@ public class CategoriesService {
         UUID userId = UserContext.getUserId();
 
         Category category = categoryRepository.findByIdAndUserId(categoryId, userId)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+                .orElseThrow(CategoryNotFoundException::new);
 
         categoryRepository.delete(category);
+    }
+
+    @Transactional
+    public void updateCategory(UUID categoryId, UpdateCategoryDTO dto) {
+
+        UUID userId = UserContext.getUserId();
+
+        Category category = categoryRepository.findByIdAndUserId(categoryId, userId)
+                .orElseThrow(CategoryNotFoundException::new);
+
+        category.setName(dto.name());
+        category.setDescription(dto.description());
+        category.setIcon(dto.icon());
+        category.setActive(dto.status());
+        category.setColor(dto.color());
     }
 }

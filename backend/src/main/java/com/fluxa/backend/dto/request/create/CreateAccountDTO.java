@@ -1,4 +1,4 @@
-package com.fluxa.backend.dto.request;
+package com.fluxa.backend.dto.request.create;
 
 import jakarta.validation.constraints.NotBlank;
 

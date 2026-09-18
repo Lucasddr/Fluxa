@@ -1,28 +1,30 @@
 package com.fluxa.backend.controller;
 
-import com.fluxa.backend.dto.internal.LoginResult;
+import com.fluxa.backend.dto.internal.TokenPair;
 import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.service.AuthService;
+import com.fluxa.backend.service.CookieService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;
+    private final CookieService cookieService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto){
@@ -42,18 +44,19 @@ public class AuthController {
             HttpServletResponse response
     ){
 
-        LoginResult result = authService.login(dto);
-        String jwt = result.token();
+        TokenPair result = authService.login(dto);
 
-        ResponseCookie cookie = ResponseCookie.from("access_token", jwt)
-                .httpOnly(true)
-                .secure(false) //mudar em producção
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(Duration.ofHours(2))
-                .build();
+        log.info("[AUTH_CONTROLLER] Iniciando geração de cookie de acesso");
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.createAcessTokenCookie(result.jwtToken()).toString()
+        );
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.createRefreshTokenCookie(result.refreshToken()).toString()
+        );
 
         return ResponseEntity.ok().build();
     }
@@ -71,21 +74,43 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> me (Authentication authentication) {
-        return ResponseEntity.ok(Map.of("email", authentication.getName()));
+        return ResponseEntity.ok(Map.of("UserId", authentication.getName()));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("access_token", "")
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(Duration.ofHours(0))
-                .build();
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.deleteAccessTokenCookie().toString()
+        );
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.deleteRefreshTokenCookie().toString()
+        );
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Void> refresh(
+            @CookieValue(name = "refresh_token", required = false)
+            String refreshToken,
+            HttpServletResponse response
+    ) {
+        TokenPair result = authService.refresh(refreshToken);
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.createAcessTokenCookie(result.jwtToken()).toString()
+        );
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookieService.createRefreshTokenCookie(result.refreshToken()).toString()
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,7 +1,7 @@
 package com.fluxa.backend.controller;
 
-import com.fluxa.backend.dto.request.CreateCategoryDTO;
-import com.fluxa.backend.dto.request.DeleteCategoryDTO;
+import com.fluxa.backend.dto.request.create.CreateCategoryDTO;
+import com.fluxa.backend.dto.request.update.UpdateCategoryDTO;
 import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.service.CategoriesService;
 import jakarta.validation.Valid;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RequestMapping("/categories")
@@ -31,15 +32,15 @@ public class CategoryController {
         ));
     }
 
-    @GetMapping("/getCategories")
+    @GetMapping
     public ResponseEntity<?> getCategories() {
 
         return ResponseEntity.ok(
-                categoriesService.ListCategories()
+                categoriesService.listCategories()
         );
     }
 
-    @GetMapping("/getCategoriesSelect")
+    @GetMapping("/select")
     public ResponseEntity<List<CategoriesSelectProjection>> getCategoriesSelect() {
 
         return ResponseEntity.ok(
@@ -48,13 +49,23 @@ public class CategoryController {
         );
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteCategories(@Valid @RequestBody DeleteCategoryDTO dto) {
-        categoriesService.deleteCategory(dto.categoryId());
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<?> deleteCategories(@PathVariable UUID categoryId) {
+        categoriesService.deleteCategory(categoryId);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
                 "message", "Categoria deletada com sucesso",
-                    "categoryId", dto.categoryId()
+                    "categoryId", categoryId
         ));
+    }
+
+    @PatchMapping("/{categoryId}")
+    public ResponseEntity<?> updateCategory(@PathVariable UUID categoryId,
+                                            @Valid @RequestBody UpdateCategoryDTO dto) {
+        categoriesService.updateCategory(categoryId, dto);
+
+        return ResponseEntity.ok(
+                Map.of("message", "Categoria atualizada com sucesso")
+        );
     }
 }

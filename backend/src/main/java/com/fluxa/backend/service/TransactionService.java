@@ -4,9 +4,12 @@ import com.fluxa.backend.domain.entity.Account;
 import com.fluxa.backend.domain.entity.Category;
 import com.fluxa.backend.domain.entity.Transaction;
 import com.fluxa.backend.domain.entity.User;
-import com.fluxa.backend.dto.request.CreateTransactionDTO;
+import com.fluxa.backend.dto.request.create.CreateTransactionDTO;
+import com.fluxa.backend.dto.request.update.UpdateTransactionDTO;
 import com.fluxa.backend.dto.response.DashboardRecentTransactionResponseDTO;
 import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
+import com.fluxa.backend.exception.CategoryNotFoundException;
+import com.fluxa.backend.exception.TransactionNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.TransactionRepository;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -55,7 +59,7 @@ public class TransactionService {
         transaction.setUser(user);
         transaction.setAccount(account);
         transaction.setCategory(category);
-        transaction.setKind(dto.kind());
+        transaction.setKind(category.getKind());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description());
         transaction.setOccurredAt(
@@ -78,8 +82,7 @@ public class TransactionService {
 
         UUID userId = UserContext.getUserId();
 
-        Page<DashboardRecentTransactionResponseDTO> transactionsList =
-                transactionRepository
+        return transactionRepository
                         .findLastTransactions(userId, PageRequest.of(0, 10))
                         .map(transaction -> new DashboardRecentTransactionResponseDTO(
                                 transaction.getId(),
@@ -88,8 +91,6 @@ public class TransactionService {
                                 transaction.getKind(),
                                 Formatters.formatRelativeDate(transaction.getOccurredAt())
                         ));
-
-        return transactionsList;
     }
 
     public Page<?> listTransactions(Pageable pageable) {
@@ -112,5 +113,34 @@ public class TransactionService {
                                     transaction.getCategory().getColor()
                             );
                         });
+    }
+
+    @Transactional
+    public void updateTransaction(UUID transactionID, UpdateTransactionDTO dto) {
+        UUID userId = UserContext.getUserId();
+
+        Transaction transaction = transactionRepository.findByIdAndUserId(transactionID, userId)
+                .orElseThrow(TransactionNotFoundException::new);
+
+        Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)
+                .orElseThrow(CategoryNotFoundException::new);
+
+        transaction.setCategory(category);
+        transaction.setKind(category.getKind());
+        transaction.setAmount(dto.amount());
+        transaction.setDescription(dto.description());
+        transaction.setOccurredAt(dto.occurredAt());
+        transaction.setPaymentMethod(dto.paymentMethod());
+        transaction.setObservation(dto.observation());
+        transaction.setRecurrent(dto.recurring());
+    }
+
+    public void deleteTransaction(UUID transactionId) {
+        UUID userId = UserContext.getUserId();
+
+        Transaction transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(TransactionNotFoundException::new);
+
+        transactionRepository.delete(transaction);
     }
 }
