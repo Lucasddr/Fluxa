@@ -25,7 +25,7 @@ public class CookieService {
     @Value("${cookie.same.site}")
     private String cookieSameSite;
 
-    @Value("${COOKIE_ACCESS_PATH")
+    @Value("${COOKIE_ACCESS_PATH}")
     private String cookieAccessPath;
 
     @Value("${COOKIE_REFRESH_PATH}")
