@@ -180,7 +180,7 @@ export default function CategoriasPage() {
       setLoading(true);
 
       const response = await api(
-        `/categories/getCategories?page=${page}&size=${itemsPerPage}`
+        `/categories?page=${page}&size=${itemsPerPage}`
       );
 
       if (!response.ok) {

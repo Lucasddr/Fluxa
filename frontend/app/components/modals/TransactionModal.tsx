@@ -97,7 +97,7 @@ export default function TransactionModal({
         setLoadingCategories(true);
 
         const response = await api(
-          "/categories/getCategoriesSelect"
+          "/categories/select"
         );
 
         if (!response.ok) {
@@ -233,6 +233,10 @@ export default function TransactionModal({
       }
     `;
 
+    const filteredCategories = categories.filter(
+      (category) => category.kind === form.kind
+    );
+
   return (
 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -295,11 +299,23 @@ export default function TransactionModal({
                     type="button"
                     key={t}
                     onClick={() =>
-                      setForm((f) => ({
+                    setForm((f) => {
+                      const currentCategory = categories.find(
+                        (category) => category.id === f.categoryId
+                      );
+
+                      const categoryBelongsToKind =
+                        currentCategory?.kind === t;
+
+                      return {
                         ...f,
                         kind: t,
-                      }))
-                    }
+                        categoryId: categoryBelongsToKind
+                          ? f.categoryId
+                          : "",
+                      };
+                    })
+                  }
                     className={`
                       flex-1 py-2 px-3 rounded-lg
                       text-sm font-medium border
@@ -379,12 +395,26 @@ export default function TransactionModal({
 
               <select
                 value={form.categoryId}
-                onChange={(e) =>
-                  field(
-                    "categoryId",
-                    e.target.value
-                  )
-                }
+                onChange={(e) => {
+                  const categoryId = e.target.value;
+
+                  const selectedCategory = categories.find(
+                    (category) => category.id === categoryId
+                  );
+
+                  setForm((f) => ({
+                    ...f,
+                    categoryId,
+                    ...(selectedCategory && {
+                      kind: selectedCategory.kind as "EXPENSE" | "INCOME",
+                    }),
+                  }));
+
+                  setErrors((e) => ({
+                    ...e,
+                    categoryId: undefined,
+                  }));
+                }}
                 className={inputClass(
                   errors.categoryId
                 )}
@@ -396,7 +426,7 @@ export default function TransactionModal({
                     : "Selecione uma categoria"}
                 </option>
 
-                {categories.map((c) => (
+                {filteredCategories.map((c) => (
 
                   <option
                     key={c.id}
