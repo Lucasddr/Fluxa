@@ -1,0 +1,31 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: fluxa-postgres
+    environment:
+      POSTGRES_DB: fluxa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ld0423
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: fluxa-backend
+    depends_on:
+      - postgres
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/fluxa
+      DB_USERNAME: postgres
+      DB_PASSWORD: ld0423
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: 900000
+      REFRESH_TOKEN_EXPIRATION: 604800000
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
