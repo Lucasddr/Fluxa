@@ -1,5 +1,6 @@
-package com.fluxa.backend.security;
+package com.fluxa.backend.security.filter;
 
+import com.fluxa.backend.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -24,6 +25,15 @@ import java.util.UUID;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+
+        return uri.equals("/auth/login")
+                || uri.equals("/auth/register")
+                || uri.equals("/auth/refresh");
+    }
 
     @Override
     protected void doFilterInternal(

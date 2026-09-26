@@ -19,13 +19,25 @@ public class CookieService {
     @Value("${refresh.token.expiration}")
     private long refreshExpiration;
 
-    public ResponseCookie createAcessTokenCookie (String token) {
+    @Value("${cookie.secure}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.same.site}")
+    private String cookieSameSite;
+
+    @Value("${COOKIE_ACCESS_PATH")
+    private String cookieAccessPath;
+
+    @Value("${COOKIE_REFRESH_PATH}")
+    private String cookieRefreshPath;
+
+    public ResponseCookie createAccessTokenCookie (String token) {
 
         ResponseCookie cookie = ResponseCookie.from("access_token",token)
                 .httpOnly(true)
-                .secure(false) //mudar em produção
-                .sameSite("Lax")
-                .path("/")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path(cookieAccessPath)
                 .maxAge(Duration.ofMillis(jwtExpiration))
                 .build();
 
@@ -38,19 +50,19 @@ public class CookieService {
 
         return ResponseCookie.from("refresh_token", token)
                 .httpOnly(true)
-                .secure(false) //mudar em produção
-                .sameSite("Lax")
-                .path("/auth/refresh")
-                .maxAge(Duration.ofDays(refreshExpiration))
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path(cookieRefreshPath)
+                .maxAge(Duration.ofMillis(refreshExpiration))
                 .build();
     }
 
     public ResponseCookie deleteAccessTokenCookie() {
         return ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
-                .path("/")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path(cookieAccessPath)
                 .maxAge(Duration.ZERO)
                 .build();
     }
@@ -58,9 +70,9 @@ public class CookieService {
     public ResponseCookie deleteRefreshTokenCookie() {
         return ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
-                .path("/auth/refresh")
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path(cookieRefreshPath)
                 .maxAge(Duration.ZERO)
                 .build();
     }

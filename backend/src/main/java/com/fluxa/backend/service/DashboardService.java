@@ -29,8 +29,6 @@ public class DashboardService {
 
         UUID userId = UserContext.getUserId();
 
-        log.info("[DTO DEBUG] start: {} | end: {}", dto.start(), dto.end());
-
         String user = userRepository.findNameById(userId);
         String accountName = accountRepository.findAccountNameByUserId(userId);
         BigDecimal entry = transactionRepository.getTotalIncome(userId, dto.start(), dto.end());

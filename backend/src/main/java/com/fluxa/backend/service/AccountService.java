@@ -32,8 +32,7 @@ public class AccountService {
 
         accountRepository.save(account);
 
-        log.info(
-                "[ACCOUNT] default account created | user: {} | accountName: {} | currency: {}",
+        log.info("[ACCOUNT] default account created | user: {} | accountName: {} | currency: {}",
                 user.getId(),
                 account.getName(),
                 account.getCurrency()

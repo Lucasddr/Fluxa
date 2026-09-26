@@ -20,10 +20,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
 
     @Query(
         value = """
-        SELECT COALESCE(SUM(t.amount), 0) 
-        FROM Transaction t 
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
         WHERE t.user.id = :userId
-        AND t.kind = 'INCOME' 
+        AND t.kind = 'INCOME'
         AND t.occurredAt BETWEEN :start AND :end
         """)
     BigDecimal getTotalIncome(
@@ -34,10 +34,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
 
         @Query(
             value = """
-            SELECT COALESCE(SUM(t.amount), 0) 
-            FROM Transaction t 
+            SELECT COALESCE(SUM(t.amount), 0)
+            FROM Transaction t
             WHERE t.user.id = :userId
-            AND t.kind = 'EXPENSE' 
+            AND t.kind = 'EXPENSE'
             AND t.occurredAt BETWEEN :start AND :end
             """)
         BigDecimal getTotalExpense(
@@ -68,7 +68,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
         SUM(t.amount) AS total_spent
         FROM transactions t
         JOIN categories c 
-            ON c.id = t.category_id
+        ON c.id = t.category_id
         WHERE t.user_id = :userId
         AND t.kind = 'EXPENSE'
         GROUP BY c.name

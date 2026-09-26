@@ -11,6 +11,7 @@ import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.context.UserContext;
+import com.fluxa.backend.util.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,8 +34,6 @@ public class CategoriesService {
     public void createCategory(CreateCategoryDTO dto){
 
         UUID userId = UserContext.getUserId();
-
-        log.info("USER ID CONTEXT: {}", userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -77,8 +76,11 @@ public class CategoriesService {
             UUID userId,
             Pageable pageable
     ){
+
+        Pageable safePageable = PageableUtils.limitPageSize(pageable);
+
         return categoryRepository
-                .findCategoryByUserId(userId, pageable)
+                .findCategoryByUserId(userId, safePageable)
                 .map(this::toDTO);
     }
 

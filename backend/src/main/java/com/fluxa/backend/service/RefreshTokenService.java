@@ -1,4 +1,4 @@
-package com.fluxa.backend.security;
+package com.fluxa.backend.service;
 
 import com.fluxa.backend.domain.entity.RefreshToken;
 import com.fluxa.backend.domain.entity.User;

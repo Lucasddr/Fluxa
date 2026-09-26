@@ -1,8 +1,10 @@
 package com.fluxa.backend.controller;
 
+import com.fluxa.backend.domain.entity.RefreshToken;
 import com.fluxa.backend.dto.internal.TokenPair;
 import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
+import com.fluxa.backend.service.RefreshTokenService;
 import com.fluxa.backend.service.AuthService;
 import com.fluxa.backend.service.CookieService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,6 +27,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieService cookieService;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto){
@@ -46,11 +49,11 @@ public class AuthController {
 
         TokenPair result = authService.login(dto);
 
-        log.info("[AUTH_CONTROLLER] Iniciando geração de cookie de acesso");
+        log.debug("[AUTH_CONTROLLER] Iniciando geração de cookie de acesso");
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
-                cookieService.createAcessTokenCookie(result.jwtToken()).toString()
+                cookieService.createAccessTokenCookie(result.jwtToken()).toString()
         );
 
         response.addHeader(
@@ -78,7 +81,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout(
+            @CookieValue(name = "refresh_token")
+            String refreshToken,
+            HttpServletResponse response) {
+
+        RefreshToken token = refreshTokenService.validate(refreshToken);
+
+        refreshTokenService.revoke(token);
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
@@ -103,7 +113,7 @@ public class AuthController {
 
         response.addHeader(
                 HttpHeaders.SET_COOKIE,
-                cookieService.createAcessTokenCookie(result.jwtToken()).toString()
+                cookieService.createAccessTokenCookie(result.jwtToken()).toString()
         );
 
         response.addHeader(

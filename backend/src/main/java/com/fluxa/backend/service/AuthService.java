@@ -10,7 +10,6 @@ import com.fluxa.backend.exception.EmailAlreadyExistsException;
 import com.fluxa.backend.exception.InvalidCredentialsException;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.JwtService;
-import com.fluxa.backend.security.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -102,6 +101,10 @@ public class AuthService {
 
     @Transactional
     public TokenPair refresh(String token){
+
+        if (token == null) {
+            throw new RuntimeException("Refresh token não recebido");
+        }
 
         RefreshToken refreshToken = refreshTokenService.validate(token);
 

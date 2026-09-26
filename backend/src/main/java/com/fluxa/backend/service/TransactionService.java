@@ -16,6 +16,7 @@ import com.fluxa.backend.repository.TransactionRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.context.UserContext;
 import com.fluxa.backend.util.Formatters;
+import com.fluxa.backend.util.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -97,7 +98,9 @@ public class TransactionService {
 
         UUID userId = UserContext.getUserId();
 
-        return transactionRepository.findLastTransactions(userId, pageable)
+        Pageable safePageable = PageableUtils.limitPageSize(pageable);
+
+        return transactionRepository.findLastTransactions(userId, safePageable)
                         .map(transaction -> {
                             String dataLabel = Formatters.formatRelativeDate(transaction.getOccurredAt());
                             return new ListTransactionResponseDTO(
