@@ -25,10 +25,10 @@ public class CookieService {
     @Value("${cookie.same.site}")
     private String cookieSameSite;
 
-    @Value("${COOKIE_ACCESS_PATH}")
+    @Value("${cookie.access.path}")
     private String cookieAccessPath;
 
-    @Value("${COOKIE_REFRESH_PATH}")
+    @Value("${cookie.refresh.path}")
     private String cookieRefreshPath;
 
     public ResponseCookie createAccessTokenCookie (String token) {
