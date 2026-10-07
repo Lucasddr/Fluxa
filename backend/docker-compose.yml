@@ -17,13 +17,8 @@ services:
     container_name: fluxa-backend
     depends_on:
       - postgres
-    environment:
-      DB_URL: jdbc:postgresql://postgres:5432/fluxa
-      DB_USERNAME: postgres
-      DB_PASSWORD: ld0423
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION: 900000
-      REFRESH_TOKEN_EXPIRATION: 604800000
+    env_file:
+      - .env.docker
     ports:
       - "8080:8080"
 
