@@ -4,15 +4,11 @@ WORKDIR /app
 
 COPY pom.xml .
 
-RUN grep -n "flyway" pom.xml
-RUN mvn dependency:tree -Dincludes=org.flywaydb:*
-
 RUN mvn dependency:go-offline
 
 COPY src ./src
 
 RUN mvn clean package -DskipTests
-RUN jar tf target/*.jar | grep flyway
 
 
 FROM eclipse-temurin:17-jre
