@@ -53,11 +53,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
 
         @Query(
             value = """
-            SELECT t
-            FROM Transaction t
-            WHERE t.user.id = :userId
-            ORDER BY t.occurredAt DESC
-        """)
+                SELECT t
+                FROM Transaction t
+                JOIN FETCH t.category
+                WHERE t.user.id = :userId
+                ORDER BY t.occurredAt DESC
+            """,
+            countQuery = """
+                SELECT COUNT(t)
+                FROM Transaction t
+                WHERE t.user.id = :userId
+            """)
         Page<Transaction> findLastTransactions(
                 @Param("userId") UUID userId,
                 Pageable pageable
