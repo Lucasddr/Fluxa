@@ -4,7 +4,6 @@ import com.fluxa.backend.domain.enums.CategoryKind;
 import com.fluxa.backend.domain.enums.PaymentMethods;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.UUID;
 
 public record ListTransactionResponseDTO(

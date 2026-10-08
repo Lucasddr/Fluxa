@@ -1,6 +1,5 @@
 package com.fluxa.backend.service;
 
-import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.dto.response.BiggestExpenseDTO;
 import com.fluxa.backend.dto.response.EconomyCardDTO;
 import com.fluxa.backend.repository.TransactionRepository;

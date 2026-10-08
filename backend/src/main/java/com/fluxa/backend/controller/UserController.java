@@ -1,6 +1,5 @@
 package com.fluxa.backend.controller;
 
-import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

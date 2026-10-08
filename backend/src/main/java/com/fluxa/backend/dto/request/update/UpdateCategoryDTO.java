@@ -1,6 +1,5 @@
 package com.fluxa.backend.dto.request.update;
 
-import com.fluxa.backend.domain.enums.CategoryKind;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

@@ -5,7 +5,6 @@ import com.fluxa.backend.dto.request.DashboardDTO;
 import com.fluxa.backend.dto.response.BuildDashboardResponseDTO;
 import com.fluxa.backend.service.DashboardService;
 import com.fluxa.backend.service.InsightAggregatorService;
-import com.fluxa.backend.service.InsightsService;
 import com.fluxa.backend.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
