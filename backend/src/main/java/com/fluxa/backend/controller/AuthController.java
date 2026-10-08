@@ -123,4 +123,10 @@ public class AuthController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/test-500")
+    public ResponseEntity<Void> test500() {
+
+        throw new RuntimeException("Teste de Error 500");
+    }
 }

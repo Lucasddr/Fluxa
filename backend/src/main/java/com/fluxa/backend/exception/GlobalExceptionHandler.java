@@ -1,7 +1,7 @@
 package com.fluxa.backend.exception;
 
 import com.fluxa.backend.dto.response.ErrorResponseDTO;
-import org.hibernate.TransactionManagementException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -52,29 +53,31 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleRunTimeException(RuntimeException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleRuntimeException(RuntimeException ex) {
+
+        log.error("Unexpected server error", ex);
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponseDTO(
-                        HttpStatus.BAD_REQUEST.value(),
-                        ex.getMessage().lines().toList()
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        List.of("Internal server error")
                 ));
     }
 
-    @ExceptionHandler(TransactionManagementException.class)
-    public ResponseEntity<?> handleTransactionNotFoundException(TransactionNotFoundException ex) {
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTransactionNotFoundException(TransactionNotFoundException ex) {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponseDTO(
-                        HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.NOT_FOUND.value(),
                         ex.getMessage().lines().toList()
                 ));
     }
 
     @ExceptionHandler(CategoryNotFoundException.class)
-    public ResponseEntity<?> handleCategoryNotFoundException(CategoryNotFoundException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleCategoryNotFoundException(CategoryNotFoundException ex) {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -85,12 +88,12 @@ public class GlobalExceptionHandler {
     }
     
     @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<?> handleAccountNotFoundException(AccountNotFoundException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleAccountNotFoundException(AccountNotFoundException ex) {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponseDTO(
-                        HttpStatus.NO_CONTENT.value(),
+                        HttpStatus.NOT_FOUND.value(),
                         ex.getMessage().lines().toList()
                 ));
     }
