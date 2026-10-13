@@ -90,8 +90,8 @@ public class CategoriesService {
                category.getId(),
                category.getName(),
                category.getKind().toString(),
-               category.getColor(),
                category.getIcon(),
+               category.getColor(),
                category.getDescription(),
                category.isActive()
         );
