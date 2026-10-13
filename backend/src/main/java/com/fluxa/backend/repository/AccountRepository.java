@@ -21,12 +21,4 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     @Query("SELECT a.name FROM Account a WHERE a.user.id = :id")
     String findAccountNameByUserId(@Param("id") UUID userId);
-
-    @Query("SELECT a.currentBalance FROM Account a WHERE a.user.id = :id")
-    BigDecimal findAccountCurrentBalanceByUserId(@Param("id") UUID userId);
-
-    @Modifying
-    @Query("UPDATE Account a SET a.currentBalance = :amount WHERE a.user.id = :id")
-    void updateAccountBalance(@Param("amount") BigDecimal amount,
-                              @Param("id") UUID userId);
 }

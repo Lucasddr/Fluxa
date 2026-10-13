@@ -76,8 +76,12 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me (Authentication authentication) {
-        return ResponseEntity.ok(Map.of("UserId", authentication.getName()));
+    public ResponseEntity<?> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(Map.of("userId", authentication.getName()));
     }
 
     @PostMapping("/logout")

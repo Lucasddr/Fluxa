@@ -31,12 +31,6 @@ public class Account {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name = "start_balance", nullable = false, precision = 12, scale = 2)
-    private BigDecimal startBalance;
-
-    @Column(name = "current_balance", nullable = false, precision = 12, scale = 2)
-    private BigDecimal currentBalance;
-
     @Column(nullable = false, length = 3)
     private String currency;
 

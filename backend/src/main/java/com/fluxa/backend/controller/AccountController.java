@@ -16,25 +16,4 @@ import java.util.Map;
 @RequestMapping("/account")
 public class AccountController {
 
-    private final AccountService accountService;
-
-    @GetMapping("/currentBalance")
-    public ResponseEntity<?> getCurrentBalance() {
-
-        BigDecimal currentBalance = accountService.getAccountCurrentBalance();
-
-        return ResponseEntity.ok(Map.of("currentBalance", currentBalance));
-    }
-
-    @PatchMapping("/amount")
-    public ResponseEntity<?> updateCurrentBalance(@RequestBody PatchAccountCurrentBalanceDTO dto) {
-
-        log.info("[ACCOUNT] Valor para update no currentBalance : {}", dto.amount());
-
-        accountService.updateAccountCurrentBalance(dto.amount());
-
-        return ResponseEntity.ok(Map.of("message", "Valor da conta atualizado com sucesso!"));
-    }
-
-
 }
