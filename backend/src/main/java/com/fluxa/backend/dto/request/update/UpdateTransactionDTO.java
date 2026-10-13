@@ -14,9 +14,6 @@ public record UpdateTransactionDTO(
         @NotNull(message = "categoryId é obrigatório")
         UUID categoryId,
 
-        @NotNull(message = "CategoryKind é obrigatório")
-        CategoryKind kind,
-
         @NotNull(message = "Valor é obrigatório")
         @Positive(message = "Valor deve ser maior que zero")
         BigDecimal amount,
