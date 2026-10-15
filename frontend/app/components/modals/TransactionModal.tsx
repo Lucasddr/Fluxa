@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+
+import AppDialog from "@/app/components/ui/Dialog";
 
 import { api } from "@/services/api";
 import { formatCurrency } from "@/app/utils/Formatters";
@@ -239,43 +240,53 @@ export default function TransactionModal({
 
   return (
 
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-
-          <div>
-
-            <h2 className="text-lg font-semibold text-gray-900">
-              Nova Transação
-            </h2>
-
-            <p className="text-sm text-gray-400 mt-0.5">
-              Preencha os dados abaixo
-              para criar uma nova
-              transação.
-            </p>
-          </div>
-
+    <AppDialog
+      open
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+      title="Nova Transação"
+      description="Preencha os dados abaixo para criar uma nova transação."
+      footer={
+        <>
           <button
             type="button"
             onClick={onClose}
             className="
-              p-1.5 rounded-lg
-              hover:bg-gray-100
+              px-5 py-2 rounded-lg
+              border border-gray-200
+              text-sm font-medium text-gray-600
+              hover:bg-gray-100 hover:border-gray-300
               transition-all duration-200
-              text-gray-400 hover:text-gray-600
               focus:outline-none focus:ring-2 focus:ring-gray-200
             "
           >
-            <X className="w-5 h-5" />
+            Cancelar
           </button>
-        </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="
+              px-5 py-2 rounded-lg
+              text-sm font-semibold text-white
+              transition-all duration-200
+              hover:brightness-110
+              active:scale-[0.98]
+              focus:outline-none focus:ring-2 focus:ring-offset-1
+            "
+            style={{
+              backgroundColor:
+                "var(--color-interactive)",
+            }}
+          >
+            Salvar Transação
+          </button>
+        </>
+      }
+    >
 
           {/* Tipo + Valor */}
           <div className="grid grid-cols-2 gap-4">
@@ -629,46 +640,7 @@ export default function TransactionModal({
               </span>
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="
-              px-5 py-2 rounded-lg
-              border border-gray-200
-              text-sm font-medium text-gray-600
-              hover:bg-gray-100 hover:border-gray-300
-              transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-gray-200
-            "
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSave}
-            className="
-              px-5 py-2 rounded-lg
-              text-sm font-semibold text-white
-              transition-all duration-200
-              hover:brightness-110
-              active:scale-[0.98]
-              focus:outline-none focus:ring-2 focus:ring-offset-1
-            "
-            style={{
-              backgroundColor:
-                "var(--color-interactive)",
-            }}
-          >
-            Salvar Transação
-          </button>
-        </div>
-      </div>
-    </div>
+    </AppDialog>
   );
 }
