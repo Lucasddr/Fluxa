@@ -11,11 +11,18 @@ import {
   MoreVertical,
   ArrowUpRight,
   ArrowDownLeft,
+  Eye,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import TransactionModal, {
   type TransactionFormData,
 } from "@/app/components/modals/TransactionModal";
+
+import MenuListModal from "@/app/components/modals/MenuListmodal";
+
+import AppDialog from "@/app/components/ui/Dialog";
 
 import { api } from "@/services/api";
 import { formatCurrency, formatPaymentMethod } from "@/app/utils/Formatters";
@@ -41,6 +48,19 @@ type PageResponse<T> = {
   totalPages: number;
   size: number;
   number: number;
+};
+
+type TransactionDetails = {
+  id: string;
+  description: string;
+  observation: string | null;
+  amount: number;
+  kind: "EXPENSE" | "INCOME";
+  categoryId: string | null;
+  categoryName: string | null;
+  paymentMethod: string;
+  occurredAt: string;
+  recurring: boolean;
 };
 
 
@@ -185,6 +205,26 @@ export default function TransactionsPage() {
 
   const [modalOpen, setModalOpen] =
     useState(false);
+
+  const [detailsOpen, setDetailsOpen] =
+    useState(false);
+
+  const [detailsTx, setDetailsTx] =
+    useState<TransactionDetails | null>(null);
+
+  const [detailsError, setDetailsError] =
+    useState<string | null>(null);
+
+  const [editingTx, setEditingTx] =
+    useState<TransactionDetails | null>(null);
+
+  const [deletingTx, setDeletingTx] =
+    useState<{ id: string; title: string; amount: number } | null>(null);
+
+  const [deleting, setDeleting] = useState(false);
+
+  const [deleteError, setDeleteError] =
+    useState<string | null>(null);
 
   // ─── fetch ────────────────────────────────────────────────────────────────
 
@@ -334,32 +374,171 @@ export default function TransactionsPage() {
     data: TransactionFormData
   ) {
 
+    const res = await api(
+      "/transactions/create",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Falha ao criar transação (${res.status})`
+      );
+    }
+
+    await fetchTransactions();
+
+    setModalOpen(false);
+  }
+
+  async function fetchTransactionDetails(
+    id: string
+  ): Promise<TransactionDetails | null> {
+
     try {
 
-      await api(
-        "/transactions/create",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify(data),
-        }
+      const res = await api(
+        `/transactions/${id}`
       );
 
-      await fetchTransactions();
+      if (!res.ok) {
+        console.error(
+          "Erro ao buscar transação:",
+          res.status
+        );
 
-      setModalOpen(false);
+        return null;
+      }
+
+      return (await res.json()) as TransactionDetails;
 
     } catch (error) {
 
       console.error(
-        "Erro ao salvar transação:",
+        "Erro ao buscar transação:",
         error
       );
+
+      return null;
+    }
+  }
+
+  async function handleOpenDetails(id: string) {
+
+    setDetailsTx(null);
+    setDetailsError(null);
+    setDetailsOpen(true);
+
+    const data = await fetchTransactionDetails(id);
+
+    if (!data) {
+      setDetailsError(
+        "Não foi possível carregar os detalhes. Tente novamente."
+      );
+
+      return;
+    }
+
+    setDetailsTx(data);
+  }
+
+  async function handleOpenEdit(id: string) {
+
+    const data = await fetchTransactionDetails(id);
+
+    if (data) {
+      setEditingTx(data);
+    }
+  }
+
+  async function handleUpdateTransaction(
+    id: string,
+    form: TransactionFormData
+  ) {
+
+    const res = await api(
+      `/transactions/${id}`,
+      {
+        method: "PATCH",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          categoryId: form.categoryId,
+          amount: form.amount,
+          description: form.description,
+          occurredAt: form.occurredAt,
+          observation: form.observation,
+          paymentMethod: form.paymentMethod,
+          recurring: form.recurring,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Falha ao atualizar transação (${res.status})`
+      );
+    }
+
+    await fetchTransactions();
+
+    setEditingTx(null);
+    setDetailsTx(null);
+  }
+
+  async function handleDeleteTransaction() {
+
+    if (!deletingTx || deleting) {
+      return;
+    }
+
+    setDeleteError(null);
+    setDeleting(true);
+
+    try {
+
+      const res = await api(
+        `/transactions/${deletingTx.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          `Falha ao excluir transação (${res.status})`
+        );
+      }
+
+      await fetchTransactions();
+
+      setDeletingTx(null);
+      setDetailsTx(null);
+
+    } catch (error) {
+
+      console.error(
+        "Erro ao excluir transação:",
+        error
+      );
+
+      setDeleteError(
+        "Não foi possível excluir. Tente novamente."
+      );
+
+    } finally {
+
+      setDeleting(false);
     }
   }
 
@@ -663,10 +842,46 @@ export default function TransactionsPage() {
 
               {/* Ações */}
 
-              <button className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600">
-
-                <MoreVertical className="w-4 h-4" />
-              </button>
+              <MenuListModal
+                trigger={
+                  <button
+                    type="button"
+                    aria-label="Opções da transação"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                }
+                actions={[
+                  {
+                    label: "Ver detalhes",
+                    icon: Eye,
+                    onClick: () => {
+                      handleOpenDetails(t.id);
+                    },
+                  },
+                  {
+                    label: "Editar",
+                    icon: Pencil,
+                    onClick: () => {
+                      handleOpenEdit(t.id);
+                    },
+                  },
+                  {
+                    label: "Excluir",
+                    icon: Trash2,
+                    danger: true,
+                    onClick: () => {
+                      setDeleteError(null);
+                      setDeletingTx({
+                        id: t.id,
+                        title: t.title,
+                        amount: t.amount,
+                      });
+                    },
+                  },
+                ]}
+              />
             </div>
           ))
         )}
@@ -787,10 +1002,13 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal criar */}
 
       {modalOpen && (
         <TransactionModal
+          title="Nova Transação"
+          description="Preencha os dados abaixo para criar uma nova transação."
+          submitLabel="Salvar Transação"
           onClose={() =>
             setModalOpen(false)
           }
@@ -799,6 +1017,247 @@ export default function TransactionsPage() {
           }
         />
       )}
+
+      {/* Modal editar */}
+
+      {editingTx && (
+        <TransactionModal
+          mode="edit"
+          title="Editar Transação"
+          description="Altere os dados abaixo para atualizar a transação."
+          submitLabel="Salvar alterações"
+          initialData={{
+            categoryId: editingTx.categoryId ?? "",
+            kind: editingTx.kind,
+            amount: editingTx.amount,
+            description: editingTx.description,
+            occurredAt: editingTx.occurredAt,
+            paymentMethod: editingTx.paymentMethod,
+            observation: editingTx.observation ?? "",
+            recurring: editingTx.recurring,
+          }}
+          onClose={() =>
+            setEditingTx(null)
+          }
+          onSave={(form) =>
+            handleUpdateTransaction(editingTx.id, form)
+          }
+        />
+      )}
+
+      {/* Modal detalhes */}
+
+      {detailsOpen && (
+        <AppDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) {
+              setDetailsOpen(false);
+              setDetailsTx(null);
+            }
+          }}
+          title="Detalhes da transação"
+          description={
+            detailsTx
+              ? detailsTx.description
+              : "Carregando dados da transação."
+          }
+          footer={
+            detailsTx ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDetailsOpen(false);
+                    setDetailsTx(null);
+                  }}
+                  className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+                >
+                  Voltar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setDeletingTx({
+                      id: detailsTx.id,
+                      title: detailsTx.description,
+                      amount: detailsTx.amount,
+                    });
+                  }}
+                  className="px-5 py-2 rounded-lg border border-red-300 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                >
+                  Excluir
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTx(detailsTx);
+                    setDetailsOpen(false);
+                    setDetailsTx(null);
+                  }}
+                  className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
+                  style={{
+                    backgroundColor:
+                      "var(--color-interactive)",
+                  }}
+                >
+                  Editar
+                </button>
+              </>
+            ) : undefined
+          }
+        >
+          {detailsError ? (
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+            >
+              {detailsError}
+            </p>
+          ) : !detailsTx ? (
+            <p className="text-sm text-gray-500">
+              Carregando...
+            </p>
+          ) : (
+            <>
+              <DetailRow
+                label="Tipo"
+                value={
+                  detailsTx.kind === "INCOME"
+                    ? "Entrada"
+                    : "Saída"
+                }
+              />
+
+              <DetailRow
+                label="Valor"
+                value={formatCurrency(detailsTx.amount)}
+              />
+
+              <DetailRow
+                label="Categoria"
+                value={
+                  detailsTx.categoryName ??
+                  "Sem categoria"
+                }
+              />
+
+              <DetailRow
+                label="Data"
+                value={detailsTx.occurredAt
+                  .split("-")
+                  .reverse()
+                  .join("/")}
+              />
+
+              <DetailRow
+                label="Pagamento"
+                value={formatPaymentMethod(
+                  detailsTx.paymentMethod
+                )}
+              />
+
+              <DetailRow
+                label="Recorrente"
+                value={
+                  detailsTx.recurring ? "Sim" : "Não"
+                }
+              />
+
+              {detailsTx.observation && (
+                <DetailRow
+                  label="Observação"
+                  value={detailsTx.observation}
+                />
+              )}
+            </>
+          )}
+        </AppDialog>
+      )}
+
+      {/* Modal excluir */}
+
+      {deletingTx && (
+        <AppDialog
+          open
+          onOpenChange={(next) => {
+            if (!next && !deleting) {
+              setDeletingTx(null);
+            }
+          }}
+          title="Excluir transação?"
+          description="Esta ação não pode ser desfeita."
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!deleting) {
+                    setDeletingTx(null);
+                  }
+                }}
+                disabled={deleting}
+                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteTransaction}
+                disabled={deleting}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Excluindo..." : "Excluir"}
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-700">
+            Tem certeza que deseja excluir{" "}
+            <strong>
+              &quot;{deletingTx.title}&quot;
+            </strong>{" "}
+            no valor de{" "}
+            <strong>
+              {formatCurrency(deletingTx.amount)}
+            </strong>
+            ?
+          </p>
+
+          {deleteError && (
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+            >
+              {deleteError}
+            </p>
+          )}
+        </AppDialog>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
+      <span className="text-sm text-gray-400">
+        {label}
+      </span>
+
+      <span className="text-sm font-medium text-gray-800 text-right">
+        {value}
+      </span>
     </div>
   );
 }
