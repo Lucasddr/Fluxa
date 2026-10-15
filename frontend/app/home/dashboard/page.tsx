@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import ValueCard from "@/app/components/ValueCard";
 import InsightCards from "@/app/components/InsightCards";
@@ -79,10 +79,23 @@ type InsightCardDTO =
   | MostExpenseCategoryDTO
   | InstallmentsAmountDTO;
 
-// ─── período mockado ───────────────────────────────────────────
+// ─── período ───────────────────────────────────────────────────
 
-const start = "2026-04-01";
-const end = "2026-12-30";
+type PeriodKey = "7d" | "15d" | "30d" | "3m" | "6m";
+
+const PERIODS: { key: PeriodKey; label: string; days: number }[] = [
+  { key: "7d", label: "7D", days: 7 },
+  { key: "15d", label: "15D", days: 15 },
+  { key: "30d", label: "30D", days: 30 },
+  { key: "3m", label: "3M", days: 90 },
+  { key: "6m", label: "6M", days: 180 },
+];
+
+function toISODate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 // ─── página ────────────────────────────────────────────────────
 
@@ -101,6 +114,26 @@ export default function DashboardPage() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [loadError, setLoadError] =
+    useState<string | null>(null);
+
+  const [period, setPeriod] =
+    useState<PeriodKey>("30d");
+
+  const { start, end } = useMemo(() => {
+    const days =
+      PERIODS.find((p) => p.key === period)?.days ?? 30;
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - (days - 1));
+
+    return {
+      start: toISODate(startDate),
+      end: toISODate(endDate),
+    };
+  }, [period]);
 
   async function handleLogout() {
     try{
@@ -125,6 +158,7 @@ export default function DashboardPage() {
       try {
 
         setLoading(true);
+        setLoadError(null);
 
         const [
           dashboardResponse,
@@ -132,8 +166,8 @@ export default function DashboardPage() {
           insightsResponse,
         ] = await Promise.all([
           api(`/dashboard/buildDashboard?start=${start}&end=${end}`),
-          api("/dashboard/recentTransactions"),
-          api("/dashboard/insightCards"),
+          api(`/dashboard/recentTransactions?start=${start}&end=${end}`),
+          api(`/dashboard/insightCards?start=${start}&end=${end}`),
         ]);
 
       if (
@@ -170,12 +204,16 @@ export default function DashboardPage() {
           error
         );
 
+        setLoadError(
+          "Não foi possível carregar o dashboard. Tente novamente."
+        );
+
       } finally {
 
         setLoading(false);
       }
 
-    }, []);
+    }, [start, end]);
 
   // ─── load inicial ───────────────────────────────────────────
 
@@ -183,19 +221,43 @@ export default function DashboardPage() {
     fetchDashboard();
   }, [fetchDashboard]);
 
-  // ─── loading ────────────────────────────────────────────────
+  // ─── loading / erro ─────────────────────────────────────────
 
-  if (
-    loading ||
-    !cardsData ||
-    !transactionList ||
-    insightCards.length === 0
-  ) {
+  if (loading && (!cardsData || !transactionList)) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px] text-gray-400">
         Carregando dashboard...
       </div>
     );
+  }
+
+  if (loadError && (!cardsData || !transactionList)) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 h-full min-h-[400px]">
+        <p
+          role="alert"
+          className="text-sm text-red-600"
+        >
+          {loadError}
+        </p>
+
+        <button
+          type="button"
+          onClick={fetchDashboard}
+          className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
+          style={{
+            backgroundColor:
+              "var(--color-interactive)",
+          }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
+  if (!cardsData || !transactionList) {
+    return null;
   }
 
   // ─── render ─────────────────────────────────────────────────
@@ -242,6 +304,61 @@ export default function DashboardPage() {
               },
             ]}
           />
+        </div>
+      </div>
+
+      {/* Período + retry */}
+
+      <div className="flex items-center justify-end gap-3">
+        {loading && cardsData && (
+          <span className="text-xs text-gray-400">
+            Atualizando...
+          </span>
+        )}
+
+        {loadError && cardsData && (
+          <button
+            type="button"
+            onClick={fetchDashboard}
+            className="text-xs font-medium text-red-600 hover:underline"
+          >
+            Falha ao atualizar. Tentar novamente
+          </button>
+        )}
+
+        <div
+          role="group"
+          aria-label="Período do dashboard"
+          className="inline-flex rounded-xl border-2 border-(--color-border) p-1 gap-1 bg-white shadow-sm"
+        >
+          {PERIODS.map((p) => {
+            const active = period === p.key;
+
+            return (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => setPeriod(p.key)}
+                aria-pressed={active}
+                disabled={loading}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:cursor-wait ${
+                  active
+                    ? "text-white"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+                style={
+                  active
+                    ? {
+                        backgroundColor:
+                          "var(--color-interactive)",
+                      }
+                    : undefined
+                }
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -335,10 +452,15 @@ export default function DashboardPage() {
             </div>
           <div className="border-t-2 border-(--color-border) max-h-[440px] overflow-y-auto">
 
-
-            <TransactionList
-              data={transactionList.content}
-            />
+            {transactionList.content.length === 0 ? (
+              <p className="px-6 py-12 text-center text-gray-400 text-sm">
+                Nenhuma transação neste período.
+              </p>
+            ) : (
+              <TransactionList
+                data={transactionList.content}
+              />
+            )}
           </div>
         </div>
       </div>
