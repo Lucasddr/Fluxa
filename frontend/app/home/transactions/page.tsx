@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -23,8 +23,16 @@ import TransactionModal, {
 import MenuListModal from "@/app/components/modals/MenuListmodal";
 
 import AppDialog from "@/app/components/ui/Dialog";
+import DetailRow from "@/app/components/ui/DetailRow";
+import FormAlert from "@/app/components/ui/FormAlert";
 
-import { api } from "@/services/api";
+import {
+  createTransaction,
+  deleteTransaction,
+  getTransaction,
+  listTransactions,
+  updateTransaction,
+} from "@/services/transactions";
 import { formatCurrency, formatPaymentMethod } from "@/app/utils/Formatters";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
@@ -234,8 +242,7 @@ export default function TransactionsPage() {
 
       setLoading(true);
 
-      const response =
-        await api("/transactions/list");
+      const response = await listTransactions();
 
       const data:
         PageResponse<Transaction> =
@@ -374,19 +381,7 @@ export default function TransactionsPage() {
     data: TransactionFormData
   ) {
 
-    const res = await api(
-      "/transactions/create",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await createTransaction(data);
 
     if (!res.ok) {
       throw new Error(
@@ -405,9 +400,7 @@ export default function TransactionsPage() {
 
     try {
 
-      const res = await api(
-        `/transactions/${id}`
-      );
+      const res = await getTransaction(id);
 
       if (!res.ok) {
         console.error(
@@ -464,27 +457,15 @@ export default function TransactionsPage() {
     form: TransactionFormData
   ) {
 
-    const res = await api(
-      `/transactions/${id}`,
-      {
-        method: "PATCH",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          categoryId: form.categoryId,
-          amount: form.amount,
-          description: form.description,
-          occurredAt: form.occurredAt,
-          observation: form.observation,
-          paymentMethod: form.paymentMethod,
-          recurring: form.recurring,
-        }),
-      }
-    );
+    const res = await updateTransaction(id, {
+      categoryId: form.categoryId,
+      amount: form.amount,
+      description: form.description,
+      occurredAt: form.occurredAt,
+      observation: form.observation,
+      paymentMethod: form.paymentMethod,
+      recurring: form.recurring,
+    });
 
     if (!res.ok) {
       throw new Error(
@@ -509,9 +490,8 @@ export default function TransactionsPage() {
 
     try {
 
-      const res = await api(
-        `/transactions/${deletingTx.id}`,
-        { method: "DELETE" }
+      const res = await deleteTransaction(
+        deletingTx.id
       );
 
       if (!res.ok) {
@@ -540,6 +520,51 @@ export default function TransactionsPage() {
 
       setDeleting(false);
     }
+  }
+
+  function TxMenu({ tx }: { tx: Transaction }) {
+    return (
+      <MenuListModal
+        trigger={
+          <button
+            type="button"
+            aria-label="Opções da transação"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        }
+        actions={[
+          {
+            label: "Ver detalhes",
+            icon: Eye,
+            onClick: () => {
+              handleOpenDetails(tx.id);
+            },
+          },
+          {
+            label: "Editar",
+            icon: Pencil,
+            onClick: () => {
+              handleOpenEdit(tx.id);
+            },
+          },
+          {
+            label: "Excluir",
+            icon: Trash2,
+            danger: true,
+            onClick: () => {
+              setDeleteError(null);
+              setDeletingTx({
+                id: tx.id,
+                title: tx.title,
+                amount: tx.amount,
+              });
+            },
+          },
+        ]}
+      />
+    );
   }
 
   return (
@@ -708,9 +733,9 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* Cabeçalho */}
+        {/* Cabeçalho (desktop) */}
 
-        <div className="grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.5fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <div className="hidden lg:grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.5fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
 
           <span>Descrição</span>
 
@@ -745,9 +770,9 @@ export default function TransactionsPage() {
 
           paginated.map((t) => (
 
+            <Fragment key={t.id}>
             <div
-              key={t.id}
-              className="grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/70 hover:bg-gray-50/60 transition items-center"
+              className="hidden lg:grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/70 hover:bg-gray-50/60 transition items-center"
             >
 
               {/* Descrição */}
@@ -842,47 +867,75 @@ export default function TransactionsPage() {
 
               {/* Ações */}
 
-              <MenuListModal
-                trigger={
-                  <button
-                    type="button"
-                    aria-label="Opções da transação"
-                    className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                }
-                actions={[
-                  {
-                    label: "Ver detalhes",
-                    icon: Eye,
-                    onClick: () => {
-                      handleOpenDetails(t.id);
-                    },
-                  },
-                  {
-                    label: "Editar",
-                    icon: Pencil,
-                    onClick: () => {
-                      handleOpenEdit(t.id);
-                    },
-                  },
-                  {
-                    label: "Excluir",
-                    icon: Trash2,
-                    danger: true,
-                    onClick: () => {
-                      setDeleteError(null);
-                      setDeletingTx({
-                        id: t.id,
-                        title: t.title,
-                        amount: t.amount,
-                      });
-                    },
-                  },
-                ]}
-              />
+              <TxMenu tx={t} />
             </div>
+
+            {/* Card mobile */}
+
+            <div className="lg:hidden px-4 py-4 border-b border-(--color-border)/70">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0
+                    ${
+                      t.kind === "INCOME"
+                        ? "bg-green-50"
+                        : "bg-red-50"
+                    }`}
+                  >
+                    {t.kind === "INCOME" ? (
+                      <ArrowUpRight className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <ArrowDownLeft className="w-4 h-4 text-red-500" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {t.title}
+                    </p>
+
+                    <p className="text-xs text-gray-400 truncate">
+                      {t.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <span
+                    className={`text-sm font-semibold
+                    ${
+                      t.kind === "INCOME"
+                        ? "text-(--color-positive)"
+                        : "text-(--color-alert)"
+                    }`}
+                  >
+                    {t.kind === "EXPENSE" ? "-" : ""}
+                    {formatCurrency(t.amount)}
+                  </span>
+
+                  <TxMenu tx={t} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <CategoryBadge
+                  name={t.category}
+                  color={t.categoryColor}
+                />
+
+                <KindBadge kind={t.kind} />
+
+                <span className="text-xs text-gray-400">
+                  {t.date}
+                </span>
+
+                <span className="text-xs text-gray-400">
+                  {formatPaymentMethod(t.paymentMethod)}
+                </span>
+              </div>
+            </div>
+            </Fragment>
           ))
         )}
 
@@ -1111,12 +1164,7 @@ export default function TransactionsPage() {
           }
         >
           {detailsError ? (
-            <p
-              role="alert"
-              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            >
-              {detailsError}
-            </p>
+            <FormAlert>{detailsError}</FormAlert>
           ) : !detailsTx ? (
             <p className="text-sm text-gray-500">
               Carregando...
@@ -1229,35 +1277,10 @@ export default function TransactionsPage() {
           </p>
 
           {deleteError && (
-            <p
-              role="alert"
-              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            >
-              {deleteError}
-            </p>
+            <FormAlert>{deleteError}</FormAlert>
           )}
         </AppDialog>
       )}
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-400">
-        {label}
-      </span>
-
-      <span className="text-sm font-medium text-gray-800 text-right">
-        {value}
-      </span>
     </div>
   );
 }

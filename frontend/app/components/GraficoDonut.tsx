@@ -76,7 +76,7 @@ const handlePieEnter = (_: unknown, index: number) => {
 };
 
 return (
-    <div className="flex items-center gap-3 lg:gap-8 w-full h-full px-4 py-4">
+    <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-center lg:gap-8 w-full h-full px-4 py-4">
     {/* DONUT */}
 
     <div
@@ -132,7 +132,7 @@ return (
 
     {/* LEGENDA */}
 
-    <div className="flex-1 min-w-0">
+    <div className="flex-1 min-w-0 w-full lg:w-auto">
         <h3
         className={`font-semibold text-gray-900 mb-3 ${
             isDesktop ? "text-base" : "text-sm"

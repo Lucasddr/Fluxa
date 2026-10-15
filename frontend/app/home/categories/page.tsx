@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 import {
   Search,
@@ -30,7 +30,12 @@ import {
 import MenuListModal from "@/app/components/modals/MenuListmodal";
 import CategoryModal from "@/app/components/modals/CategoryModal";
 import AppDialog from "@/app/components/ui/Dialog";
-import { api } from "@/services/api";
+import DetailRow from "@/app/components/ui/DetailRow";
+import FormAlert from "@/app/components/ui/FormAlert";
+import {
+  deleteCategory,
+  listCategories,
+} from "@/services/categories";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -187,8 +192,9 @@ export default function CategoriasPage() {
     try {
       setLoading(true);
 
-      const response = await api(
-        `/categories?page=${page}&size=${itemsPerPage}`
+      const response = await listCategories(
+        page,
+        itemsPerPage
       );
 
       if (!response.ok) {
@@ -221,9 +227,8 @@ export default function CategoriasPage() {
 
     try {
 
-      const res = await api(
-        `/categories/${deletingCat.id}`,
-        { method: "DELETE" }
+      const res = await deleteCategory(
+        deletingCat.id
       );
 
       if (!res.ok) {
@@ -259,6 +264,47 @@ export default function CategoriasPage() {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  function CatMenu({ cat }: { cat: Category }) {
+    return (
+      <MenuListModal
+        trigger={
+          <button
+            type="button"
+            aria-label="Abrir opções da categoria"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        }
+        actions={[
+          {
+            label: "Ver detalhes",
+            icon: Eye,
+            onClick: () => {
+              setDetailsCat(cat);
+            },
+          },
+          {
+            label: "Editar",
+            icon: Pencil,
+            onClick: () => {
+              setEditingCat(cat);
+            },
+          },
+          {
+            label: "Excluir",
+            icon: Trash2,
+            danger: true,
+            onClick: () => {
+              setDeleteError(null);
+              setDeletingCat(cat);
+            },
+          },
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -335,8 +381,8 @@ export default function CategoriasPage() {
           </div>
         </div>
 
-        {/* header */}
-        <div className="grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        {/* header (desktop) */}
+        <div className="hidden lg:grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
           <span>Categoria</span>
           <span>Tipo</span>
           <span>Descrição</span>
@@ -355,9 +401,9 @@ export default function CategoriasPage() {
           </div>
         ) : (
           categories?.content.map((cat) => (
+            <Fragment key={cat.id}>
             <div
-              key={cat.id}
-              className="grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/80 hover:bg-gray-50/60 transition items-center"
+              className="hidden lg:grid grid-cols-[2fr_1fr_2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/80 hover:bg-gray-50/60 transition items-center"
             >
               <div className="flex items-center gap-3">
                 <CategoryIcon
@@ -381,44 +427,43 @@ export default function CategoriasPage() {
               <StatusBadge status={cat.status} />
 
               <div className="relative">
-                <MenuListModal
-                  trigger={
-                    <button
-                      type="button"
-                      aria-label="Abrir opções da categoria"
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                  }
-                  actions={[
-                    {
-                      label: "Ver detalhes",
-                      icon: Eye,
-                      onClick: () => {
-                        setDetailsCat(cat);
-                      },
-                    },
-                    {
-                      label: "Editar",
-                      icon: Pencil,
-                      onClick: () => {
-                        setEditingCat(cat);
-                      },
-                    },
-                    {
-                      label: "Excluir",
-                      icon: Trash2,
-                      danger: true,
-                      onClick: () => {
-                        setDeleteError(null);
-                        setDeletingCat(cat);
-                      },
-                    },
-                  ]}
-                />
+                <CatMenu cat={cat} />
               </div>
             </div>
+
+            {/* Card mobile */}
+
+            <div className="lg:hidden px-4 py-4 border-b border-(--color-border)/80">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <CategoryIcon
+                    icon={cat.icon}
+                    color={cat.color}
+                  />
+
+                  <p className="text-sm font-semibold text-gray-800 truncate">
+                    {cat.name}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <StatusBadge status={cat.status} />
+
+                  <CatMenu cat={cat} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <TypeBadge kind={cat.kind} />
+
+                {cat.description ? (
+                  <span className="text-xs text-gray-400 truncate">
+                    {cat.description}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            </Fragment>
           ))
         )}
 
@@ -635,37 +680,12 @@ export default function CategoriasPage() {
           </p>
 
           {deleteError && (
-            <p
-              role="alert"
-              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            >
-              {deleteError}
-            </p>
+            <FormAlert>{deleteError}</FormAlert>
           )}
         </AppDialog>
       )}
     </div>
 
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-400">
-        {label}
-      </span>
-
-      <span className="text-sm font-medium text-gray-800 text-right">
-        {value}
-      </span>
-    </div>
   );
 }
 

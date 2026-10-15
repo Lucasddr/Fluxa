@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/services/api";
+import { login } from "@/services/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,13 +44,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await api("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          password: password.trim()
-        }),
-        headers: {"Content-Type": "application/json"},
+      const res = await login({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
       });
 
       if (!res.ok) {

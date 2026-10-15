@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/services/api";
+import { register } from "@/services/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -55,16 +55,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await api("/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          password: password.trim(),
-        }),
+      const res = await register({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
       });
 
       // 🔥 leitura segura da resposta

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import SideNav from "../components/navigation/SideNav";
 import { useEffect, useState } from "react";
-import { api } from "@/services/api";
+import { me } from "@/services/auth";
 
 export default function HomeLayout({
 children,
@@ -17,7 +17,7 @@ children: React.ReactNode;
     useEffect(() => {
         async function checkAuth() {
             try{
-                const res = await api("/auth/me");
+                const res = await me();
                 if(!res.ok) {
                     router.replace("/login");
                     return;

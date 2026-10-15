@@ -24,8 +24,12 @@ import {
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import AppDialog from "@/app/components/ui/Dialog";
+import FormAlert from "@/app/components/ui/FormAlert";
 
-import { api } from "@/services/api";
+import {
+  createCategory,
+  updateCategory,
+} from "@/services/categories";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -213,26 +217,14 @@ export default function CategoryModal({
       setLoading(true);
 
       const response = isEdit
-        ? await api(`/categories/${categoryId}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: form.name,
-              icon: form.icon,
-              description: form.description,
-              color: form.color,
-              status: form.status,
-            }),
+        ? await updateCategory(categoryId ?? "", {
+            name: form.name,
+            icon: form.icon,
+            description: form.description,
+            color: form.color,
+            status: form.status,
           })
-        : await api("/categories/create", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-          });
+        : await createCategory(form);
 
       if (!response.ok) {
         throw new Error(
@@ -611,12 +603,7 @@ export default function CategoryModal({
           </div>
 
           {serverError && (
-            <p
-              role="alert"
-              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            >
-              {serverError}
-            </p>
+            <FormAlert>{serverError}</FormAlert>
           )}
 
     </AppDialog>

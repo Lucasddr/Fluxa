@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 
 import AppDialog from "@/app/components/ui/Dialog";
+import FormAlert from "@/app/components/ui/FormAlert";
 
-import { api } from "@/services/api";
+import { selectCategories } from "@/services/categories";
 import { formatCurrency } from "@/app/utils/Formatters";
 
 type TransactionModalProps = {
@@ -118,9 +119,7 @@ export default function TransactionModal({
 
         setLoadingCategories(true);
 
-        const response = await api(
-          "/categories/select"
-        );
+        const response = await selectCategories();
 
         if (!response.ok) {
           throw new Error(
@@ -685,12 +684,7 @@ export default function TransactionModal({
           </div>
 
           {serverError && (
-            <p
-              role="alert"
-              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            >
-              {serverError}
-            </p>
+            <FormAlert>{serverError}</FormAlert>
           )}
 
     </AppDialog>

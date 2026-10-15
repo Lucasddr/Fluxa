@@ -18,7 +18,12 @@ import {
   AwardIcon,
 } from "lucide-react";
 
-import { api } from "@/services/api";
+import { logout } from "@/services/auth";
+import {
+  buildDashboard,
+  insightCards as fetchInsightCards,
+  recentTransactions,
+} from "@/services/dashboard";
 
 import { formatCurrency } from "@/app/utils/Formatters";
 
@@ -137,7 +142,7 @@ export default function DashboardPage() {
 
   async function handleLogout() {
     try{
-        const res = await api("/auth/logout", {method: "POST"});
+        const res = await logout();
 
         if (!res.ok){
           console.error("Houve um erro ao realizar o logout, tente novamente em breve")
@@ -165,9 +170,9 @@ export default function DashboardPage() {
           transactionResponse,
           insightsResponse,
         ] = await Promise.all([
-          api(`/dashboard/buildDashboard?start=${start}&end=${end}`),
-          api(`/dashboard/recentTransactions?start=${start}&end=${end}`),
-          api(`/dashboard/insightCards?start=${start}&end=${end}`),
+          buildDashboard(start, end),
+          recentTransactions(start, end),
+          fetchInsightCards(start, end),
         ]);
 
       if (
