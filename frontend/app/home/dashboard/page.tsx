@@ -102,13 +102,6 @@ export default function DashboardPage() {
   const [loading, setLoading] =
     useState(true);
 
-  const [openMenu, setOpenMenu] = useState<Boolean>(false);
-
-  const [menuPosition, setMenuPosition] = useState({
-  top: 0,
-  left: 0,
-});
-
   async function handleLogout() {
     try{
         const res = await api("/auth/logout", {method: "POST"});
@@ -123,20 +116,6 @@ export default function DashboardPage() {
       console.error("Houve um erro ao realizar o logout, tente novamente em breve")
     }
 };
-
-  const handleOpenMenu = (
-  event: React.MouseEvent<HTMLDivElement>,
-) => {
-  const rect = event.currentTarget.getBoundingClientRect();
-
-  setMenuPosition({
-    top: rect.bottom + window.scrollY,
-    left: rect.right + window.scrollX - 20,
-  });
-
-  setOpenMenu(prev => !prev);
-};
-
 
   // ─── fetch dashboard ────────────────────────────────────────
 
@@ -243,12 +222,26 @@ export default function DashboardPage() {
             </h3>
           </div>
 
-          <div className="relative flex items-center justify-center border-2 border-(--color-border) rounded-full w-12 h-12 shadow-lg cursor-pointer" onClick={(e) => {
-            handleOpenMenu(e)
-          }}>
-
-            <User className="w-5 h-5" />
-          </div>
+          <MenuListModal
+            trigger={
+              <button
+                type="button"
+                aria-label="Abrir menu do usuário"
+                className="relative flex items-center justify-center border-2 border-(--color-border) rounded-full w-12 h-12 shadow-lg cursor-pointer"
+              >
+                <User className="w-5 h-5" />
+              </button>
+            }
+            actions={[
+              {
+                label: "Logout",
+                icon: LogOut,
+                onClick: () => {
+                  handleLogout();
+                },
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -346,29 +339,6 @@ export default function DashboardPage() {
             <TransactionList
               data={transactionList.content}
             />
-
-            {openMenu && (
-              <div
-                className="fixed z-50"
-                style={{
-                  top: menuPosition.top,
-                  left: menuPosition.left,
-                }}
-              >
-                <MenuListModal
-                  actions={[
-                    {
-                      label: "Logout",
-                      icon: LogOut,
-                      onClick: () => {
-                        handleLogout();
-                        setOpenMenu(false);
-                      },
-                    }
-                  ]}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>

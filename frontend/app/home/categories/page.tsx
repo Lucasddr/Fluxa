@@ -166,13 +166,6 @@ export default function CategoriasPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
 
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
-  const [menuPosition, setMenuPosition] = useState({
-  top: 0,
-  left: 0,
-});
-
   // ─── fetch ───────────────────────────────────────────────────
 
   const fetchCategories = useCallback(async () => {
@@ -215,22 +208,6 @@ export default function CategoriasPage() {
     }
 };
 
-const handleOpenMenu = (
-  event: React.MouseEvent<HTMLButtonElement>,
-  categoryId: string
-) => {
-  const rect = event.currentTarget.getBoundingClientRect();
-
-  setMenuPosition({
-    top: rect.bottom + window.scrollY + 0,
-    left: rect.right + window.scrollX - 20,
-  });
-
-  setOpenMenuId(
-    openMenuId === categoryId ? null : categoryId
-  );
-};
-
   // ─── effects ─────────────────────────────────────────────────
 
   useEffect(() => {
@@ -255,7 +232,6 @@ const handleOpenMenu = (
         <button
           onClick={() => {
             setModalOpen(true);
-            setOpenMenuId(null);
           }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md"
           style={{
@@ -359,14 +335,43 @@ const handleOpenMenu = (
               <StatusBadge status={cat.status} />
 
               <div className="relative">
-                <button
-                    onClick={(e) =>
-                    handleOpenMenu(e, cat.id)
+                <MenuListModal
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label="Abrir opções da categoria"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
                   }
-                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+                  actions={[
+                    {
+                      label: "Ver detalhes",
+                      icon: Eye,
+                      onClick: () => {
+                        const found = categories?.content.find(
+                          (c) => c.id === cat.id
+                        );
+
+                        console.log(found);
+                      },
+                    },
+                    {
+                      label: "Editar",
+                      icon: Pencil,
+                      onClick: () => {
+                        console.log("editar", cat.id);
+                      },
+                    },
+                    {
+                      label: "Excluir",
+                      icon: Trash2,
+                      danger: true,
+                      onClick: () => {},
+                    },
+                  ]}
+                />
               </div>
             </div>
           ))
@@ -432,56 +437,6 @@ const handleOpenMenu = (
             await fetchCategories();
           }}
         />
-      )}
-      {openMenuId && (
-        <div
-          className="fixed z-50"
-          style={{
-            top: menuPosition.top,
-            left: menuPosition.left,
-          }}
-        >
-          <MenuListModal
-            actions={[
-              {
-                label: "Ver detalhes",
-                icon: Eye,
-                onClick: () => {
-                  const cat = categories?.content.find(
-                    (c) => c.id === openMenuId
-                  );
-
-                  console.log(cat);
-
-                  setOpenMenuId(null);
-                },
-              },
-              {
-                label: "Editar",
-                icon: Pencil,
-                onClick: () => {
-                  console.log("editar", openMenuId);
-
-                  setOpenMenuId(null);
-                },
-              },
-              {
-                label: "Excluir",
-                icon: Trash2,
-                danger: true,
-                onClick: async () => {
-                  const id = openMenuId;
-
-                  setOpenMenuId(null);
-
-                  if (id) {
-                    
-                  }
-                },
-              },
-            ]}
-          />
-        </div>
       )}
     </div>
     
