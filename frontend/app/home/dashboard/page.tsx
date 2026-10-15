@@ -141,19 +141,14 @@ export default function DashboardPage() {
   }, [period]);
 
   async function handleLogout() {
-    try{
-        const res = await logout();
-
-        if (!res.ok){
-          console.error("Houve um erro ao realizar o logout, tente novamente em breve")
-          return;
-        }
-
-      router.push("/login");
+    try {
+      await logout();
     } catch {
-      console.error("Houve um erro ao realizar o logout, tente novamente em breve")
+      console.error("Houve um erro ao realizar o logout, tente novamente em breve");
+    } finally {
+      router.push("/login");
     }
-};
+  }
 
   // ─── fetch dashboard ────────────────────────────────────────
 

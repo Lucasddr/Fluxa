@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/auth";
+import { login, me } from "@/services/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +16,20 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    me().then((res) => {
+      if (active && res.ok) {
+        router.replace("/home");
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   // validações
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
