@@ -8,6 +8,7 @@ import com.fluxa.backend.dto.request.create.CreateTransactionDTO;
 import com.fluxa.backend.dto.request.update.UpdateTransactionDTO;
 import com.fluxa.backend.dto.response.DashboardRecentTransactionResponseDTO;
 import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
+import com.fluxa.backend.dto.response.TransactionDetailsResponseDTO;
 import com.fluxa.backend.exception.CategoryNotFoundException;
 import com.fluxa.backend.exception.TransactionNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -40,7 +42,7 @@ public class TransactionService {
     public final UserRepository userRepository;
 
 
-    public void createTransaction(CreateTransactionDTO dto){
+    public boolean createTransaction(CreateTransactionDTO dto){
 
         UUID userId = UserContext.getUserId();
 
@@ -55,6 +57,27 @@ public class TransactionService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        LocalDate occurredAt =
+                LocalDate.from(dto.occurredAt().atStartOfDay());
+
+        boolean duplicate = transactionRepository
+                .existsByUserIdAndAmountAndDescriptionAndOccurredAtAndPaymentMethodAndCategory_IdAndCreatedAtAfter(
+                        userId,
+                        dto.amount(),
+                        dto.description(),
+                        occurredAt,
+                        dto.paymentMethod(),
+                        category.getId(),
+                        OffsetDateTime.now().minusSeconds(10)
+                );
+
+        if (duplicate) {
+            log.warn("[TRANSACTION] duplicate submission ignored | user: {}",
+                    user.getId());
+
+            return false;
+        }
+
         Transaction transaction = new Transaction();
 
         transaction.setUser(user);
@@ -63,9 +86,7 @@ public class TransactionService {
         transaction.setKind(category.getKind());
         transaction.setAmount(dto.amount());
         transaction.setDescription(dto.description());
-        transaction.setOccurredAt(
-                LocalDate.from(dto.occurredAt().atStartOfDay())
-        );
+        transaction.setOccurredAt(occurredAt);
         transaction.setPaymentMethod(dto.paymentMethod());
         transaction.setObservation(dto.observation());
         transaction.setRecurrent(dto.recurring());
@@ -77,6 +98,8 @@ public class TransactionService {
                 transaction.getId(),
                 transaction.getKind()
         );
+
+        return true;
     }
 
     public Page<?> listRecentTransactions(){
@@ -116,6 +139,28 @@ public class TransactionService {
                                     transaction.getCategory().getColor()
                             );
                         });
+    }
+
+    public TransactionDetailsResponseDTO getTransactionDetails(UUID transactionId) {
+        UUID userId = UserContext.getUserId();
+
+        Transaction transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(TransactionNotFoundException::new);
+
+        Category category = transaction.getCategory();
+
+        return new TransactionDetailsResponseDTO(
+                transaction.getId(),
+                transaction.getDescription(),
+                transaction.getObservation(),
+                transaction.getAmount(),
+                transaction.getKind(),
+                category != null ? category.getId() : null,
+                category != null ? category.getName() : null,
+                transaction.getPaymentMethod(),
+                transaction.getOccurredAt(),
+                transaction.isRecurrent()
+        );
     }
 
     @Transactional
