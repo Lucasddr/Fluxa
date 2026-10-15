@@ -4,7 +4,6 @@
 import { useState } from "react";
 
 import {
-  X,
   ShoppingCart,
   Home,
   Car,
@@ -21,6 +20,10 @@ import {
   Utensils,
   DollarSign,
 } from "lucide-react";
+
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
+import AppDialog from "@/app/components/ui/Dialog";
 
 import { api } from "@/services/api";
 
@@ -152,9 +155,6 @@ export default function CategoryModal({
 
   const [loading, setLoading] = useState(false);
 
-  const [iconDropdownOpen, setIconDropdownOpen] =
-    useState(false);
-
   const [errors, setErrors] = useState<
     Partial<Record<keyof CategoryFormData, string>>
   >({});
@@ -223,33 +223,41 @@ export default function CategoryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Nova Categoria
-            </h2>
-
-            <p className="text-sm text-gray-400 mt-0.5">
-              Preencha os dados abaixo para criar uma nova categoria.
-            </p>
-          </div>
-
+    <AppDialog
+      open
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+      title="Nova Categoria"
+      description="Preencha os dados abaixo para criar uma nova categoria."
+      footer={
+        <>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+            disabled={loading}
+            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
           >
-            <X className="w-5 h-5" />
+            Cancelar
           </button>
-        </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50"
+            style={{
+              backgroundColor:
+                "var(--color-interactive)",
+            }}
+          >
+            {loading
+              ? "Salvando..."
+              : "Salvar Categoria"}
+          </button>
+        </>
+      }
+    >
 
           {/* Tipo + Nome */}
           <div className="grid grid-cols-2 gap-4">
@@ -335,46 +343,47 @@ export default function CategoryModal({
               Ícone
             </label>
 
-            <div className="flex items-center gap-3">
-
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                style={{
-                  backgroundColor: form.color + "22",
-                }}
-                onClick={() =>
-                    setIconDropdownOpen((o) => !o)
-                  }
-              >
-                <SelectedIconComponent
-                  className="w-5 h-5"
-                  style={{
-                    color: form.color,
-                  }}
-                />
-              </div>
-
-              <div className="relative flex-1">
-
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  onClick={() =>
-                    setIconDropdownOpen((o) => !o)
-                  }
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition"
+                  className="w-full flex items-center gap-3 text-left"
                 >
-                  <span>
-                    {selectedIcon?.label ??
-                      "Selecionar ícone"}
+                  <span
+                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: form.color + "22",
+                    }}
+                  >
+                    <SelectedIconComponent
+                      className="w-5 h-5"
+                      style={{
+                        color: form.color,
+                      }}
+                    />
                   </span>
 
-                  <span className="text-gray-400">
-                    ▾
+                  <span className="flex-1 flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
+                    <span>
+                      {selectedIcon?.label ??
+                        "Selecionar ícone"}
+                    </span>
+
+                    <span className="text-gray-400">
+                      ▾
+                    </span>
                   </span>
                 </button>
+              </DropdownMenu.Trigger>
 
-                {iconDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-10 grid grid-cols-5 gap-1 p-2 max-h-40 overflow-y-auto">
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="start"
+                  sideOffset={4}
+                  collisionPadding={8}
+                  className="z-[60] w-[var(--radix-dropdown-menu-trigger-width)] max-h-40 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg p-2"
+                >
+                  <div className="grid grid-cols-5 gap-1">
 
                     {IconOptions.map(
                       ({
@@ -382,18 +391,15 @@ export default function CategoryModal({
                         value,
                         component: IconComp,
                       }) => (
-                        <button
+                        <DropdownMenu.Item
                           key={value}
-                          type="button"
-                          onClick={() => {
+                          onSelect={() => {
                             setForm((f) => ({
                               ...f,
                               icon: value,
                             }));
-
-                            setIconDropdownOpen(false);
                           }}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition text-xs text-gray-600
+                          className={`flex flex-col items-center gap-1 p-2 rounded-lg outline-none cursor-pointer transition text-xs text-gray-600 data-[highlighted]:bg-gray-100
                           ${
                             form.icon === value
                               ? "bg-gray-100"
@@ -405,13 +411,13 @@ export default function CategoryModal({
                           <span className="leading-tight text-center">
                             {label}
                           </span>
-                        </button>
+                        </DropdownMenu.Item>
                       )
                     )}
                   </div>
-                )}
-              </div>
-            </div>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
             <p className="text-xs text-gray-400 mt-1.5">
               Escolha um ícone para representar a categoria
@@ -563,34 +569,7 @@ export default function CategoryModal({
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
-
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{
-              backgroundColor:
-                "var(--color-interactive)",
-            }}
-          >
-            {loading
-              ? "Salvando..."
-              : "Salvar Categoria"}
-          </button>
-        </div>
-      </div>
-    </div>
+    </AppDialog>
   );
 }
