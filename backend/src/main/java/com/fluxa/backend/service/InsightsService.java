@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,11 +22,15 @@ public class InsightsService {
 
     private final TransactionRepository transactionRepository;
 
-    public BiggestExpenseDTO getBiggestExpense() {
+    public BiggestExpenseDTO getBiggestExpense(LocalDate start, LocalDate end) {
 
         UUID userId = UserContext.getUserId();
 
-        List<Object[]> result = transactionRepository.findBiggestExpense(userId);
+        boolean ranged = start != null && end != null;
+
+        List<Object[]> result = ranged
+                ? transactionRepository.findBiggestExpenseInPeriod(userId, start, end)
+                : transactionRepository.findBiggestExpense(userId);
 
         if (result.isEmpty()) {
             return new BiggestExpenseDTO(
@@ -43,7 +48,9 @@ public class InsightsService {
         String categoryName = String.valueOf(row[0]);
         BigDecimal totalSpent = new BigDecimal(row[1].toString());
 
-        BigDecimal totalExpenses = transactionRepository.sumAllExpenses(userId);
+        BigDecimal totalExpenses = ranged
+                ? transactionRepository.sumExpensesInPeriod(userId, start, end)
+                : transactionRepository.sumAllExpenses(userId);
 
         Integer percentageOfExpenses = 0;
 
@@ -70,16 +77,22 @@ public class InsightsService {
         );
     }
 
-    public EconomyCardDTO economyCardDTO() {
+    public EconomyCardDTO economyCardDTO(LocalDate start, LocalDate end) {
 
         UUID userId = UserContext.getUserId();
 
+        boolean ranged = start != null && end != null;
+
         BigDecimal totalIncome = Optional.ofNullable(
-                transactionRepository.sumAllIncomes(userId)
+                ranged
+                        ? transactionRepository.sumIncomesInPeriod(userId, start, end)
+                        : transactionRepository.sumAllIncomes(userId)
         ).orElse(BigDecimal.ZERO);
 
         BigDecimal totalExpense = Optional.ofNullable(
-                transactionRepository.sumAllExpenses(userId)
+                ranged
+                        ? transactionRepository.sumExpensesInPeriod(userId, start, end)
+                        : transactionRepository.sumAllExpenses(userId)
         ).orElse(BigDecimal.ZERO);
 
         BigDecimal savedAmount = totalIncome.subtract(totalExpense);

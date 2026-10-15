@@ -26,10 +26,18 @@ public class DashboardController {
     private final InsightAggregatorService insightAggregatorService;
 
     @GetMapping("/buildDashboard")
-    public ResponseEntity<BuildDashboardResponseDTO> buildDashboard (
+    public ResponseEntity<?> buildDashboard (
             @RequestParam LocalDate start,
             @RequestParam LocalDate end
             ) {
+
+        String rangeError = validateRange(start, end);
+
+        if (rangeError != null) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", rangeError)
+            );
+        }
 
         DashboardDTO dto = new DashboardDTO(start, end);
 
@@ -39,19 +47,65 @@ public class DashboardController {
     }
 
     @GetMapping("/recentTransactions")
-    public ResponseEntity<?> recentTransactions() {
+    public ResponseEntity<?> recentTransactions(
+            @RequestParam(required = false) LocalDate start,
+            @RequestParam(required = false) LocalDate end
+    ) {
+
+        String rangeError = validateOptionalRange(start, end);
+
+        if (rangeError != null) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", rangeError)
+            );
+        }
 
         return ResponseEntity.ok(
-                transactionService.listRecentTransactions()
+                transactionService.listRecentTransactions(start, end)
         );
 
     }
 
     @GetMapping("/insightCards")
-    public ResponseEntity<List<Object>> getInsightCards() {
+    public ResponseEntity<?> getInsightCards(
+            @RequestParam(required = false) LocalDate start,
+            @RequestParam(required = false) LocalDate end
+    ) {
 
-        List<Object> cards = insightAggregatorService.getInsightCards();
+        String rangeError = validateOptionalRange(start, end);
+
+        if (rangeError != null) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", rangeError)
+            );
+        }
+
+        List<Object> cards = insightAggregatorService.getInsightCards(start, end);
 
         return ResponseEntity.ok(cards);
+    }
+
+    private static String validateRange(LocalDate start, LocalDate end) {
+        if (start.isAfter(end)) {
+            return "start deve ser anterior ou igual a end";
+        }
+
+        if (start.plusDays(366).isBefore(end)) {
+            return "intervalo máximo permitido: 366 dias";
+        }
+
+        return null;
+    }
+
+    private static String validateOptionalRange(LocalDate start, LocalDate end) {
+        if ((start == null) != (end == null)) {
+            return "start e end devem ser informados juntos";
+        }
+
+        if (start != null) {
+            return validateRange(start, end);
+        }
+
+        return null;
     }
 }

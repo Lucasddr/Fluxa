@@ -102,12 +102,17 @@ public class TransactionService {
         return true;
     }
 
-    public Page<?> listRecentTransactions(){
+    public Page<?> listRecentTransactions(LocalDate start, LocalDate end){
 
         UUID userId = UserContext.getUserId();
 
-        return transactionRepository
-                        .findLastTransactions(userId, PageRequest.of(0, 10))
+        Page<Transaction> page = (start != null && end != null)
+                ? transactionRepository.findLastTransactionsInPeriod(
+                        userId, start, end, PageRequest.of(0, 10))
+                : transactionRepository.findLastTransactions(
+                        userId, PageRequest.of(0, 10));
+
+        return page
                         .map(transaction -> new DashboardRecentTransactionResponseDTO(
                                 transaction.getId(),
                                 transaction.getAmount(),

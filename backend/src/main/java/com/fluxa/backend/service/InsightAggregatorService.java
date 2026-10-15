@@ -5,6 +5,7 @@ import com.fluxa.backend.dto.response.EconomyCardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -13,10 +14,10 @@ public class InsightAggregatorService {
 
     private final InsightsService insightsService;
 
-    public List<Object> getInsightCards() {
+    public List<Object> getInsightCards(LocalDate start, LocalDate end) {
 
-        EconomyCardDTO economy = insightsService.economyCardDTO();
-        BiggestExpenseDTO biggestExpense = insightsService.getBiggestExpense();
+        EconomyCardDTO economy = insightsService.economyCardDTO(start, end);
+        BiggestExpenseDTO biggestExpense = insightsService.getBiggestExpense(start, end);
 
         return List.of(
                 economy,

@@ -71,6 +71,28 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
                 Pageable pageable
         );
 
+        @Query(
+            value = """
+                SELECT t
+                FROM Transaction t
+                JOIN FETCH t.category
+                WHERE t.user.id = :userId
+                AND t.occurredAt BETWEEN :start AND :end
+                ORDER BY t.occurredAt DESC
+            """,
+            countQuery = """
+                SELECT COUNT(t)
+                FROM Transaction t
+                WHERE t.user.id = :userId
+                AND t.occurredAt BETWEEN :start AND :end
+            """)
+        Page<Transaction> findLastTransactionsInPeriod(
+                @Param("userId") UUID userId,
+                @Param("start") LocalDate start,
+                @Param("end") LocalDate end,
+                Pageable pageable
+        );
+
         @Query(value = """
         SELECT c.name AS category,
         SUM(t.amount) AS total_spent
@@ -84,6 +106,24 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
         LIMIT 1
         """, nativeQuery = true)
         List<Object[]> findBiggestExpense(UUID userId);
+
+        @Query(value = """
+        SELECT c.name AS category,
+        SUM(t.amount) AS total_spent
+        FROM transactions t
+        JOIN categories c
+        ON c.id = t.category_id
+        WHERE t.user_id = :userId
+        AND t.kind = 'EXPENSE'
+        AND t.occurred_at BETWEEN :start AND :end
+        GROUP BY c.name
+        ORDER BY total_spent DESC
+        LIMIT 1
+        """, nativeQuery = true)
+        List<Object[]> findBiggestExpenseInPeriod(
+                UUID userId,
+                LocalDate start,
+                LocalDate end);
 
     @Query("""
         SELECT SUM(t.amount)
@@ -102,6 +142,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
     """)
     BigDecimal sumAllIncomes(
             @Param("userId") UUID userID);
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+        AND t.kind = 'EXPENSE'
+        AND t.occurredAt BETWEEN :start AND :end
+        """)
+    BigDecimal sumExpensesInPeriod(
+            @Param("userId") UUID userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
+
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+        AND t.kind = 'INCOME'
+        AND t.occurredAt BETWEEN :start AND :end
+        """)
+    BigDecimal sumIncomesInPeriod(
+            @Param("userId") UUID userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
