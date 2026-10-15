@@ -23,7 +23,12 @@ public class TransactionController {
     @PostMapping("/create")
     public ResponseEntity<?> createTransaction (@Valid @RequestBody CreateTransactionDTO dto){
 
-        transactionService.createTransaction(dto);
+        boolean created = transactionService.createTransaction(dto);
+
+        if (!created) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "duplicate transaction ignored"));
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "transaction created"));
@@ -34,6 +39,14 @@ public class TransactionController {
 
         return ResponseEntity.ok(
             transactionService.listTransactions(pageable)
+        );
+    }
+
+    @GetMapping("/{transactionId}")
+    public ResponseEntity<?> getTransactionDetails(@PathVariable UUID transactionId) {
+
+        return ResponseEntity.ok(
+            transactionService.getTransactionDetails(transactionId)
         );
     }
 

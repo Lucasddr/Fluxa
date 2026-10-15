@@ -9,7 +9,12 @@ import { formatCurrency } from "@/app/utils/Formatters";
 
 type TransactionModalProps = {
   onClose: () => void;
-  onSave: (transaction: TransactionFormData) => void;
+  onSave: (transaction: TransactionFormData) => void | Promise<void>;
+  title: string;
+  description: string;
+  submitLabel: string;
+  initialData?: Partial<TransactionFormData>;
+  mode?: "create" | "edit";
 };
 
 export type TransactionFormData = {
@@ -57,7 +62,14 @@ const TODAY =
 export default function TransactionModal({
   onClose,
   onSave,
+  title,
+  description,
+  submitLabel,
+  initialData,
+  mode = "create",
 }: TransactionModalProps) {
+
+  const isEdit = mode === "edit";
 
   const [categories, setCategories] =
     useState<CategoriesSelect[]>([]);
@@ -66,19 +78,28 @@ export default function TransactionModal({
     useState(true);
 
   const [amountInput, setAmountInput] =
-    useState("");
+    useState(
+      initialData?.amount
+        ? formatCurrency(initialData.amount)
+        : ""
+    );
 
   const [form, setForm] =
     useState<TransactionFormData>({
-      categoryId: "",
-      kind: "INCOME",
-      amount: 0,
-      description: "",
-      occurredAt: TODAY,
-      paymentMethod: "",
-      observation: "",
-      recurring: false,
+      categoryId: initialData?.categoryId ?? "",
+      kind: initialData?.kind ?? "INCOME",
+      amount: initialData?.amount ?? 0,
+      description: initialData?.description ?? "",
+      occurredAt: initialData?.occurredAt ?? TODAY,
+      paymentMethod: initialData?.paymentMethod ?? "",
+      observation: initialData?.observation ?? "",
+      recurring: initialData?.recurring ?? false,
     });
+
+  const [saving, setSaving] = useState(false);
+
+  const [serverError, setServerError] =
+    useState<string | null>(null);
 
   const [errors, setErrors] = useState<
     Partial<
@@ -189,7 +210,7 @@ export default function TransactionModal({
     return e;
   }
 
-  function handleSave() {
+  async function handleSave() {
 
     const e = validate();
 
@@ -200,7 +221,23 @@ export default function TransactionModal({
       return;
     }
 
-    onSave(form);
+    setServerError(null);
+    setSaving(true);
+
+    try {
+      await onSave(form);
+    } catch (err) {
+      console.error(
+        "Erro ao salvar transação:",
+        err
+      );
+
+      setServerError(
+        "Não foi possível salvar. Tente novamente."
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   function field(
@@ -247,13 +284,14 @@ export default function TransactionModal({
           onClose();
         }
       }}
-      title="Nova Transação"
-      description="Preencha os dados abaixo para criar uma nova transação."
+      title={title}
+      description={description}
       footer={
         <>
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             className="
               px-5 py-2 rounded-lg
               border border-gray-200
@@ -261,6 +299,7 @@ export default function TransactionModal({
               hover:bg-gray-100 hover:border-gray-300
               transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-gray-200
+              disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
             Cancelar
@@ -269,6 +308,7 @@ export default function TransactionModal({
           <button
             type="button"
             onClick={handleSave}
+            disabled={saving}
             className="
               px-5 py-2 rounded-lg
               text-sm font-semibold text-white
@@ -276,13 +316,14 @@ export default function TransactionModal({
               hover:brightness-110
               active:scale-[0.98]
               focus:outline-none focus:ring-2 focus:ring-offset-1
+              disabled:opacity-50 disabled:cursor-not-allowed
             "
             style={{
               backgroundColor:
                 "var(--color-interactive)",
             }}
           >
-            Salvar Transação
+            {saving ? "Salvando..." : submitLabel}
           </button>
         </>
       }
@@ -309,6 +350,7 @@ export default function TransactionModal({
                   <button
                     type="button"
                     key={t}
+                    disabled={isEdit}
                     onClick={() =>
                     setForm((f) => {
                       const currentCategory = categories.find(
@@ -332,6 +374,7 @@ export default function TransactionModal({
                       text-sm font-medium border
                       transition-all duration-200
                       focus:outline-none focus:ring-2 focus:ring-offset-1
+                      disabled:opacity-50 disabled:cursor-not-allowed
                       ${
                         form.kind === t
                           ? t ===
@@ -640,6 +683,15 @@ export default function TransactionModal({
               </span>
             </button>
           </div>
+
+          {serverError && (
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+            >
+              {serverError}
+            </p>
+          )}
 
     </AppDialog>
   );

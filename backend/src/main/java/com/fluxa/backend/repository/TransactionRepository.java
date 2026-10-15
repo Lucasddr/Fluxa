@@ -2,6 +2,7 @@ package com.fluxa.backend.repository;
 
 
 import com.fluxa.backend.domain.entity.Transaction;
+import com.fluxa.backend.domain.enums.PaymentMethods;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -102,4 +104,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             @Param("userId") UUID userID);
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+
+    boolean existsByUserIdAndAmountAndDescriptionAndOccurredAtAndPaymentMethodAndCategory_IdAndCreatedAtAfter(
+            UUID userId,
+            BigDecimal amount,
+            String description,
+            LocalDate occurredAt,
+            PaymentMethods paymentMethod,
+            UUID categoryId,
+            OffsetDateTime since);
 }
