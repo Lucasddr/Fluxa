@@ -32,6 +32,12 @@ import { api } from "@/services/api";
 type CategoryModalProps = {
   onClose: () => void;
   onSave: () => Promise<void>;
+  title: string;
+  description: string;
+  submitLabel: string;
+  initialData?: Partial<CategoryFormData>;
+  mode?: "create" | "edit";
+  categoryId?: string;
 };
 
 export type CategoryFormData = {
@@ -141,16 +147,24 @@ const PresetColors = [
 export default function CategoryModal({
   onClose,
   onSave,
+  title,
+  description,
+  submitLabel,
+  initialData,
+  mode = "create",
+  categoryId,
 }: CategoryModalProps) {
+
+  const isEdit = mode === "edit";
 
   const [form, setForm] =
     useState<CategoryFormData>({
-      name: "",
-      kind: "EXPENSE",
-      icon: "ShoppingCart",
-      description: "",
-      color: "#22C55E",
-      status: true,
+      name: initialData?.name ?? "",
+      kind: initialData?.kind ?? "EXPENSE",
+      icon: initialData?.icon ?? "ShoppingCart",
+      description: initialData?.description ?? "",
+      color: initialData?.color ?? "#22C55E",
+      status: initialData?.status ?? true,
     });
 
   const [loading, setLoading] = useState(false);
@@ -158,6 +172,9 @@ export default function CategoryModal({
   const [errors, setErrors] = useState<
     Partial<Record<keyof CategoryFormData, string>>
   >({});
+
+  const [serverError, setServerError] =
+    useState<string | null>(null);
 
   // ─── selected icon ───────────────────────────────────────────
 
@@ -190,19 +207,37 @@ export default function CategoryModal({
       return;
     }
 
+    setServerError(null);
+
     try {
       setLoading(true);
 
-      const response = await api("/categories/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
+      const response = isEdit
+        ? await api(`/categories/${categoryId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: form.name,
+              icon: form.icon,
+              description: form.description,
+              color: form.color,
+              status: form.status,
+            }),
+          })
+        : await api("/categories/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(form),
+          });
 
       if (!response.ok) {
-        throw new Error("Erro ao criar categoria");
+        throw new Error(
+          `Falha ao salvar categoria (${response.status})`
+        );
       }
 
       await onSave();
@@ -214,6 +249,10 @@ export default function CategoryModal({
       console.error(
         "Erro ao salvar categoria:",
         error
+      );
+
+      setServerError(
+        "Não foi possível salvar. Tente novamente."
       );
 
     } finally {
@@ -230,14 +269,14 @@ export default function CategoryModal({
           onClose();
         }
       }}
-      title="Nova Categoria"
-      description="Preencha os dados abaixo para criar uma nova categoria."
+      title={title}
+      description={description}
       footer={
         <>
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
+            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
           </button>
@@ -245,7 +284,7 @@ export default function CategoryModal({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50"
+            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               backgroundColor:
                 "var(--color-interactive)",
@@ -253,7 +292,7 @@ export default function CategoryModal({
           >
             {loading
               ? "Salvando..."
-              : "Salvar Categoria"}
+              : submitLabel}
           </button>
         </>
       }
@@ -273,13 +312,14 @@ export default function CategoryModal({
                   <button
                     key={t}
                     type="button"
+                    disabled={isEdit}
                     onClick={() =>
                       setForm((f) => ({
                         ...f,
                         kind: t,
                       }))
                     }
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition disabled:opacity-50 disabled:cursor-not-allowed
                     ${
                       form.kind === t
                         ? t === "EXPENSE"
@@ -569,6 +609,15 @@ export default function CategoryModal({
               </button>
             </div>
           </div>
+
+          {serverError && (
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+            >
+              {serverError}
+            </p>
+          )}
 
     </AppDialog>
   );

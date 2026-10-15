@@ -29,6 +29,7 @@ import {
 
 import MenuListModal from "@/app/components/modals/MenuListmodal";
 import CategoryModal from "@/app/components/modals/CategoryModal";
+import AppDialog from "@/app/components/ui/Dialog";
 import { api } from "@/services/api";
 
 // ─── types ─────────────────────────────────────────────────────
@@ -166,6 +167,20 @@ export default function CategoriasPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
 
+  const [detailsCat, setDetailsCat] =
+    useState<Category | null>(null);
+
+  const [editingCat, setEditingCat] =
+    useState<Category | null>(null);
+
+  const [deletingCat, setDeletingCat] =
+    useState<Category | null>(null);
+
+  const [deleting, setDeleting] = useState(false);
+
+  const [deleteError, setDeleteError] =
+    useState<string | null>(null);
+
   // ─── fetch ───────────────────────────────────────────────────
 
   const fetchCategories = useCallback(async () => {
@@ -195,18 +210,49 @@ export default function CategoriasPage() {
 
   // ─── delete ─────────────────────────────────────────────────
 
-  const handleDelete = async (id: string) => {
-    const response = await api("/categories/delete", {
-      method: "DELETE",
-      body: JSON.stringify({
-        categoryId: id
-      })
-    });
+  async function handleDeleteCategory() {
 
-    if (response.ok) {
-      await fetchCategories();
+    if (!deletingCat || deleting) {
+      return;
     }
-};
+
+    setDeleteError(null);
+    setDeleting(true);
+
+    try {
+
+      const res = await api(
+        `/categories/${deletingCat.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          `Falha ao excluir categoria (${res.status})`
+        );
+      }
+
+      await fetchCategories();
+
+      setDeletingCat(null);
+      setDetailsCat(null);
+
+    } catch (error) {
+
+      console.error(
+        "Erro ao excluir categoria:",
+        error
+      );
+
+      setDeleteError(
+        "Não foi possível excluir. Tente novamente."
+      );
+
+    } finally {
+
+      setDeleting(false);
+    }
+  }
 
   // ─── effects ─────────────────────────────────────────────────
 
@@ -350,25 +396,24 @@ export default function CategoriasPage() {
                       label: "Ver detalhes",
                       icon: Eye,
                       onClick: () => {
-                        const found = categories?.content.find(
-                          (c) => c.id === cat.id
-                        );
-
-                        console.log(found);
+                        setDetailsCat(cat);
                       },
                     },
                     {
                       label: "Editar",
                       icon: Pencil,
                       onClick: () => {
-                        console.log("editar", cat.id);
+                        setEditingCat(cat);
                       },
                     },
                     {
                       label: "Excluir",
                       icon: Trash2,
                       danger: true,
-                      onClick: () => {},
+                      onClick: () => {
+                        setDeleteError(null);
+                        setDeletingCat(cat);
+                      },
                     },
                   ]}
                 />
@@ -429,17 +474,198 @@ export default function CategoriasPage() {
         </div>
       </div>
 
-      {/* modal */}
+      {/* modal criar */}
       {modalOpen && (
         <CategoryModal
+          title="Nova Categoria"
+          description="Preencha os dados abaixo para criar uma nova categoria."
+          submitLabel="Salvar Categoria"
           onClose={() => setModalOpen(false)}
           onSave={async () => {
             await fetchCategories();
           }}
         />
       )}
+
+      {/* modal editar */}
+      {editingCat && (
+        <CategoryModal
+          mode="edit"
+          categoryId={editingCat.id}
+          title="Editar Categoria"
+          description="Altere os dados abaixo para atualizar a categoria."
+          submitLabel="Salvar alterações"
+          initialData={{
+            name: editingCat.name,
+            kind: editingCat.kind,
+            icon: editingCat.icon,
+            description: editingCat.description,
+            color: editingCat.color,
+            status: editingCat.status,
+          }}
+          onClose={() => setEditingCat(null)}
+          onSave={async () => {
+            await fetchCategories();
+          }}
+        />
+      )}
+
+      {/* modal detalhes */}
+      {detailsCat && (
+        <AppDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) {
+              setDetailsCat(null);
+            }
+          }}
+          title="Detalhes da categoria"
+          description={detailsCat.name}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setDetailsCat(null)}
+                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+              >
+                Voltar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError(null);
+                  setDeletingCat(detailsCat);
+                }}
+                className="px-5 py-2 rounded-lg border border-red-300 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+              >
+                Excluir
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingCat(detailsCat);
+                  setDetailsCat(null);
+                }}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
+                style={{
+                  backgroundColor: "var(--color-interactive)",
+                }}
+              >
+                Editar
+              </button>
+            </>
+          }
+        >
+          <div className="flex items-center gap-3 pb-1">
+            <CategoryIcon
+              icon={detailsCat.icon}
+              color={detailsCat.color}
+            />
+
+            <div>
+              <p className="text-base font-semibold text-gray-900">
+                {detailsCat.name}
+              </p>
+
+              <p className="text-xs text-gray-400">
+                {detailsCat.kind === "INCOME" ? "Receita" : "Despesa"}
+              </p>
+            </div>
+          </div>
+
+          <DetailRow
+            label="Cor"
+            value={detailsCat.color}
+          />
+
+          <DetailRow
+            label="Descrição"
+            value={detailsCat.description || "—"}
+          />
+
+          <DetailRow
+            label="Status"
+            value={detailsCat.status ? "Ativa" : "Inativa"}
+          />
+        </AppDialog>
+      )}
+
+      {/* modal excluir */}
+      {deletingCat && (
+        <AppDialog
+          open
+          onOpenChange={(next) => {
+            if (!next && !deleting) {
+              setDeletingCat(null);
+            }
+          }}
+          title="Excluir categoria?"
+          description="Esta ação não pode ser desfeita."
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!deleting) {
+                    setDeletingCat(null);
+                  }
+                }}
+                disabled={deleting}
+                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteCategory}
+                disabled={deleting}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? "Excluindo..." : "Excluir"}
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-700">
+            Tem certeza que deseja excluir a categoria{" "}
+            <strong>&quot;{deletingCat.name}&quot;</strong>?
+          </p>
+
+          {deleteError && (
+            <p
+              role="alert"
+              className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+            >
+              {deleteError}
+            </p>
+          )}
+        </AppDialog>
+      )}
     </div>
-    
+
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
+      <span className="text-sm text-gray-400">
+        {label}
+      </span>
+
+      <span className="text-sm font-medium text-gray-800 text-right">
+        {value}
+      </span>
+    </div>
   );
 }
 
