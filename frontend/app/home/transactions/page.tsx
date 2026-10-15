@@ -106,17 +106,25 @@ function FilterSelect({
   value,
   onChange,
   children,
+  fullWidth = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  fullWidth?: boolean;
 }) {
   return (
-    <div className="relative">
+    <div
+      className={`relative min-w-0 ${
+        fullWidth ? "w-full sm:w-auto" : ""
+      }`}
+    >
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 cursor-pointer"
+        className={`${
+          fullWidth ? "w-full sm:w-auto" : ""
+        } appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 cursor-pointer`}
       >
         {children}
       </select>
@@ -620,6 +628,7 @@ export default function TransactionsPage() {
         </div>
 
         <FilterSelect
+          fullWidth
           value={filterCategory}
           onChange={(v) => {
             setFilterCategory(v);
@@ -634,6 +643,7 @@ export default function TransactionsPage() {
         </FilterSelect>
 
         <FilterSelect
+          fullWidth
           value={filterkind}
           onChange={(v) => {
             setFilterkind(v);
@@ -654,6 +664,7 @@ export default function TransactionsPage() {
         </FilterSelect>
 
         <FilterSelect
+          fullWidth
           value={filterPayment}
           onChange={(v) => {
             setFilterPayment(v);
@@ -684,9 +695,9 @@ export default function TransactionsPage() {
 
         {/* Topo */}
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-b border-gray-100">
 
-          <div>
+          <div className="min-w-0">
 
             <h2 className="text-base font-semibold text-gray-900">
               Lista de Transações
@@ -704,9 +715,9 @@ export default function TransactionsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
 
-            <span>
+            <span className="shrink-0">
               Ordenar por:
             </span>
 
@@ -941,9 +952,9 @@ export default function TransactionsPage() {
 
         {/* Paginação */}
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4 border-t border-gray-100">
 
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-400 min-w-0">
 
             Mostrando{" "}
 

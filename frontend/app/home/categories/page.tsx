@@ -139,17 +139,25 @@ function FilterSelect({
   value,
   onChange,
   children,
+  fullWidth = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  fullWidth?: boolean;
 }) {
   return (
-    <div className="relative">
+    <div
+      className={`relative min-w-0 ${
+        fullWidth ? "w-full sm:w-auto" : ""
+      }`}
+    >
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700"
+        className={`${
+          fullWidth ? "w-full sm:w-auto" : ""
+        } appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700`}
       >
         {children}
       </select>
@@ -348,7 +356,7 @@ export default function CategoriasPage() {
           />
         </div>
 
-        <FilterSelect value="" onChange={() => {}}>
+        <FilterSelect fullWidth value="" onChange={() => {}}>
           <option>Todos os tipos</option>
         </FilterSelect>
 
