@@ -57,7 +57,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             value = """
                 SELECT t
                 FROM Transaction t
-                JOIN FETCH t.category
+                LEFT JOIN FETCH t.category
                 WHERE t.user.id = :userId
                 ORDER BY t.occurredAt DESC
             """,
@@ -75,7 +75,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             value = """
                 SELECT t
                 FROM Transaction t
-                JOIN FETCH t.category
+                LEFT JOIN FETCH t.category
                 WHERE t.user.id = :userId
                 AND t.occurredAt BETWEEN :start AND :end
                 ORDER BY t.occurredAt DESC
@@ -168,6 +168,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             @Param("end") LocalDate end);
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+
+    boolean existsByUserIdAndCategory_Id(UUID userId, UUID categoryId);
 
     boolean existsByUserIdAndAmountAndDescriptionAndOccurredAtAndPaymentMethodAndCategory_IdAndCreatedAtAfter(
             UUID userId,

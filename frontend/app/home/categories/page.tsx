@@ -240,6 +240,15 @@ export default function CategoriasPage() {
       );
 
       if (!res.ok) {
+        if (res.status === 409) {
+          const data = await res.json().catch(() => null);
+          const message =
+            data?.errors?.[0] ??
+            "Categoria possui vínculos e não pode ser excluída.";
+
+          throw new Error(message);
+        }
+
         throw new Error(
           `Falha ao excluir categoria (${res.status})`
         );
@@ -258,7 +267,9 @@ export default function CategoriasPage() {
       );
 
       setDeleteError(
-        "Não foi possível excluir. Tente novamente."
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir. Tente novamente."
       );
 
     } finally {

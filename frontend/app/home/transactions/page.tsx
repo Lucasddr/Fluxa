@@ -41,13 +41,13 @@ type Transaction = {
   id: string;
   amount: number;
   title: string;
+  category: string | null;
+  categoryColor: string | null;
   subtitle: string;
   kind: "EXPENSE" | "INCOME";
   date: string;
-  category: string;
   paymentMethod: string;
   dateLabel: string;
-  categoryColor: string;
 };
 
 type PageResponse<T> = {
@@ -163,19 +163,22 @@ function CategoryBadge({
   name,
   color,
 }: {
-  name: string;
-  color: string;
+  name: string | null;
+  color: string | null;
 }) {
+  const safeColor = color ?? "#9CA3AF";
+  const safeName = name ?? "Sem categoria";
+
   return (
     <span
       className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
       style={{
-        backgroundColor: color + "18",
-        color,
-        borderColor: color + "40",
+        backgroundColor: safeColor + "18",
+        color: safeColor,
+        borderColor: safeColor + "40",
       }}
     >
-      {name}
+      {safeName}
     </span>
   );
 }

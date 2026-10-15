@@ -97,4 +97,15 @@ public class GlobalExceptionHandler {
                         ex.getMessage().lines().toList()
                 ));
     }
+
+    @ExceptionHandler(CategoryInUseException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCategoryInUseException(CategoryInUseException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
 }

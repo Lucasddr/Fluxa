@@ -6,9 +6,11 @@ import com.fluxa.backend.domain.enums.CategoryKind;
 import com.fluxa.backend.dto.request.update.UpdateCategoryDTO;
 import com.fluxa.backend.dto.response.CategoryResponseDTO;
 import com.fluxa.backend.dto.request.create.CreateCategoryDTO;
+import com.fluxa.backend.exception.CategoryInUseException;
 import com.fluxa.backend.exception.CategoryNotFoundException;
 import com.fluxa.backend.projection.CategoriesSelectProjection;
 import com.fluxa.backend.repository.CategoryRepository;
+import com.fluxa.backend.repository.TransactionRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.context.UserContext;
 import com.fluxa.backend.util.PageableUtils;
@@ -30,6 +32,7 @@ public class CategoriesService {
 
     public final CategoryRepository categoryRepository;
     public final UserRepository userRepository;
+    public final TransactionRepository transactionRepository;
 
     public void createCategory(CreateCategoryDTO dto){
 
@@ -126,6 +129,16 @@ public class CategoriesService {
 
         Category category = categoryRepository.findByIdAndUserId(categoryId, userId)
                 .orElseThrow(CategoryNotFoundException::new);
+
+        boolean inUse = transactionRepository.existsByUserIdAndCategory_Id(
+                userId, category.getId());
+
+        if (inUse) {
+            log.warn("[CATEGORY] delete blocked, category in use | user: {} | categoryId: {}",
+                    userId, categoryId);
+
+            throw new CategoryInUseException();
+        }
 
         categoryRepository.delete(category);
     }

@@ -131,6 +131,7 @@ public class TransactionService {
         return transactionRepository.findLastTransactions(userId, safePageable)
                         .map(transaction -> {
                             String dataLabel = Formatters.formatRelativeDate(transaction.getOccurredAt());
+                            Category category = transaction.getCategory();
                             return new ListTransactionResponseDTO(
                                     transaction.getId(),
                                     transaction.getAmount(),
@@ -138,10 +139,10 @@ public class TransactionService {
                                     transaction.getObservation(),
                                     transaction.getKind(),
                                     transaction.getOccurredAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                                    transaction.getCategory().getName(),
+                                    category != null ? category.getName() : null,
                                     transaction.getPaymentMethod(),
                                     dataLabel,
-                                    transaction.getCategory().getColor()
+                                    category != null ? category.getColor() : null
                             );
                         });
     }
