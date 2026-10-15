@@ -25,6 +25,7 @@ import {
   Utensils,
   Trash2,
   Eye,
+  Power,
 } from "lucide-react";
 
 import MenuListModal from "@/app/components/modals/MenuListmodal";
@@ -35,6 +36,7 @@ import FormAlert from "@/app/components/ui/FormAlert";
 import {
   deleteCategory,
   listCategories,
+  updateCategory,
 } from "@/services/categories";
 
 // ─── types ─────────────────────────────────────────────────────
@@ -284,6 +286,31 @@ export default function CategoriasPage() {
     fetchCategories();
   }, [fetchCategories]);
 
+  async function handleToggleCategory(cat: Category) {
+    try {
+      const res = await updateCategory(cat.id, {
+        name: cat.name,
+        icon: cat.icon,
+        description: cat.description,
+        color: cat.color,
+        status: !cat.status,
+      });
+
+      if (!res.ok) {
+        throw new Error(
+          "Não foi possível atualizar o status. Tente novamente."
+        );
+      }
+
+      await fetchCategories();
+    } catch (error) {
+      console.error(
+        "Erro ao atualizar categoria:",
+        error
+      );
+    }
+  }
+
   function CatMenu({ cat }: { cat: Category }) {
     return (
       <MenuListModal
@@ -309,6 +336,13 @@ export default function CategoriasPage() {
             icon: Pencil,
             onClick: () => {
               setEditingCat(cat);
+            },
+          },
+          {
+            label: cat.status ? "Desativar" : "Ativar",
+            icon: cat.status ? Power : Power,
+            onClick: () => {
+              handleToggleCategory(cat);
             },
           },
           {
