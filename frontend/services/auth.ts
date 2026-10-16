@@ -36,3 +36,14 @@ export function logout(): Promise<Response> {
 export function me(): Promise<Response> {
   return api("/auth/me");
 }
+
+export function forgotPassword(email: string): Promise<Response> {
+  return api("/auth/forgot-password", json("POST", { email }));
+}
+
+export function resetPassword(
+  token: string,
+  password: string
+): Promise<Response> {
+  return api("/auth/reset-password", json("POST", { token, password }));
+}

@@ -13,6 +13,8 @@ const NO_REFRESH_PATHS = [
     "/auth/register",
     "/auth/registerAdmin",
     "/auth/refresh",
+    "/auth/forgot-password",
+    "/auth/reset-password",
 ];
 
 // Promise compartilhada do refresh em andamento (4.5b):

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, me } from "@/services/auth";
 
@@ -166,6 +167,15 @@ export default function LoginPage() {
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
+
+          <p className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-teal-700 hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
 
         </form>
       </div>
