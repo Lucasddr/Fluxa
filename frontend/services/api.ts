@@ -15,6 +15,8 @@ const NO_REFRESH_PATHS = [
     "/auth/refresh",
     "/auth/forgot-password",
     "/auth/reset-password",
+    "/auth/send-verification",
+    "/auth/verify-email",
 ];
 
 // Promise compartilhada do refresh em andamento (4.5b):
@@ -22,8 +24,9 @@ const NO_REFRESH_PATHS = [
 let refreshPromise: Promise<boolean> | null = null;
 
 function shouldBypassRefresh(path: string): boolean {
+    const clean = path.split("?")[0];
     return NO_REFRESH_PATHS.some(
-        (p) => path === p || path.startsWith(p + "/")
+        (p) => clean === p || clean.startsWith(p + "/")
     );
 }
 

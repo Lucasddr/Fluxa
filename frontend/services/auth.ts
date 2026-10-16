@@ -47,3 +47,11 @@ export function resetPassword(
 ): Promise<Response> {
   return api("/auth/reset-password", json("POST", { token, password }));
 }
+
+export function sendVerification(): Promise<Response> {
+  return api("/auth/send-verification", { method: "POST" });
+}
+
+export function verifyEmail(token: string): Promise<Response> {
+  return api(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+}
