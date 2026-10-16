@@ -77,6 +77,24 @@ public class RateLimitService {
         );
     }
 
+    public boolean isCreditPurchaseCreateAllowed(String ip) {
+        return tryConsume(
+                "credit-purchase-create:" + ip,
+                30,
+                30,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isInstallmentPayAllowed(String ip) {
+        return tryConsume(
+                "installment-pay:" + ip,
+                30,
+                30,
+                Duration.ofMinutes(1)
+        );
+    }
+
     public boolean tryConsume(String key, int capacity, int refillTokens, Duration refillDuration) {
 
         Bucket bucket = buckets.computeIfAbsent(

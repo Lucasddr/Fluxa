@@ -108,4 +108,81 @@ public class GlobalExceptionHandler {
                         ex.getMessage().lines().toList()
                 ));
     }
+
+    @ExceptionHandler(CreditPurchaseNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCreditPurchaseNotFoundException(CreditPurchaseNotFoundException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InstallmentNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInstallmentNotFoundException(InstallmentNotFoundException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InstallmentAlreadyPaidException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInstallmentAlreadyPaidException(InstallmentAlreadyPaidException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InvalidInstallmentsSumException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidInstallmentsSumException(InvalidInstallmentsSumException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InvalidCategoryKindException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidCategoryKindException(InvalidCategoryKindException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InvalidInstallmentOperationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidInstallmentOperationException(InvalidInstallmentOperationException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(CategoryInactiveException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCategoryInactiveException(CategoryInactiveException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
 }

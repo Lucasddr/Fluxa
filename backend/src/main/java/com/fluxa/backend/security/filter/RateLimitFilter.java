@@ -90,6 +90,25 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         }
 
+        if (uri.equals("/credit-purchases/create")
+                && "POST".equalsIgnoreCase(request.getMethod())
+                && !rateLimitService.isCreditPurchaseCreateAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.startsWith("/installments/")
+                && uri.endsWith("/pay")
+                && "POST".equalsIgnoreCase(request.getMethod())
+                && !rateLimitService.isInstallmentPayAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
         filterChain.doFilter(request, response);
     }
 
