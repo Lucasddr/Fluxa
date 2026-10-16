@@ -32,6 +32,17 @@ public interface InstallmentRepository extends JpaRepository<Installment, UUID> 
             @Param("end") LocalDate end
     );
 
+    @Query("""
+    SELECT COALESCE(SUM(i.amount), 0)
+    FROM Installment i
+    WHERE i.account.user.id = :userId
+    AND i.status IN ('PENDING', 'OVERDUE')
+    AND i.dueDate <= :horizonEnd
+    """)
+    BigDecimal getTotalPayableForward(
+            @Param("userId") UUID userId,
+            @Param("horizonEnd") LocalDate horizonEnd);
+
     Optional<Installment> findByIdAndCreditPurchase_UserId(UUID id, UUID userId);
 
     List<Installment> findByCreditPurchase_IdAndCreditPurchase_UserIdOrderByNumberAsc(

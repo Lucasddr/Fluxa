@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +35,8 @@ public class DashboardService {
         String accountName = accountRepository.findAccountNameByUserId(userId);
         BigDecimal entry = transactionRepository.getTotalIncome(userId, dto.start(), dto.end());
         BigDecimal expenses = transactionRepository.getTotalExpense(userId, dto.start(), dto.end());
-        BigDecimal payableAccounts = installmentRepository.getTotalPayableAccounts(userId, dto.start(), dto.end());
+        BigDecimal payableAccounts = installmentRepository.getTotalPayableForward(
+                userId, horizonEnd(dto));
         BigDecimal montlhyBalance = entry.subtract(expenses).subtract(payableAccounts);
 
         return new BuildDashboardResponseDTO(
@@ -45,5 +48,11 @@ public class DashboardService {
                 montlhyBalance
 
         );
+    }
+
+    private static LocalDate horizonEnd(DashboardDTO dto) {
+        long days = ChronoUnit.DAYS.between(dto.start(), dto.end()) + 1;
+
+        return LocalDate.now().plusDays(days - 1);
     }
 }

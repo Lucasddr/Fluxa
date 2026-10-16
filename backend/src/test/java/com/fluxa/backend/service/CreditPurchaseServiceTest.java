@@ -326,13 +326,13 @@ class CreditPurchaseServiceTest {
     }
 
     @Test
-    void dashboardPayableFollowsPeriodWindow() {
-        var future = new CreateCreditPurchaseDTO(
-                "Futura", "Loja", new BigDecimal("100.00"),
+    void dashboardPayableUsesForwardHorizon() {
+        var far = new CreateCreditPurchaseDTO(
+                "Longe", "Loja", new BigDecimal("100.00"),
                 LocalDate.now(), 2, LocalDate.now().plusDays(60),
                 expenseCategoryId, null, null);
 
-        creditPurchaseService.createCreditPurchase(future);
+        creditPurchaseService.createCreditPurchase(far);
 
         var window = new com.fluxa.backend.dto.request.DashboardDTO(
                 LocalDate.now().minusDays(29), LocalDate.now());
@@ -347,9 +347,9 @@ class CreditPurchaseServiceTest {
 
         UUID nearId = creditPurchaseService.createCreditPurchase(near);
 
-        var inWindow = dashboardService.buildDashboardDTO(window);
+        var inHorizon = dashboardService.buildDashboardDTO(window);
 
-        assertEquals(new BigDecimal("30.00"), inWindow.accountsPayable());
+        assertEquals(new BigDecimal("60.00"), inHorizon.accountsPayable());
 
         UUID installmentId = creditPurchaseService
                 .getCreditPurchaseDetails(nearId).installments().get(0).id();
@@ -358,7 +358,7 @@ class CreditPurchaseServiceTest {
 
         var afterPay = dashboardService.buildDashboardDTO(window);
 
-        assertEquals(new BigDecimal("0"), afterPay.accountsPayable());
+        assertEquals(new BigDecimal("30.00"), afterPay.accountsPayable());
         assertEquals(new BigDecimal("30.00"), afterPay.expenses());
     }
 
