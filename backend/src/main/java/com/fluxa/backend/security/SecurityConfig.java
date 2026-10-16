@@ -1,9 +1,11 @@
 package com.fluxa.backend.security;
 
+import com.fluxa.backend.dto.response.ErrorResponseDTO;
 import com.fluxa.backend.security.filter.JwtFilter;
 import com.fluxa.backend.security.filter.RateLimitFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +31,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final ObjectMapper objectMapper;
 
     @Value("${cors.allowed.origins}")
     private String allowedOrigins;
@@ -36,6 +39,24 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+    }
+
+    private void writeError(
+            HttpServletResponse response,
+            int status,
+            String message
+    ) throws java.io.IOException {
+        ErrorResponseDTO error = new ErrorResponseDTO(
+                status,
+                List.of(message)
+        );
+
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(
+                objectMapper.writeValueAsString(error)
+        );
     }
 
     @Bean
@@ -64,14 +85,12 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Não autenticado\"}");
+                            writeError(response, HttpServletResponse.SC_UNAUTHORIZED,
+                                    "Não autenticado");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"Acesso negado\"}");
+                            writeError(response, HttpServletResponse.SC_FORBIDDEN,
+                                    "Acesso negado");
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
