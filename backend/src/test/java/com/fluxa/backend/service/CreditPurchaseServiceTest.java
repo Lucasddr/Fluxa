@@ -363,6 +363,18 @@ class CreditPurchaseServiceTest {
     }
 
     @Test
+    void oversizedIdempotencyKeyIsRejectedAsBadRequest() {
+        UUID purchaseId = creditPurchaseService.createCreditPurchase(equalDto());
+
+        UUID installmentId = creditPurchaseService
+                .getCreditPurchaseDetails(purchaseId).installments().get(0).id();
+
+        assertThrows(com.fluxa.backend.exception.InvalidInstallmentOperationException.class,
+                () -> installmentService.payInstallment(
+                        installmentId, "1234567890-1234567890-1234567890-1234567890"));
+    }
+
+    @Test
     void postponingOverdueRestoresPending() {
         var dto = new CreateCreditPurchaseDTO(
                 "Antiga", "Loja", new BigDecimal("50.00"),

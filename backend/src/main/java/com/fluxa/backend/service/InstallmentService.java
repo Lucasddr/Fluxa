@@ -106,6 +106,11 @@ public class InstallmentService {
                 ? idempotencyKey
                 : null;
 
+        if (key != null && key.length() > 36) {
+            throw new InvalidInstallmentOperationException(
+                    "Idempotency-Key inválida (máximo 36 caracteres)");
+        }
+
         if (key != null && transactionRepository
                 .findByUserIdAndIdempotencyKey(userId, key)
                 .isPresent()) {

@@ -260,6 +260,23 @@ export default function ContasPage() {
 
   // ─── pay ─────────────────────────────────────────────────────
 
+  function newIdempotencyKey(): string {
+    if (
+      typeof crypto !== "undefined" &&
+      "randomUUID" in crypto
+    ) {
+      return crypto.randomUUID();
+    }
+
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+      }
+    );
+  }
+
   async function handlePay(installment: Installment) {
     if (payingId) {
       return;
@@ -268,12 +285,10 @@ export default function ContasPage() {
     setPayingId(installment.id);
 
     try {
-      const idempotencyKey =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${installment.id}`;
-
-      const res = await payInstallment(installment.id, idempotencyKey);
+      const res = await payInstallment(
+        installment.id,
+        newIdempotencyKey()
+      );
 
       if (!res.ok) {
         if (res.status === 409) {

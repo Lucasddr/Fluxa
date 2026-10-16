@@ -10,6 +10,7 @@ import com.fluxa.backend.dto.response.DashboardRecentTransactionResponseDTO;
 import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
 import com.fluxa.backend.dto.response.TransactionDetailsResponseDTO;
 import com.fluxa.backend.exception.CategoryNotFoundException;
+import com.fluxa.backend.exception.InvalidInstallmentOperationException;
 import com.fluxa.backend.exception.TransactionNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
 import com.fluxa.backend.repository.CategoryRepository;
@@ -49,6 +50,11 @@ public class TransactionService {
         String key = idempotencyKey != null && !idempotencyKey.isBlank()
                 ? idempotencyKey
                 : null;
+
+        if (key != null && key.length() > 36) {
+            throw new InvalidInstallmentOperationException(
+                    "Idempotency-Key inválida (máximo 36 caracteres)");
+        }
 
         if (key != null && transactionRepository
                 .findByUserIdAndIdempotencyKey(userId, key)
