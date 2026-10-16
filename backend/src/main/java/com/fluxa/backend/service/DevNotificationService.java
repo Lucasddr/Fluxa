@@ -14,4 +14,10 @@ public class DevNotificationService implements NotificationService {
         this.lastToken = rawToken;
         log.info("[DEV] Password reset for {}: token={}", email, rawToken);
     }
+
+    @Override
+    public void sendEmailVerification(String email, String rawToken) {
+        this.lastToken = rawToken;
+        log.info("[DEV] Email verification for {}: token={}", email, rawToken);
+    }
 }

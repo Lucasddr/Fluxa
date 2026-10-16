@@ -45,4 +45,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
+    @Column(name = "verified", nullable = false)
+    private boolean verified = false;
+
 }

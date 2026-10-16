@@ -6,6 +6,7 @@ import com.fluxa.backend.dto.request.ForgotPasswordDTO;
 import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
 import com.fluxa.backend.dto.request.ResetPasswordDTO;
+import com.fluxa.backend.service.EmailVerificationService;
 import com.fluxa.backend.service.PasswordResetService;
 import com.fluxa.backend.service.RefreshTokenService;
 import com.fluxa.backend.service.AuthService;
@@ -32,6 +33,7 @@ public class AuthController {
     private final CookieService cookieService;
     private final RefreshTokenService refreshTokenService;
     private final PasswordResetService passwordResetService;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto){
@@ -155,6 +157,27 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "Senha redefinida com sucesso."
+        ));
+    }
+
+    @PostMapping("/send-verification")
+    public ResponseEntity<?> sendVerification() {
+
+        emailVerificationService.sendVerification();
+
+        return ResponseEntity.ok(Map.of(
+                "message", "E-mail de verificação enviado."
+        ));
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(
+            @RequestParam String token) {
+
+        emailVerificationService.verifyEmail(token);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "E-mail verificado com sucesso."
         ));
     }
 

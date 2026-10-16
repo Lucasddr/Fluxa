@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(("/auth/test")).hasRole("ADMIN")
                         .requestMatchers(("/auth/registerAdmin")).hasRole("ADMIN")
                         .requestMatchers("/auth/logout").authenticated()
+                        .requestMatchers("/auth/send-verification").authenticated()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
