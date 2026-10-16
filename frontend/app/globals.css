@@ -1,42 +1,105 @@
 @import "tailwindcss";
 
-:root {
-  --background: #F0F5F8;
-  --foreground: #171717;
+/* Quiet Ledger — token block. Every number in the UI traces back here.
+   Ratio 1.250 (major third). Space base 0.25rem. One radius. No shadows. */
 
-  --color-primary: #0f2d3f;
-  --color-interactive: #2E7FA8;
-  --color-surface-active: #CCDBE3;
-  --color-surface: #FFFFFF;
-  --color-border: #EDEDED;
-  --color-surface-secondary: #D4DDE3;
-  --color-text-secondary: #4A6A7D;
-  --color-alert: #e7000b;
-  --color-positive: #1BAF7A;  
-  --color-middle-alert: #FFBB28;
-  --color-neutral-alert: #0070ED; 
-  --color-text-primary: #000000;
+:root {
+  /* TYPE */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* COLOR — light (default) */
+  --paper: #faf9f7;
+  --surface: #ffffff;
+  --ink: #232326;
+  --ink-2: #5c5c60;
+  --ink-3: #9a9aa0;
+  --line: #e7e5e0;
+  --accent: #232326;
+  --accent-ink: #faf9f7;
+  --positive: #1f7a52;
+  --negative: #b3352b;
+  --warn: #b7791f;
+
+  /* FORM */
+  --radius: 0.75rem;
+  --border: 1px solid var(--line);
+  --shadow: none;
+
+  /* MOTION */
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --paper: #161618;
+  --surface: #1e1e21;
+  --ink: #f0efeb;
+  --ink-2: #b8b7b3;
+  --ink-3: #7e7e85;
+  --line: #2d2d32;
+  --accent: #ecebe6;
+  --accent-ink: #161618;
+  --positive: #4cc38a;
+  --negative: #e0685c;
+  --warn: #d9a441;
+
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warn: var(--warn);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #F2F2F2;
-  }
+/* Legacy aliases — removidos ao fim do refactor */
+:root {
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --color-primary: #232326;
+  --color-interactive: var(--ink-2);
+  --color-surface-active: var(--line);
+  --color-surface-secondary: var(--line);
+  --color-text-secondary: var(--ink-2);
+  --color-alert: var(--negative);
+  --color-positive: var(--positive);
+  --color-middle-alert: var(--warn);
+  --color-neutral-alert: var(--ink-2);
+  --color-text-primary: var(--ink);
+  --color-border: var(--line);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Focus — never suppressed, Quiet Ledger style */
+:focus-visible {
+  outline: 2px solid var(--ink-2);
+  outline-offset: 2px;
 }
 
 /* Chrome, Edge, Safari */
@@ -49,10 +112,6 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border); /* cinza suave */
+  background: var(--line);
   border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-surface-secondary);
 }

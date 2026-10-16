@@ -5,31 +5,29 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import type { NavItem } from "./types";
 
 export default function NavLink({
-href,
-slug,
-icon: Icon,
-label,
+  href,
+  slug,
+  icon: Icon,
+  label,
 }: NavItem) {
-const segment = useSelectedLayoutSegment();
+  const segment = useSelectedLayoutSegment();
 
-const isActive = slug
-    ? segment === slug
-    : segment === null;
+  const isActive = slug ? segment === slug : segment === null;
 
-return (
+  return (
     <Link
-    href={href}
-    className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg transition
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      className={`flex items-center gap-3 px-3 min-h-[44px] rounded-[var(--radius)] text-[15px] transition-colors duration-[var(--dur-fast)]
         ${
-        isActive
-            ? "bg-(--color-surface-active) text-(--color-interactive)"
-            : "text-white hover:bg-(--color-surface-active) hover:text-(--color-interactive)"
+          isActive
+            ? "bg-ink text-paper font-medium"
+            : "text-ink-2 hover:text-ink hover:bg-surface"
         }
-    `}
+      `}
     >
-    {Icon && <Icon className="w-4 h-4" />}
-    {label}
+      {Icon && <Icon className="w-[18px] h-[18px] shrink-0" aria-hidden />}
+      {label}
     </Link>
-);
+  );
 }
