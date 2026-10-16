@@ -1,5 +1,17 @@
 # Fluxa --- Documento de Requisitos
 
+> ### Status de implementação (2026-10-16)
+>
+> Requisitos **atendidos**: autenticação (4.1), dashboard com período (4.2), registro e
+> visualização de transações (4.3/4.5), categorias.
+> Requisitos **NÃO atendidos (MVP)**:
+> - **4.4 Compras no crédito parceladas** — entidades existem, mas **sem CRUD, endpoints ou UI**
+>   (é o diferencial do produto; P0 no roadmap).
+> - **4.2 Saldo Comprometido / Saldo Disponível** — o dashboard exibe entradas/saídas/saldo do mês,
+>   mas o "Contas a Pagar" só aparece via parcelas que ainda não podem ser criadas pelo usuário.
+>
+> Pendências e priorização: **`docs/ROADMAP-FECHAMENTO-PENDENCIAS.md`**.
+
 ## 1. Visão Geral
 
 O Fluxa é um sistema de controle financeiro pessoal com foco em fornecer

@@ -1,5 +1,21 @@
 # Fluxa — Banco de Dados (V2: Ledger + Saldo Materializado)
 
+> ### ⚠️ PROPOSTA SUPERADA — não reflete o código atual (2026-10-16)
+>
+> Esta era uma **proposta** de manter `accounts.current_balance` materializado (saldo rápido de
+> leitura). A decisão final foi o oposto: a migration **V3 removeu as colunas de saldo**
+> (`current_balance`/`start_balance`) e a view, e o saldo passou a ser calculado **ao vivo por query**
+> sobre `transactions` + parcelas pendentes. Ver **ADR-001** em `docs/ARCHITECTURE-DECISIONS.md`.
+>
+> Divergências conhecidas deste documento vs. o código real:
+> - `accounts` **não tem** `current_balance`/`opening_balance` (removidos na V3);
+> - saldo = `getTotalIncome − getTotalExpense` + `getTotalPayableAccounts` (parcelas PENDING);
+> - nomes/tipos de colunas diferem das migrations (ex.: `kind`, não `type`; `occurred_at`);
+> - `installments` usa `status` `PENDING/PAID/CANCELED` no schema (o enum Java tinha `OVERDUE` —
+>   mismatch a alinhar, ver roadmap P0-4).
+>
+> Use como referência: as migrations em `backend/src/main/resources/db/migration/` e o ADR-001.
+
 ## 1. Objetivo desta revisão
 
 Você levantou um ponto correto: **recalcular saldo sempre via `SUM(transactions)` pode ficar caro** conforme o sistema cresce.
