@@ -1,5 +1,5 @@
 
-import { ChartPie, ArrowLeftRight, Tag } from "lucide-react";
+import { ChartPie, ArrowLeftRight, Tag, CreditCard } from "lucide-react";
 import type { NavItem } from "./types";
 
 export const navItems : NavItem[] = [ 
@@ -20,5 +20,11 @@ export const navItems : NavItem[] = [
         slug: "categories", 
         icon: Tag,
         label: "Categorias"
+    },
+    {
+        href: "/home/accounts",
+        slug: "accounts", 
+        icon: CreditCard,
+        label: "Contas"
     },
 ]
