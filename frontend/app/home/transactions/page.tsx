@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -24,6 +24,7 @@ import MenuListModal from "@/app/components/modals/MenuListmodal";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import DetailRow from "@/app/components/ui/DetailRow";
+import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
 import Skeleton from "@/app/components/ui/Skeleton";
 
@@ -206,6 +207,11 @@ export default function TransactionsPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [loaded, setLoaded] = useState(false);
+
+  const [listError, setListError] =
+    useState<string | null>(null);
+
   const [search, setSearch] =
     useState("");
 
@@ -277,19 +283,25 @@ export default function TransactionsPage() {
 
   // ─── fetch ────────────────────────────────────────────────────────────────
 
-  async function fetchTransactions() {
+  const fetchTransactions = useCallback(async () => {
 
     try {
 
       setLoading(true);
+      setListError(null);
 
       const response = await listTransactions();
+
+      if (!response.ok) {
+        throw new HttpError(response.status);
+      }
 
       const data:
         PageResponse<Transaction> =
         await response.json();
 
       setTransactions(data.content);
+      setLoaded(true);
 
     } catch (error) {
 
@@ -298,17 +310,25 @@ export default function TransactionsPage() {
         error
       );
 
+      const message =
+        error instanceof HttpError
+          ? friendlyHttpError(error.status)
+          : "Não foi possível carregar as transações. Tente novamente.";
+
+      setListError(message);
+      toast(message, "error");
+
     } finally {
 
       setLoading(false);
     }
-  }
+  }, [toast]);
 
   // ─── load inicial ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [fetchTransactions]);
 
   // ─── filtros ──────────────────────────────────────────────────────────────
 
@@ -809,6 +829,13 @@ export default function TransactionsPage() {
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
           </div>
+
+        ) : listError && !loaded ? (
+
+          <ErrorState
+            message={listError}
+            onRetry={fetchTransactions}
+          />
 
         ) : paginated.length === 0 ? (
 

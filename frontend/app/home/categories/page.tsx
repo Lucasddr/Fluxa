@@ -32,15 +32,16 @@ import MenuListModal from "@/app/components/modals/MenuListmodal";
 import CategoryModal from "@/app/components/modals/CategoryModal";
 import AppDialog from "@/app/components/ui/Dialog";
 import DetailRow from "@/app/components/ui/DetailRow";
+import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
 import Skeleton from "@/app/components/ui/Skeleton";
+import { useToast } from "@/app/components/ui/Toaster";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
   deleteCategory,
   listCategories,
   updateCategory,
 } from "@/services/categories";
-import { useToast } from "@/app/components/ui/Toaster";
-import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -181,6 +182,11 @@ export default function CategoriasPage() {
 
   const [loading, setLoading] = useState(true);
 
+  const [loaded, setLoaded] = useState(false);
+
+  const [listError, setListError] =
+    useState<string | null>(null);
+
   const [page, setPage] = useState(0);
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -206,6 +212,7 @@ export default function CategoriasPage() {
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
+      setListError(null);
 
       const response = await listCategories(
         page,
@@ -213,21 +220,30 @@ export default function CategoriasPage() {
       );
 
       if (!response.ok) {
-        throw new Error("Erro ao buscar categorias");
+        throw new HttpError(response.status);
       }
 
       const data: PageResponse<Category> =
         await response.json();
 
       setCategories(data);
+      setLoaded(true);
 
     } catch (error) {
       console.error("Erro ao buscar categorias:", error);
 
+      const message =
+        error instanceof HttpError
+          ? friendlyHttpError(error.status)
+          : "Não foi possível carregar as categorias. Tente novamente.";
+
+      setListError(message);
+      toast(message, "error");
+
     } finally {
       setLoading(false);
     }
-  }, [page, itemsPerPage]);
+  }, [page, itemsPerPage, toast]);
 
   // ─── delete ─────────────────────────────────────────────────
 
@@ -470,6 +486,11 @@ export default function CategoriasPage() {
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
           </div>
+        ) : listError && !loaded ? (
+          <ErrorState
+            message={listError}
+            onRetry={fetchCategories}
+          />
         ) : categories?.content.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-gray-400">
             Nenhuma categoria encontrada.
