@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# next.js auto-generated agent rules (recreated by `next dev`)
+AGENTS.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
