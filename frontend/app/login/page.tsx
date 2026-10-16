@@ -75,8 +75,12 @@ export default function LoginPage() {
 
       router.push("/home");
 
-    } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao concetar com o servidor");
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Erro ao conectar com o servidor"
+      );
     } finally {
       setLoading(false);
     }

@@ -85,8 +85,12 @@ export default function RegisterPage() {
         router.push("/login");
       }, 1500);
 
-    } catch (err: any) {
-      setErrorMessage(err.message);
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Erro ao conectar com o servidor"
+      );
     } finally {
       setLoading(false);
     }
