@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { register } from "@/services/auth";
+import ThemeToggle from "@/app/components/ui/ThemeToggle";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function RegisterPage() {
         password: password.trim(),
       });
 
-      // 🔥 leitura segura da resposta
+      // leitura segura da resposta
       const text = await res.text();
 
       let data = null;
@@ -96,149 +97,146 @@ export default function RegisterPage() {
     }
   }
 
+  const inputClass = (invalid: boolean) =>
+    `w-full mt-1.5 px-3.5 min-h-[48px] rounded-[var(--radius)] border bg-surface text-ink text-[15px] transition-colors duration-[var(--dur-fast)] focus:outline-none focus:border-ink-3 placeholder:text-ink-3 ${
+      invalid ? "border-negative" : "border-line"
+    }`;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-      <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg">
+    <div className="min-h-dvh flex flex-col bg-paper text-ink">
+      <div className="flex justify-end p-4">
+        <ThemeToggle />
+      </div>
 
-        <h1 className="text-3xl font-bold text-teal-900 text-center mb-6">
-          Criar conta
-        </h1>
+      <div className="flex-1 flex items-center justify-center px-4 pb-16">
+        <div className="w-full max-w-sm">
+          <p className="text-center text-[13px] text-ink-3 mb-2">
+            Fluxa
+          </p>
 
-        {/* ✅ SUCESSO */}
-        {success && (
-          <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-600 text-sm border border-green-200">
-            Conta criada com sucesso! Redirecionando...
-          </div>
-        )}
+          <h1 className="text-center text-3xl font-light tracking-tight mb-8">
+            Criar conta
+          </h1>
 
-        {/* ❌ ERRO */}
-        {errorMessage && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
-            {errorMessage}
-          </div>
-        )}
+          {success && (
+            <div
+              role="status"
+              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-positive/40 text-positive text-sm"
+            >
+              Conta criada com sucesso! Redirecionando...
+            </div>
+          )}
 
-        <form onSubmit={handleRegister} className="space-y-5">
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-negative/40 text-negative text-sm"
+            >
+              {errorMessage}
+            </div>
+          )}
 
-          {/* NOME */}
-          <div>
-            <label className="text-sm font-medium text-teal-900">
-              Nome
-            </label>
+          <form onSubmit={handleRegister} className="flex flex-col gap-5" noValidate>
+            <div>
+              <label htmlFor="register-name" className="text-sm text-ink-2">
+                Nome
+              </label>
 
-            <input
-              type="text"
-              value={name}
-              placeholder="Seu nome"
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => markTouched("name")}
-              className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                focus:outline-none focus:ring-2 transition
-                ${
-                  nameError
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-teal-200 focus:ring-teal-400"
-                }
-              `}
-            />
+              <input
+                id="register-name"
+                type="text"
+                autoComplete="name"
+                value={name}
+                placeholder="Seu nome"
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => markTouched("name")}
+                aria-invalid={nameError}
+                className={inputClass(nameError)}
+              />
 
-            {nameError && (
-              <p className="text-xs text-red-500 mt-1">
-                nome muito curto
-              </p>
-            )}
-          </div>
+              {nameError && (
+                <p className="text-xs text-negative mt-1.5">
+                  Nome muito curto
+                </p>
+              )}
+            </div>
 
-          {/* EMAIL */}
-          <div>
-            <label className="text-sm font-medium text-teal-900">
-              Email
-            </label>
+            <div>
+              <label htmlFor="register-email" className="text-sm text-ink-2">
+                Email
+              </label>
 
-            <input
-              type="email"
-              value={email}
-              placeholder="email@exemplo.com"
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => markTouched("email")}
-              className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                focus:outline-none focus:ring-2 transition
-                ${
-                  emailError
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-teal-200 focus:ring-teal-400"
-                }
-              `}
-            />
+              <input
+                id="register-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                placeholder="email@exemplo.com"
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => markTouched("email")}
+                aria-invalid={emailError}
+                className={inputClass(emailError)}
+              />
 
-            {emailError && (
-              <p className="text-xs text-red-500 mt-1">
-                email inválido
-              </p>
-            )}
-          </div>
+              {emailError && (
+                <p className="text-xs text-negative mt-1.5">
+                  Email inválido
+                </p>
+              )}
+            </div>
 
-          {/* SENHA */}
-          <div>
-            <label className="text-sm font-medium text-teal-900">
-              Senha
-            </label>
+            <div>
+              <label htmlFor="register-password" className="text-sm text-ink-2">
+                Senha
+              </label>
 
-            <input
-              type="password"
-              value={password}
-              placeholder="••••••••"
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => markTouched("password")}
-              className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                focus:outline-none focus:ring-2 transition
-                ${
-                  passwordError
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-teal-200 focus:ring-teal-400"
-                }
-              `}
-            />
+              <input
+                id="register-password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                placeholder="Mínimo 8 caracteres"
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => markTouched("password")}
+                aria-invalid={passwordError}
+                className={inputClass(passwordError)}
+              />
 
-            {passwordError && (
-              <p className="text-xs text-red-500 mt-1">
-                a senha deve ter pelo menos 8 caracteres
-              </p>
-            )}
-          </div>
+              {passwordError && (
+                <p className="text-xs text-negative mt-1.5">
+                  A senha deve ter pelo menos 8 caracteres
+                </p>
+              )}
+            </div>
 
-          {/* BUTTON */}
-          <button
-            type="submit"
-            disabled={!formValid || loading || success}
-            className="w-full p-3 rounded-lg font-semibold text-white
-                      bg-teal-700 hover:bg-teal-800 transition
-                      disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Criando conta..." : "Criar conta"}
-          </button>
+            <button
+              type="submit"
+              disabled={!formValid || loading || success}
+              className="w-full min-h-[48px] rounded-[var(--radius)] font-medium text-[15px] text-accent-ink bg-accent transition-opacity duration-[var(--dur-fast)] disabled:opacity-40"
+            >
+              {loading ? "Criando conta..." : "Criar conta"}
+            </button>
+          </form>
 
-        </form>
+          <p className="mt-8 text-center text-sm text-ink-2">
+            Já tem uma conta?{" "}
+            <Link href="/login" className="text-ink font-medium hover:underline">
+              Entrar
+            </Link>
+          </p>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Já tem uma conta?{" "}
-          <Link href="/login" className="text-teal-700 font-medium hover:underline">
-            Entrar
-          </Link>
-        </p>
-
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Ao criar a conta você concorda com os{" "}
-          <Link href="/terms" className="hover:underline">
-            Termos
-          </Link>
-          {" "}e a{" "}
-          <Link href="/privacy" className="hover:underline">
-            Privacidade
-          </Link>
-          .
-        </p>
-
+          <p className="mt-6 text-center text-xs text-ink-3">
+            Ao criar a conta você concorda com os{" "}
+            <Link href="/terms" className="hover:underline">
+              Termos
+            </Link>
+            {" "}e a{" "}
+            <Link href="/privacy" className="hover:underline">
+              Privacidade
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     </div>
   );

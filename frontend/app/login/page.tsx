@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, me } from "@/services/auth";
+import ThemeToggle from "@/app/components/ui/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -86,112 +87,120 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass = (invalid: boolean) =>
+    `w-full mt-1.5 px-3.5 min-h-[48px] rounded-[var(--radius)] border bg-surface text-ink text-[15px] transition-colors duration-[var(--dur-fast)] focus:outline-none focus:border-ink-3 placeholder:text-ink-3 ${
+      invalid ? "border-negative" : "border-line"
+    }`;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-      <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg">
+    <div className="min-h-dvh flex flex-col bg-paper text-ink">
+      <div className="flex justify-end p-4">
+        <ThemeToggle />
+      </div>
 
-        <h1 className="text-3xl font-bold text-teal-900 text-center mb-6">
-          Login
-        </h1>
+      <div className="flex-1 flex items-center justify-center px-4 pb-16">
+        <div className="w-full max-w-sm">
+          <p className="text-center text-[13px] text-ink-3 mb-2">
+            Fluxa
+          </p>
 
-        {/* erro geral */}
-        {errorMessage && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
-            {errorMessage}
-          </div>
-        )}
+          <h1 className="text-center text-3xl font-light tracking-tight mb-8">
+            Entrar
+          </h1>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-
-          {/* EMAIL */}
-          <div>
-            <label className="text-sm font-medium text-teal-900">
-              Email
-            </label>
-
-            <input
-              type="email"
-              value={email}
-              placeholder="email@exemplo.com"
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => markTouched("email")}
-              className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                focus:outline-none focus:ring-2 transition
-                ${
-                  emailError
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-teal-200 focus:ring-teal-400"
-                }
-              `}
-            />
-
-            {emailError && (
-              <p className="text-xs text-red-500 mt-1">
-                email inválido
-              </p>
-            )}
-          </div>
-
-          {/* SENHA */}
-          <div>
-            <label className="text-sm font-medium text-teal-900">
-              Senha
-            </label>
-
-            <input
-              type="password"
-              value={password}
-              placeholder="••••••••"
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => markTouched("password")}
-              className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                focus:outline-none focus:ring-2 transition
-                ${
-                  passwordError
-                    ? "border-red-500 focus:ring-red-300"
-                    : "border-teal-200 focus:ring-teal-400"
-                }
-              `}
-            />
-
-            {passwordError && (
-              <p className="text-xs text-red-500 mt-1">
-                a senha deve ter pelo menos 8 caracteres
-              </p>
-            )}
-          </div>
-
-          {/* BUTTON */}
-          <button
-            type="submit"
-            disabled={!formValid || loading}
-            className="w-full p-3 rounded-lg font-semibold text-white
-                      bg-teal-700 hover:bg-teal-800 transition
-                        disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-
-          <p className="text-center">
-            <Link
-              href="/forgot-password"
-              className="text-sm font-medium text-teal-700 hover:underline"
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-negative/40 text-negative text-sm"
             >
-              Esqueci minha senha
+              {errorMessage}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5" noValidate>
+            <div>
+              <label htmlFor="login-email" className="text-sm text-ink-2">
+                Email
+              </label>
+
+              <input
+                id="login-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                placeholder="email@exemplo.com"
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => markTouched("email")}
+                aria-invalid={emailError}
+                className={inputClass(emailError)}
+              />
+
+              {emailError && (
+                <p className="text-xs text-negative mt-1.5">
+                  Email inválido
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="login-password" className="text-sm text-ink-2">
+                Senha
+              </label>
+
+              <input
+                id="login-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                placeholder="••••••••"
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => markTouched("password")}
+                aria-invalid={passwordError}
+                className={inputClass(passwordError)}
+              />
+
+              {passwordError && (
+                <p className="text-xs text-negative mt-1.5">
+                  A senha deve ter pelo menos 8 caracteres
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={!formValid || loading}
+              className="w-full min-h-[48px] rounded-[var(--radius)] font-medium text-[15px] text-accent-ink bg-accent transition-opacity duration-[var(--dur-fast)] disabled:opacity-40"
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+
+            <p className="text-center text-sm">
+              <Link
+                href="/forgot-password"
+                className="text-ink-2 hover:text-ink transition-colors"
+              >
+                Esqueci minha senha
+              </Link>
+            </p>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-ink-2">
+            Novo por aqui?{" "}
+            <Link href="/register" className="text-ink font-medium hover:underline">
+              Criar conta
             </Link>
           </p>
 
-        </form>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          <Link href="/privacy" className="hover:underline">
-            Privacidade
-          </Link>
-          {" · "}
-          <Link href="/terms" className="hover:underline">
-            Termos
-          </Link>
-        </p>
+          <p className="mt-6 text-center text-xs text-ink-3">
+            <Link href="/privacy" className="hover:underline">
+              Privacidade
+            </Link>
+            {" · "}
+            <Link href="/terms" className="hover:underline">
+              Termos
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
