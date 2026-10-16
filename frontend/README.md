@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fluxa — Frontend
 
-## Getting Started
+Aplicação Next.js 16 (App Router) + React 19 + TypeScript + TailwindCSS 4.
 
-First, run the development server:
+## Rodando
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Configure `frontend/.env.local` (veja `frontend/.env.example` e `docs/VARIAVEIS-AMBIENTE.md`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> `NEXT_PUBLIC_API_URL` é **embutida no build** (`next build`) — trocar exige rebuild.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run start` | Sobe o build |
+| `npm run lint` | ESLint (há dívida técnica pré-existente) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estrutura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  components/     # UI, modais, navegação, gráficos
+  home/           # área autenticada: dashboard, transactions, categories, ...
+  login, register, forgot-password, reset-password, verify-email, privacy, terms
+  utils/          # formatters, http helpers
+services/         # API layer centralizada (api.ts, auth, transactions, categories, dashboard)
+```
 
-## Deploy on Vercel
+- **Autenticação:** cookies HttpOnly gerenciados pelo backend; `services/api.ts` faz o
+  interceptor de 401 (refresh único + retry + auto-logout).
+- **Estado de servidor:** hoje via `useState`/`useEffect` + `services/*` (sem TanStack Query).
+- Regra de negócio fica no **backend**; o front apenas coleta/apresenta dados.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentação do projeto
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `../docs/ROADMAP-FECHAMENTO-PENDENCIAS.md` — pendências e roadmap atual
+- `../docs/ARCHITECTURE-DECISIONS.md` — ADRs
+- `../docs/VARIAVEIS-AMBIENTE.md` — variáveis de ambiente
+- `../docs/DEPLOY.md` — deploy (Vercel)
+
+## Teste / visual
+
+- `app/home/insightsTest/` é um **demo estático** (dados falsos) e `app/teste2/` contém docs de
+  design **desatualizados** — ambos pendentes de remoção (ver roadmap, Onda 0).

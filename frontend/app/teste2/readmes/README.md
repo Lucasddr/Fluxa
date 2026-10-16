@@ -1,5 +1,12 @@
 # Fluxa — Telas de Categorias e Transações
 
+> ### ⚠️ DOCUMENTO DESATUALIZADO (2026-10-16)
+>
+> Estes readmes descrevem versões antigas das telas (com **dados mock**). As telas hoje consomem a
+> API real (`services/*`), com CRUD completo, toasts, skeletons e estados de erro. Servem apenas
+> como histórico de design; **pendentes de remoção** (ver `docs/ROADMAP-FECHAMENTO-PENDENCIAS.md`,
+> Onda 0).
+
 ## O que foi entregue
 
 ```
