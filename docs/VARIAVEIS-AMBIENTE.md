@@ -1,13 +1,17 @@
 # Variáveis de ambiente — Fluxa
 
-> Checklist de `.env` para produção. Veja `backend/.env.example` e
-> `frontend/.env.example` para os templates.
+> Checklist de `.env` para dev e produção. Veja `backend/.env.example` e
+> `frontend/.env.example` para os templates. Deploy: `docs/DEPLOY.md`.
+>
+> Dev = `docker-compose` local (postgres `5433`). Prod = Supabase (banco) +
+> Railway (backend) + Vercel (frontend). Nunca apontar dev para o Supabase
+> de prod.
 
 ## Backend (`backend/.env` ou `backend/.env.docker`)
 
 | Variável | Obrigatória | Exemplo | Notas |
 |---|---|---|---|
-| `DB_URL` | sim | `jdbc:postgresql://postgres:5432/fluxa` | URL JDBC do Postgres 17 |
+| `DB_URL` | sim | dev: `jdbc:postgresql://postgres:5432/fluxa` (rede do compose) · prod: `jdbc:postgresql://db.<ref>.supabase.co:5432/postgres` | URL JDBC do Postgres 17 |
 | `DB_USERNAME` | sim | `postgres` | |
 | `DB_PASSWORD` | sim | (segredo) | Nunca commitar valor real |
 | `JWT_SECRET` | sim | (segredo, min 32 chars) | Assinatura HMAC dos access tokens |
@@ -19,10 +23,12 @@
 | `COOKIE_REFRESH_PATH` | não | `/api/auth` | Escopo do cookie de refresh |
 | `CORS_ALLOWED_ORIGINS` | sim | `http://localhost,http://26.220.230.81` | Lista separada por vírgula, SEM porta = só porta 80; nunca `*` com credentials |
 
-Notas de produção:
+Notas de produção (Railway + Supabase + Vercel):
 - `COOKIE_SECURE=true` + HTTPS obrigatório.
-- `JWT_SECRET` com no mínimo 32 caracteres aleatórios.
-- Revisar `CORS_ALLOWED_ORIGINS` para os domínios reais (sem `localhost`).
+- `JWT_SECRET` com no mínimo 32 caracteres aleatórios (gerar um novo só para prod).
+- Revisar `CORS_ALLOWED_ORIGINS` para o domínio real da Vercel (sem `localhost`).
+- `NEXT_PUBLIC_API_URL` da Vercel = `https://<service>.up.railway.app/api`.
+- `DB_URL` de prod = JDBC do Supabase; primeiro boot aplica Flyway `V1–V7` sozinho.
 
 ## Frontend (`frontend/.env.local`)
 

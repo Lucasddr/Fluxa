@@ -1,0 +1,72 @@
+name: CI
+
+# Pipeline da Sprint 10 (P1-1): quality gates sobre a main.
+# Deploy e automatico por plataforma (Railway = backend, Vercel = frontend)
+# a cada push na main - ver docs/DEPLOY.md. Este workflow so valida.
+#
+# Gates bloqueantes: testes do backend (H2) + tipos + build do frontend.
+# Lint e informativo (continue-on-error): ha 4 erros e 9 warnings
+# pre-existentes (react-hooks/set-state-in-effect no fetch inicial das
+# paginas + unused vars) registrados como divida tecnica - nao derrubam o CI.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (testes H2)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Permissao de execucao do wrapper
+        run: chmod +x mvnw
+
+      - name: Testes
+        run: ./mvnw -B test
+
+  frontend:
+    name: Frontend (tipos + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dependencias
+        run: npm ci
+
+      - name: Tipos (tsc)
+        run: npx tsc --noEmit
+
+      - name: Lint (informativo - divida tecnica aberta)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build de producao
+        run: npm run build
+        env:
+          # Valor ficticio so para o build passar; o deploy real injeta a
+          # URL do backend da Railway (ver docs/DEPLOY.md). A variavel e
+          # embutida no build - rebuildar ao trocar.
+          NEXT_PUBLIC_API_URL: http://localhost:8080/api
