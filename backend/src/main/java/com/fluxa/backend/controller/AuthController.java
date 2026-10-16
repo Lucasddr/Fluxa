@@ -2,8 +2,11 @@ package com.fluxa.backend.controller;
 
 import com.fluxa.backend.domain.entity.RefreshToken;
 import com.fluxa.backend.dto.internal.TokenPair;
+import com.fluxa.backend.dto.request.ForgotPasswordDTO;
 import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
+import com.fluxa.backend.dto.request.ResetPasswordDTO;
+import com.fluxa.backend.service.PasswordResetService;
 import com.fluxa.backend.service.RefreshTokenService;
 import com.fluxa.backend.service.AuthService;
 import com.fluxa.backend.service.CookieService;
@@ -28,6 +31,7 @@ public class AuthController {
     private final AuthService authService;
     private final CookieService cookieService;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto){
@@ -126,6 +130,32 @@ public class AuthController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordDTO dto) {
+
+        passwordResetService.requestReset(dto.email());
+
+        return ResponseEntity.ok(Map.of(
+                "message",
+                "Se o e-mail existir, você receberá um link de recuperação."
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordDTO dto) {
+
+        passwordResetService.resetPassword(
+                dto.token(),
+                dto.password()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Senha redefinida com sucesso."
+        ));
     }
 
     @GetMapping("/test-500")
