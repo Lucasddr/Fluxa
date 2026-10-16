@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# next.js prod local logs
+prod-3001*.log
+
 # next.js auto-generated agent rules (recreated by `next dev`)
 AGENTS.md
 
