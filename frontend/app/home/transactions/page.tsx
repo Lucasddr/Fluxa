@@ -25,6 +25,7 @@ import MenuListModal from "@/app/components/modals/MenuListmodal";
 import AppDialog from "@/app/components/ui/Dialog";
 import DetailRow from "@/app/components/ui/DetailRow";
 import FormAlert from "@/app/components/ui/FormAlert";
+import Skeleton from "@/app/components/ui/Skeleton";
 
 import {
   createTransaction,
@@ -33,7 +34,9 @@ import {
   listTransactions,
   updateTransaction,
 } from "@/services/transactions";
+import { useToast } from "@/app/components/ui/Toaster";
 import { formatCurrency, formatPaymentMethod } from "@/app/utils/Formatters";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -194,6 +197,8 @@ function formatKind(kind: string) {
 // ─── página ──────────────────────────────────────────────────────────────────
 
 export default function TransactionsPage() {
+
+  const { toast } = useToast();
 
   const [transactions, setTransactions] =
     useState<Transaction[]>([]);
@@ -395,14 +400,13 @@ export default function TransactionsPage() {
     const res = await createTransaction(data);
 
     if (!res.ok) {
-      throw new Error(
-        `Falha ao criar transação (${res.status})`
-      );
+      throw new HttpError(res.status);
     }
 
     await fetchTransactions();
 
     setModalOpen(false);
+    toast("Transação criada com sucesso.");
   }
 
   async function fetchTransactionDetails(
@@ -479,15 +483,14 @@ export default function TransactionsPage() {
     });
 
     if (!res.ok) {
-      throw new Error(
-        `Falha ao atualizar transação (${res.status})`
-      );
+      throw new HttpError(res.status);
     }
 
     await fetchTransactions();
 
     setEditingTx(null);
     setDetailsTx(null);
+    toast("Transação atualizada com sucesso.");
   }
 
   async function handleDeleteTransaction() {
@@ -506,15 +509,14 @@ export default function TransactionsPage() {
       );
 
       if (!res.ok) {
-        throw new Error(
-          `Falha ao excluir transação (${res.status})`
-        );
+        throw new HttpError(res.status);
       }
 
       await fetchTransactions();
 
       setDeletingTx(null);
       setDetailsTx(null);
+      toast("Transação excluída com sucesso.");
 
     } catch (error) {
 
@@ -524,7 +526,9 @@ export default function TransactionsPage() {
       );
 
       setDeleteError(
-        "Não foi possível excluir. Tente novamente."
+        error instanceof HttpError
+          ? friendlyHttpError(error.status)
+          : "Não foi possível excluir. Tente novamente."
       );
 
     } finally {
@@ -770,8 +774,15 @@ export default function TransactionsPage() {
 
         {loading ? (
 
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Carregando transações...
+          <div
+            className="flex flex-col gap-2 px-6 py-4"
+            role="status"
+            aria-label="Carregando transações"
+          >
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
           </div>
 
         ) : paginated.length === 0 ? (

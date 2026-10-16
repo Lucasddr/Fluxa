@@ -25,6 +25,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import FormAlert from "@/app/components/ui/FormAlert";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 import {
   createCategory,
@@ -227,9 +228,7 @@ export default function CategoryModal({
         : await createCategory(form);
 
       if (!response.ok) {
-        throw new Error(
-          `Falha ao salvar categoria (${response.status})`
-        );
+        throw new HttpError(response.status);
       }
 
       await onSave();
@@ -244,7 +243,9 @@ export default function CategoryModal({
       );
 
       setServerError(
-        "Não foi possível salvar. Tente novamente."
+        error instanceof HttpError
+          ? friendlyHttpError(error.status)
+          : "Não foi possível salvar. Tente novamente."
       );
 
     } finally {

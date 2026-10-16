@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import FormAlert from "@/app/components/ui/FormAlert";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 import { selectCategories } from "@/services/categories";
 import { formatCurrency } from "@/app/utils/Formatters";
@@ -232,7 +233,9 @@ export default function TransactionModal({
       );
 
       setServerError(
-        "Não foi possível salvar. Tente novamente."
+        err instanceof HttpError
+          ? friendlyHttpError(err.status)
+          : "Não foi possível salvar. Tente novamente."
       );
     } finally {
       setSaving(false);

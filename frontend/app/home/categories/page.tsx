@@ -33,11 +33,14 @@ import CategoryModal from "@/app/components/modals/CategoryModal";
 import AppDialog from "@/app/components/ui/Dialog";
 import DetailRow from "@/app/components/ui/DetailRow";
 import FormAlert from "@/app/components/ui/FormAlert";
+import Skeleton from "@/app/components/ui/Skeleton";
 import {
   deleteCategory,
   listCategories,
   updateCategory,
 } from "@/services/categories";
+import { useToast } from "@/app/components/ui/Toaster";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -171,6 +174,8 @@ function FilterSelect({
 
 // ─── page ──────────────────────────────────────────────────────
 export default function CategoriasPage() {
+  const { toast } = useToast();
+
   const [categories, setCategories] =
     useState<PageResponse<Category> | null>(null);
 
@@ -251,15 +256,14 @@ export default function CategoriasPage() {
           throw new Error(message);
         }
 
-        throw new Error(
-          `Falha ao excluir categoria (${res.status})`
-        );
+        throw new HttpError(res.status);
       }
 
       await fetchCategories();
 
       setDeletingCat(null);
       setDetailsCat(null);
+      toast("Categoria excluída com sucesso.");
 
     } catch (error) {
 
@@ -269,9 +273,11 @@ export default function CategoriasPage() {
       );
 
       setDeleteError(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível excluir. Tente novamente."
+        error instanceof HttpError
+          ? friendlyHttpError(error.status)
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível excluir. Tente novamente."
       );
 
     } finally {
@@ -303,10 +309,19 @@ export default function CategoriasPage() {
       }
 
       await fetchCategories();
+      toast(
+        cat.status
+          ? "Categoria desativada."
+          : "Categoria ativada."
+      );
     } catch (error) {
       console.error(
         "Erro ao atualizar categoria:",
         error
+      );
+      toast(
+        "Não foi possível atualizar o status. Tente novamente.",
+        "error"
       );
     }
   }
@@ -445,8 +460,15 @@ export default function CategoriasPage() {
 
         {/* rows */}
         {loading ? (
-          <div className="px-6 py-10 text-center text-sm text-gray-400">
-            Carregando...
+          <div
+            className="flex flex-col gap-2 px-6 py-4"
+            role="status"
+            aria-label="Carregando categorias"
+          >
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
           </div>
         ) : categories?.content.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-gray-400">
@@ -581,6 +603,7 @@ export default function CategoriasPage() {
           onClose={() => setModalOpen(false)}
           onSave={async () => {
             await fetchCategories();
+            toast("Categoria criada com sucesso.");
           }}
         />
       )}
@@ -604,6 +627,7 @@ export default function CategoriasPage() {
           onClose={() => setEditingCat(null)}
           onSave={async () => {
             await fetchCategories();
+            toast("Categoria atualizada com sucesso.");
           }}
         />
       )}

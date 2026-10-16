@@ -26,8 +26,10 @@ import {
 } from "@/services/dashboard";
 
 import { formatCurrency } from "@/app/utils/Formatters";
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 
 import MenuListModal from "@/app/components/modals/MenuListmodal";
+import Skeleton from "@/app/components/ui/Skeleton";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -170,15 +172,15 @@ export default function DashboardPage() {
           fetchInsightCards(start, end),
         ]);
 
-      if (
-          !dashboardResponse.ok ||
-          !transactionResponse.ok ||
-          !insightsResponse.ok
-        ) {
-          throw new Error(
-            "Erro ao carregar dashboard"
-          );
-        }
+      const failed = [
+        dashboardResponse,
+        transactionResponse,
+        insightsResponse,
+      ].find((r) => !r.ok);
+
+      if (failed) {
+        throw new HttpError(failed.status);
+      }
 
         const dashboardData:
           DashboardDTO =
@@ -205,7 +207,9 @@ export default function DashboardPage() {
         );
 
         setLoadError(
-          "Não foi possível carregar o dashboard. Tente novamente."
+          error instanceof HttpError
+            ? friendlyHttpError(error.status)
+            : "Não foi possível carregar o dashboard. Tente novamente."
         );
 
       } finally {
@@ -225,8 +229,21 @@ export default function DashboardPage() {
 
   if (loading && (!cardsData || !transactionList)) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px] text-gray-400">
-        Carregando dashboard...
+      <div
+        className="flex flex-col gap-4 w-full"
+        role="status"
+        aria-label="Carregando dashboard"
+      >
+        <Skeleton className="h-8 w-56" />
+
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+
+        <Skeleton className="h-[480px]" />
       </div>
     );
   }
