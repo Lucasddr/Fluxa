@@ -50,6 +50,9 @@ class CreditPurchaseServiceTest {
     private InstallmentService installmentService;
 
     @Autowired
+    private DashboardService dashboardService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -320,5 +323,53 @@ class CreditPurchaseServiceTest {
 
         assertEquals(3, details.installments().size());
         assertEquals(new BigDecimal("30.00"), details.installments().get(0).amount());
+    }
+
+    @Test
+    void dashboardPayableIncludesFutureAndExcludesPaid() {
+        UUID purchaseId = creditPurchaseService.createCreditPurchase(equalDto());
+
+        var dashboard = dashboardService.buildDashboardDTO(
+                new com.fluxa.backend.dto.request.DashboardDTO(
+                        LocalDate.now().minusDays(29), LocalDate.now()));
+
+        assertEquals(new BigDecimal("100.00"), dashboard.accountsPayable());
+
+        UUID installmentId = creditPurchaseService
+                .getCreditPurchaseDetails(purchaseId).installments().get(0).id();
+
+        installmentService.payInstallment(installmentId, null);
+
+        var afterPay = dashboardService.buildDashboardDTO(
+                new com.fluxa.backend.dto.request.DashboardDTO(
+                        LocalDate.now().minusDays(29), LocalDate.now()));
+
+        assertEquals(new BigDecimal("66.67"), afterPay.accountsPayable());
+        assertEquals(new BigDecimal("33.33"), afterPay.expenses());
+    }
+
+    @Test
+    void postponingOverdueRestoresPending() {
+        var dto = new CreateCreditPurchaseDTO(
+                "Antiga", "Loja", new BigDecimal("50.00"),
+                LocalDate.now().minusDays(40), 1,
+                LocalDate.now().minusDays(10),
+                expenseCategoryId, null, null);
+
+        UUID purchaseId = creditPurchaseService.createCreditPurchase(dto);
+
+        UUID installmentId = creditPurchaseService
+                .getCreditPurchaseDetails(purchaseId).installments().get(0).id();
+
+        assertEquals(InstallmentStatus.OVERDUE,
+                installmentService.getInstallment(installmentId).status());
+
+        installmentService.updateInstallment(
+                installmentId,
+                new UpdateInstallmentDTO(null, LocalDate.now().plusDays(5)),
+                "ONE");
+
+        assertEquals(InstallmentStatus.PENDING,
+                installmentService.getInstallment(installmentId).status());
     }
 }

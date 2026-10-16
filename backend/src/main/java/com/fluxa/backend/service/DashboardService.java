@@ -33,7 +33,7 @@ public class DashboardService {
         String accountName = accountRepository.findAccountNameByUserId(userId);
         BigDecimal entry = transactionRepository.getTotalIncome(userId, dto.start(), dto.end());
         BigDecimal expenses = transactionRepository.getTotalExpense(userId, dto.start(), dto.end());
-        BigDecimal payableAccounts = installmentRepository.getTotalPayableAccounts(userId, dto.start(), dto.end());
+        BigDecimal payableAccounts = installmentRepository.getTotalOpenPayable(userId);
         BigDecimal montlhyBalance = entry.subtract(expenses).subtract(payableAccounts);
 
         return new BuildDashboardResponseDTO(

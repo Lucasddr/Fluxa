@@ -180,6 +180,7 @@ public class InstallmentService {
 
         if (dto.dueDate() != null) {
             installment.setDueDate(dto.dueDate());
+            restorePendingIfPostponed(installment);
         }
     }
 
@@ -206,11 +207,21 @@ public class InstallmentService {
                 .filter(i -> i.getStatus() != InstallmentStatus.PAID)
                 .toList();
 
-        following.forEach(i -> i.setDueDate(i.getDueDate().plusDays(shiftDays)));
+        following.forEach(i -> {
+            i.setDueDate(i.getDueDate().plusDays(shiftDays));
+            restorePendingIfPostponed(i);
+        });
 
         log.info("[INSTALLMENT] due dates shifted | user: {} | purchaseId: {} | fromNumber: {} | shiftDays: {}",
                 userId, installment.getCreditPurchase().getId(),
                 installment.getNumber(), shiftDays);
+    }
+
+    private void restorePendingIfPostponed(Installment installment) {
+        if (installment.getStatus() == InstallmentStatus.OVERDUE
+                && !installment.getDueDate().isBefore(LocalDate.now())) {
+            installment.setStatus(InstallmentStatus.PENDING);
+        }
     }
 
     private void refreshPurchaseTotal(UUID purchaseId, UUID userId) {
