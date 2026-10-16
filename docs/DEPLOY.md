@@ -12,7 +12,7 @@
 |---|---|---|
 | Backend (Spring Boot, porta 8080) | Railway | Service com root em `backend/`, builder Dockerfile (`backend/Dockerfile`) |
 | Frontend (Next.js) | Vercel | Project com root em `frontend/` |
-| Banco prod | Supabase | Postgres gerenciado; Flyway `V1–V7` aplica sozinho no primeiro boot |
+| Banco prod | Supabase | Postgres gerenciado; Flyway `V1–V8` aplica sozinho no primeiro boot |
 | Banco dev | `docker-compose` local | `postgres:17`, `5433:5432`, volume `postgres_data` |
 
 ## Backend na Railway
@@ -27,7 +27,7 @@
    - `CORS_ALLOWED_ORIGINS` = URL pública da Vercel (ex.: `https://fluxa.vercel.app`), sem `localhost`, nunca `*` com credentials
    - `JWT_EXPIRATION` / `REFRESH_TOKEN_EXPIRATION` / `COOKIE_*_PATH` = padrões (ver `docs/VARIAVEIS-AMBIENTE.md`)
 3. Networking → gerar domínio público; a API passa a responder em `https://<service>.up.railway.app`.
-4. Primeiro boot: Flyway valida e aplica `V1–V7` (`ddl-auto=validate`, migrations nunca editadas).
+4. Primeiro boot: Flyway valida e aplica `V1–V8` (`ddl-auto=validate`, migrations nunca editadas).
 5. Deploy automático: conectado ao GitHub, cada push na `main` redeploya após o CI verde.
 
 ## Frontend na Vercel

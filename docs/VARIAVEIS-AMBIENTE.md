@@ -28,7 +28,7 @@ Notas de produção (Railway + Supabase + Vercel):
 - `JWT_SECRET` com no mínimo 32 caracteres aleatórios (gerar um novo só para prod).
 - Revisar `CORS_ALLOWED_ORIGINS` para o domínio real da Vercel (sem `localhost`).
 - `NEXT_PUBLIC_API_URL` da Vercel = `https://<service>.up.railway.app/api`.
-- `DB_URL` de prod = JDBC do Supabase; primeiro boot aplica Flyway `V1–V7` sozinho.
+- `DB_URL` de prod = JDBC do Supabase; primeiro boot aplica Flyway `V1–V8` sozinho.
 
 ## Frontend (`frontend/.env.local`)
 
@@ -39,5 +39,5 @@ Notas de produção (Railway + Supabase + Vercel):
 ## Banco (docker-compose)
 
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` no `backend/docker-compose.yml`
-  (hoje com senha hardcoded — mover para env antes de qualquer deploy compartilhado).
-- Migrations Flyway `V1`–`V6` aplicadas automaticamente no boot; nunca editar migration já aplicada.
+  (**hoje com senha hardcoded `ld0423` — mover para env antes de qualquer deploy compartilhado**).
+- Migrations Flyway `V1`–`V8` aplicadas automaticamente no boot; nunca editar migration já aplicada.
