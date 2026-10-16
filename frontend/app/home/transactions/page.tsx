@@ -230,6 +230,31 @@ export default function TransactionsPage() {
   const [modalOpen, setModalOpen] =
     useState(false);
 
+  const [createKey, setCreateKey] =
+    useState<string | null>(null);
+
+  function newIdempotencyKey(): string {
+    if (
+      typeof crypto !== "undefined" &&
+      "randomUUID" in crypto
+    ) {
+      return crypto.randomUUID();
+    }
+
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+      }
+    );
+  }
+
+  function openCreateModal() {
+    setCreateKey(newIdempotencyKey());
+    setModalOpen(true);
+  }
+
   const [detailsOpen, setDetailsOpen] =
     useState(false);
 
@@ -397,7 +422,7 @@ export default function TransactionsPage() {
     data: TransactionFormData
   ) {
 
-    const res = await createTransaction(data);
+    const res = await createTransaction(data, createKey ?? undefined);
 
     if (!res.ok) {
       throw new HttpError(res.status);
@@ -601,7 +626,7 @@ export default function TransactionsPage() {
 
         <button
           onClick={() =>
-            setModalOpen(true)
+            openCreateModal()
           }
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md hover:opacity-90 transition"
           style={{

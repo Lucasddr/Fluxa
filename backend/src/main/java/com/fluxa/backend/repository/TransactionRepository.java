@@ -169,6 +169,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
 
+    Optional<Transaction> findByUserIdAndIdempotencyKey(UUID userId, String idempotencyKey);
+
     boolean existsByUserIdAndCategory_Id(UUID userId, UUID categoryId);
 
     boolean existsByUserIdAndAmountAndDescriptionAndOccurredAtAndPaymentMethodAndCategory_IdAndCreatedAtAfter(

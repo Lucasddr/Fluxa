@@ -21,9 +21,12 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createTransaction (@Valid @RequestBody CreateTransactionDTO dto){
+    public ResponseEntity<?> createTransaction (
+            @Valid @RequestBody CreateTransactionDTO dto,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ){
 
-        boolean created = transactionService.createTransaction(dto);
+        boolean created = transactionService.createTransaction(dto, idempotencyKey);
 
         if (!created) {
             return ResponseEntity.ok(Map.of(

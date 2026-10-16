@@ -19,9 +19,22 @@ export function getTransaction(id: string): Promise<Response> {
 }
 
 export function createTransaction(
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  idempotencyKey?: string
 ): Promise<Response> {
-  return api("/transactions/create", json("POST", data));
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (idempotencyKey) {
+    headers["Idempotency-Key"] = idempotencyKey;
+  }
+
+  return api("/transactions/create", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
 }
 
 export function updateTransaction(

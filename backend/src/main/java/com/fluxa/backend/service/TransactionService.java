@@ -42,9 +42,22 @@ public class TransactionService {
     public final UserRepository userRepository;
 
 
-    public boolean createTransaction(CreateTransactionDTO dto){
+    public boolean createTransaction(CreateTransactionDTO dto, String idempotencyKey){
 
         UUID userId = UserContext.getUserId();
+
+        String key = idempotencyKey != null && !idempotencyKey.isBlank()
+                ? idempotencyKey
+                : null;
+
+        if (key != null && transactionRepository
+                .findByUserIdAndIdempotencyKey(userId, key)
+                .isPresent()) {
+            log.warn("[TRANSACTION] duplicate idempotency key ignored | user: {}",
+                    userId);
+
+            return false;
+        }
 
         UUID accountId = accountRepository.findByUserId(userId);
 
@@ -90,8 +103,16 @@ public class TransactionService {
         transaction.setPaymentMethod(dto.paymentMethod());
         transaction.setObservation(dto.observation());
         transaction.setRecurrent(dto.recurring());
+        transaction.setIdempotencyKey(key);
 
-        transactionRepository.save(transaction);
+        try {
+            transactionRepository.saveAndFlush(transaction);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("[TRANSACTION] duplicate race ignored | user: {}",
+                    user.getId());
+
+            return false;
+        }
 
         log.info("[TRANSACTION] new transaction created | user: {} | transactionId: {} | kind {}",
                 user.getId(),

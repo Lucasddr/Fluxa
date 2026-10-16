@@ -71,6 +71,9 @@ public class Transaction {
     @Column (name = "recurrent", nullable = false)
     private boolean recurrent;
 
+    @Column(name = "idempotency_key", length = 36)
+    private String idempotencyKey;
+
     @Column (name = "observation")
     private String observation;
 }
