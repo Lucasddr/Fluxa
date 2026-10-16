@@ -44,8 +44,49 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (uri.equals("/auth/register")
                 && !rateLimitService.isRegisterAllowed(ip)) {
 
-            sendTooManyRequests(response);
-            return;
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.equals("/transactions/create")
+                && "POST".equalsIgnoreCase(request.getMethod())
+                && !rateLimitService.isTransactionCreateAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.equals("/auth/forgot-password")
+                && !rateLimitService.isForgotPasswordAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.equals("/auth/reset-password")
+                && !rateLimitService.isResetPasswordAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.equals("/auth/send-verification")
+                && !rateLimitService.isSendVerificationAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+
+        }
+
+        if (uri.equals("/auth/verify-email")
+                && !rateLimitService.isVerifyEmailAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
 
         }
 

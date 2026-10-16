@@ -32,6 +32,51 @@ public class RateLimitService {
         );
     }
 
+    public boolean isTransactionCreateAllowed(String ip) {
+        return tryConsume(
+                "tx-create:" + ip,
+                30,
+                30,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isForgotPasswordAllowed(String ip) {
+        return tryConsume(
+                "forgot-password:" + ip,
+                3,
+                3,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isResetPasswordAllowed(String ip) {
+        return tryConsume(
+                "reset-password:" + ip,
+                5,
+                5,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isSendVerificationAllowed(String ip) {
+        return tryConsume(
+                "send-verification:" + ip,
+                3,
+                3,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isVerifyEmailAllowed(String ip) {
+        return tryConsume(
+                "verify-email:" + ip,
+                10,
+                10,
+                Duration.ofMinutes(1)
+        );
+    }
+
     public boolean tryConsume(String key, int capacity, int refillTokens, Duration refillDuration) {
 
         Bucket bucket = buckets.computeIfAbsent(
