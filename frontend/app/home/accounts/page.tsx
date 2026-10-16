@@ -824,6 +824,47 @@ export default function ContasPage() {
                   pagas)
                 </p>
 
+                {(() => {
+                  const nextDue = details.installments
+                    .filter(
+                      (inst) =>
+                        inst.status === "PENDING" ||
+                        inst.status === "OVERDUE"
+                    )
+                    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+
+                  if (!nextDue) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="mb-3 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-teal-700 text-white shadow-md">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-teal-100">
+                          Próximo vencimento · {nextDue.number}/
+                          {nextDue.installmentsQty}
+                        </p>
+
+                        <p className="text-lg font-bold leading-tight">
+                          {formatBRL(nextDue.amount)}{" "}
+                          <span className="text-xs font-medium text-teal-100">
+                            vence {formatDate(nextDue.dueDate)}
+                          </span>
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handlePay(nextDue)}
+                        disabled={payingId === nextDue.id}
+                        className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-teal-800 hover:bg-teal-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {payingId === nextDue.id ? "Pagando..." : "Pagar"}
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex flex-col gap-2">
                   {details.installments.map((inst) => (
                     <div

@@ -326,26 +326,40 @@ class CreditPurchaseServiceTest {
     }
 
     @Test
-    void dashboardPayableIncludesFutureAndExcludesPaid() {
-        UUID purchaseId = creditPurchaseService.createCreditPurchase(equalDto());
+    void dashboardPayableFollowsPeriodWindow() {
+        var future = new CreateCreditPurchaseDTO(
+                "Futura", "Loja", new BigDecimal("100.00"),
+                LocalDate.now(), 2, LocalDate.now().plusDays(60),
+                expenseCategoryId, null, null);
 
-        var dashboard = dashboardService.buildDashboardDTO(
-                new com.fluxa.backend.dto.request.DashboardDTO(
-                        LocalDate.now().minusDays(29), LocalDate.now()));
+        creditPurchaseService.createCreditPurchase(future);
 
-        assertEquals(new BigDecimal("100.00"), dashboard.accountsPayable());
+        var window = new com.fluxa.backend.dto.request.DashboardDTO(
+                LocalDate.now().minusDays(29), LocalDate.now());
+
+        assertEquals(new BigDecimal("0"),
+                dashboardService.buildDashboardDTO(window).accountsPayable());
+
+        var near = new CreateCreditPurchaseDTO(
+                "Perto", "Loja", new BigDecimal("60.00"),
+                LocalDate.now(), 2, LocalDate.now().minusDays(5),
+                expenseCategoryId, null, null);
+
+        UUID nearId = creditPurchaseService.createCreditPurchase(near);
+
+        var inWindow = dashboardService.buildDashboardDTO(window);
+
+        assertEquals(new BigDecimal("30.00"), inWindow.accountsPayable());
 
         UUID installmentId = creditPurchaseService
-                .getCreditPurchaseDetails(purchaseId).installments().get(0).id();
+                .getCreditPurchaseDetails(nearId).installments().get(0).id();
 
         installmentService.payInstallment(installmentId, null);
 
-        var afterPay = dashboardService.buildDashboardDTO(
-                new com.fluxa.backend.dto.request.DashboardDTO(
-                        LocalDate.now().minusDays(29), LocalDate.now()));
+        var afterPay = dashboardService.buildDashboardDTO(window);
 
-        assertEquals(new BigDecimal("66.67"), afterPay.accountsPayable());
-        assertEquals(new BigDecimal("33.33"), afterPay.expenses());
+        assertEquals(new BigDecimal("0"), afterPay.accountsPayable());
+        assertEquals(new BigDecimal("30.00"), afterPay.expenses());
     }
 
     @Test
