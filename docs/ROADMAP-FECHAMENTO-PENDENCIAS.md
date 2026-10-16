@@ -60,10 +60,10 @@
 
 | # | Pendência | Evidência no código | Impacto |
 |---|---|---|---|
-| **P0‑1** | **Módulo de Compras no Crédito + Parcelas (installments)** — o diferencial "saldo comprometido" | 🟡 **Backend pronto no WIP não commitado (2026-10-16):** `CreditPurchaseRepository`, `CreditPurchaseService`, `InstallmentService`, `CreditPurchaseController` (`POST/GET/PATCH/DELETE /credit-purchases`), `InstallmentController` (`/installments`, `/{id}/pay`), DTOs, exceptions, handlers, rate limit dos novos endpoints e `CreditPurchaseServiceTest`. **Falta** o frontend (telas/consumo). | O núcleo do Fluxa (`Saldo Disponível = Real − Comprometido`) está pronto no backend; falta expor na UI para ser usável ponta a ponta. |
+| **P0‑1** | **Módulo de Compras no Crédito + Parcelas (installments)** — o diferencial "saldo comprometido" | ✅ **Entregue 2026-10-16 (main `f9db346`):** backend (`767e85b`: `CreditPurchaseService`, `InstallmentService`, controllers, DTOs, rate limit; `8a6b67f`: pay/list/update; `361cf0e`: 13 testes H2) + frontend (`f9db346`: página `/home/accounts`, modal iguais/manual, pagar, editar ONE/FOLLOWING, delete tudo-junto). Prova ao vivo no Postgres. | Núcleo usável ponta a ponta. |
 | **P0‑2** | **Módulo de Contas (Account)** sem CRUD e sem multi‑conta | `AccountController` está **vazio**; `AccountService.createCustomAccount` nunca é chamado; `CreateAccountDTO` sem uso; `AccountRepository.findByUserId`/`findAccountNameByUserId` retornam **um único** valor (`UUID`/`String`) → assume 1 conta/usuário. | Não há como o usuário criar/gerenciar contas; a Sprint 3.10 marcou "concluído" mas o código ainda trava em conta única. |
 | **P0‑3** | **Navegação mobile inexistente** | `app/components/navigation/BottomNav.tsx` tem **0 bytes** e não é importado em lugar nenhum; `SideNav` só aparece em `lg:` (`hidden lg:flex`). Em `<lg` o usuário **não tem menu algum**. | Em mobile (público‑alvo 320px+) não dá pra navegar entre telas. |
-| **P0‑4** | ~~Mismatch do status de parcela~~ | ✅ **Resolvido pela `V8__installment_overdue_status.sql`** (CHECK passa a aceitar `PENDING/PAID/OVERDUE/CANCELED`, alinhado ao enum). Ainda **não commitada**. | — |
+| **P0‑4** | ~~Mismatch do status de parcela~~ | ✅ **Resolvido e commitado (`767e85b`, main):** `V8__installment_overdue_status.sql` (CHECK aceita `PENDING/PAID/OVERDUE/CANCELED`, alinhado ao enum; aplicado ao vivo no Postgres via Flyway). | — |
 
 ### P1 — Consistência e UX
 

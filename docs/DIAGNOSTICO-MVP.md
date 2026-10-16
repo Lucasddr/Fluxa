@@ -229,6 +229,7 @@ Itens movidos para Implementado em 2026-10-16: Password Reset Frontend (7.4), Em
 | Categorias | `CategoryController`, `CategoriesService`, `CategoryRepository`, `CategoryModal` |
 | Dashboard | `DashboardController`, `DashboardService`, `DashboardPage` |
 | Insights | `InsightAggregatorService`, `InsightsService`, `InsightCards` |
-| Installments | `Installment`, `CreditPurchase` entities + repos (sem services/controllers) |
+| Installments | `CreditPurchaseService`, `InstallmentService`, controllers, DTOs, página `/home/accounts` (P0 entregue 2026-10-16) |
 | Auth Tests | `AuthServiceTest` (10), `PasswordResetServiceTest` (6), `EmailVerificationServiceTest` (6) |
-| Migrations | `V1__initial_schema` → `V7__transaction_idempotency_key` |
+| Credit Tests | `CreditPurchaseServiceTest` (13) |
+| Migrations | `V1__initial_schema` → `V8__installment_overdue_status` |

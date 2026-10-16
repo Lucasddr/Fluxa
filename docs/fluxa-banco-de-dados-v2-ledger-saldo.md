@@ -9,10 +9,9 @@
 >
 > Divergências conhecidas deste documento vs. o código real:
 > - `accounts` **não tem** `current_balance`/`opening_balance` (removidos na V3);
-> - saldo = `getTotalIncome − getTotalExpense` + `getTotalPayableAccounts` (parcelas PENDING);
+> - saldo = `getTotalIncome − getTotalExpense` + `getTotalPayableAccounts` (parcelas PENDING/OVERDUE);
 > - nomes/tipos de colunas diferem das migrations (ex.: `kind`, não `type`; `occurred_at`);
-> - `installments` usa `status` `PENDING/PAID/CANCELED` no schema (o enum Java tinha `OVERDUE` —
->   mismatch a alinhar, ver roadmap P0-4).
+> - `installments` usa `status` `PENDING/PAID/OVERDUE/CANCELED` no schema desde a V8 (2026-10-16).
 >
 > Use como referência: as migrations em `backend/src/main/resources/db/migration/` e o ADR-001.
 

@@ -7,7 +7,7 @@
 > (`docs/ARCHITECTURE-DECISIONS.md`).
 > Diferenças a observar: IDs são **UUID** (não BIGINT); `kind` (INCOME/EXPENSE) em vez de `type`;
 > **não há coluna de saldo** em `accounts` (a V3 removeu); status de parcela é
-> `PENDING/PAID/CANCELED`. A proposta de saldo materializado está em
+> `PENDING/PAID/OVERDUE/CANCELED` (a V8 alinhou o CHECK ao enum). A proposta de saldo materializado está em
 > `docs/fluxa-banco-de-dados-v2-ledger-saldo.md` (superada pelo ADR-001).
 
 ## 1. Visão Geral

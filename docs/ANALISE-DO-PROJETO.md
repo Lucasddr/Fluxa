@@ -223,11 +223,11 @@ Não versionados:
 ## 7. Pendências e problemas identificados
 
 ### 🔴 Bloqueadores / bugs
-1. **WIP do Radix quebrado**: `MenuListmodal` exige `trigger`, chamadores não passam.
-2. **URL de exclusão de categoria errada** no frontend (`/categories/delete` vs `DELETE /categories/{id}`).
-3. **Multi-conta não resolvida**: `AccountRepository.findByUserId` retorna um único `UUID` — a auditoria marca como "Concluído", mas o código ainda assume 1 conta/usuário.
-4. **`InstallmentStatus.OVERDUE`** existe no enum Java mas o CHECK do banco aceita `CANCELED` — mismatch.
-5. **Transações sem categoria são invisíveis** (JOIN interno + NPE em `getCategory().getName()`).
+1. ~~**WIP do Radix quebrado**: `MenuListmodal` exige `trigger`, chamadores não passam.~~ ✅ Resolvido (migração Radix concluída; chamadores passam `trigger`).
+2. ~~**URL de exclusão de categoria errada** no frontend (`/categories/delete` vs `DELETE /categories/{id}`).~~ ✅ Resolvido (`services/categories.ts` usa `DELETE /categories/{id}`).
+3. **Conta única por usuário (by design desde 2026-10-16)**: `AccountRepository.findByUserId` retorna um único `UUID`; página Contas gerencia só parcelados, sem CRUD de contas (decisão do usuário).
+4. ~~**`InstallmentStatus.OVERDUE`** existe no enum Java mas o CHECK do banco aceita `CANCELED` — mismatch.~~ ✅ Resolvido pela `V8__installment_overdue_status.sql` (CHECK: `PENDING/PAID/OVERDUE/CANCELED`).
+5. ~~**Transações sem categoria são invisíveis** (JOIN interno + NPE em `getCategory().getName()`).~~ ✅ Resolvido (BKL-001: backend bloqueia delete com 409 + mapping null-safe com fallback "Sem categoria").
 
 ### 🟡 Divergências código × documentação
 6. `docker-compose.yml` ainda tem senha hardcoded (`POSTGRES_PASSWORD: ld0423`), embora a auditoria 3.17 afirme que foi movida para env.

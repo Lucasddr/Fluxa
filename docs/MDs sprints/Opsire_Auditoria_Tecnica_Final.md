@@ -21,7 +21,7 @@
 > - **4 código morto** — `AccountService.createCustomAccount`, `CreateAccountDTO` e
 >   `CategoriesService.findCategories` seguem sem uso (P3).
 > - **Novo (fora desta auditoria):** `CategoriesService.listCategories()` faz `PageRequest.of(0, 10)`
->   fixo (paginação quebrada); status de parcela enum (`OVERDUE`) ≠ CHECK (`CANCELED`).
+>   fixo (paginação quebrada); ~~status de parcela enum (`OVERDUE`) ≠ CHECK (`CANCELED`)~~ ✅ resolvido pela `V8__installment_overdue_status.sql` (2026-10-16).
 >
 > Roteiro atualizado: **`docs/ROADMAP-FECHAMENTO-PENDENCIAS.md`**.
 
