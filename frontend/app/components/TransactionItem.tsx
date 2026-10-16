@@ -15,16 +15,16 @@ const isIncome = kind === "INCOME";
 
 const transactionStyle = isIncome ? {
         icon: (
-            <ArrowUpRight className = "w-4 h-4 text-(--color-positive)"/>
+            <ArrowUpRight className = "w-4 h-4 text-positive"/>
         ),
         signal: "+",
-        color: "text-(--color-positive)",
+        color: "text-positive",
     } : {
         icon: (
-            <ArrowDownLeft className = "w-4 h-4 text-(--color-alert)"/>
+            <ArrowDownLeft className = "w-4 h-4 text-negative"/>
         ),
         signal: "-",
-        color: "text-(--color-alert)"
+        color: "text-negative"
     };
 
 
@@ -36,20 +36,20 @@ const formatCurrency = (value: number) => {
 };
 
 return (
-    <div className="flex justify-between w-11/12 mx-auto items-center p-3 rounded-xl border-b-2 border-(--color-border) hover:bg-(--color-surface-secondary) transition">
+    <div className="flex justify-between items-center gap-3 py-3 border-b border-line">
     {/* esquerda */}
-    <div className="flex flex-col">
-        <p className="text-sm font-medium text-gray-800">{title}</p>
-        <span className="text-xs text-gray-400">{date}</span>
+    <div className="flex flex-col min-w-0">
+        <p className="text-sm text-ink truncate">{title}</p>
+        <span className="text-xs text-ink-3">{date}</span>
     </div>
 
     {/* direita */}
-    <div className="flex items-center gap-2">
-    
+    <div className="flex items-center gap-2 shrink-0">
+
     {transactionStyle.icon}
     <p
     className={`
-        text-sm font-semibold ${transactionStyle.color}`}
+        text-sm tabular-nums ${transactionStyle.color}`}
     >
     {transactionStyle.signal}
     {formatCurrency(amount)}

@@ -1,36 +1,30 @@
-
 type ValueCardProps = {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
-  textColor?: string;
-  bgColor?: string;
-  iconBgColor?: string;
+  tone?: "ink" | "positive" | "negative" | "warn";
+};
+
+const TONE_CLASS: Record<NonNullable<ValueCardProps["tone"]>, string> = {
+  ink: "text-ink",
+  positive: "text-positive",
+  negative: "text-negative",
+  warn: "text-warn",
 };
 
 export default function ValueCard({
-    title,
-    value,
-    icon,
-    textColor = "text-gray-900",
-    bgColor = "bg-white",
-    iconBgColor = "bg-gray-100",
-        }: ValueCardProps) {
+  title,
+  value,
+  tone = "ink",
+}: ValueCardProps) {
+  return (
+    <div className="border-t border-line pt-3">
+      <p className="text-[13px] text-ink-3">{title}</p>
 
-    return (
-        <div className={`flex items-center justify-between p-4 rounded-xl shadow ${bgColor} shadow-xl border-2 border-(--color-border)`}>
-        
-        <div className="flex flex-col">
-            <span className="text-sm text-gray-500">{title}</span>
-
-            <span className={`text-lg font-semibold ${textColor}`}>
-            {value}
-            </span>
-        </div>
-
-        <div className={`p-2 rounded-lg ${iconBgColor}`}>
-            {icon}
-        </div>
-        </div>
-    );
+      <p
+        className={`mt-1 text-[28px] leading-none font-light tracking-tight tabular-nums ${TONE_CLASS[tone]}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
 }

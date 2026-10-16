@@ -51,5 +51,6 @@ services/         # API layer centralizada (api.ts, auth, transactions, categori
 
 ## Teste / visual
 
-- `app/home/insightsTest/` é um **demo estático** (dados falsos) e `app/teste2/` contém docs de
-  design **desatualizados** — ambos pendentes de remoção (ver roadmap, Onda 0).
+- As rotas `/home/insights`, `/home/insightsTest` e `/home/reports` foram removidas
+  no refactor Quiet Ledger (insights vivem no dashboard, em "Leituras").
+  `app/teste2/` contém docs de design **desatualizados** — pendente de remoção.

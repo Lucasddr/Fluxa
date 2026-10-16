@@ -9,13 +9,8 @@ import TransactionList from "@/app/components/TransactionList";
 import { useRouter } from "next/navigation";
 
 import {
-  ArrowDownLeft,
-  Banknote,
-  DollarSign,
-  User,
-  Wallet,
   LogOut,
-  AwardIcon,
+  User,
 } from "lucide-react";
 
 import { logout } from "@/services/auth";
@@ -250,10 +245,10 @@ export default function DashboardPage() {
 
   if (loadError && (!cardsData || !transactionList)) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 h-full min-h-[400px]">
+      <div className="flex flex-col items-center justify-center gap-4 h-full min-h-[400px]">
         <p
           role="alert"
-          className="text-sm text-red-600"
+          className="text-sm text-negative"
         >
           {loadError}
         </p>
@@ -261,11 +256,7 @@ export default function DashboardPage() {
         <button
           type="button"
           onClick={fetchDashboard}
-          className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
-          style={{
-            backgroundColor:
-              "var(--color-interactive)",
-          }}
+          className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
         >
           Tentar novamente
         </button>
@@ -280,55 +271,52 @@ export default function DashboardPage() {
   // ─── render ─────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-8 w-full">
 
       {/* Header */}
 
-      <div className="grid grid-rows-2 gap-1.5 lg:grid-cols-2 h-16 text-black justify-between">
-
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl">
-            Olá, {cardsData.user}!
-          </h2>
+          <h1 className="text-[28px] font-light tracking-tight text-ink">
+            Olá, {cardsData.user}
+          </h1>
+
+          <p className="mt-1 flex items-center gap-2 text-sm text-ink-2">
+            <span
+              aria-hidden
+              className="inline-block w-1.5 h-1.5 rounded-full bg-positive"
+            />
+            {cardsData.accountName}
+          </p>
         </div>
 
-        <div className="flex justify-end gap-2">
-
-          <div className="flex flex-col justify-center rounded-xl border-2 border-(--color-border) px-4 h-10 shadow-lg cursor-pointer">
-
-            <h3 className="text-center text-(--color-text-secondary)">
-              {cardsData.accountName} 🟢
-            </h3>
-          </div>
-
-          <MenuListModal
-            trigger={
-              <button
-                type="button"
-                aria-label="Abrir menu do usuário"
-                className="relative flex items-center justify-center border-2 border-(--color-border) rounded-full w-12 h-12 shadow-lg cursor-pointer"
-              >
-                <User className="w-5 h-5" />
-              </button>
-            }
-            actions={[
-              {
-                label: "Logout",
-                icon: LogOut,
-                onClick: () => {
-                  handleLogout();
-                },
+        <MenuListModal
+          trigger={
+            <button
+              type="button"
+              aria-label="Abrir menu do usuário"
+              className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] border border-line text-ink-2 transition-colors duration-[var(--dur-fast)] hover:text-ink hover:border-ink-3"
+            >
+              <User className="w-[18px] h-[18px]" />
+            </button>
+          }
+          actions={[
+            {
+              label: "Sair",
+              icon: LogOut,
+              onClick: () => {
+                handleLogout();
               },
-            ]}
-          />
-        </div>
+            },
+          ]}
+        />
       </div>
 
       {/* Período + retry */}
 
       <div className="flex items-center justify-end gap-3">
         {loading && cardsData && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-ink-3">
             Atualizando...
           </span>
         )}
@@ -337,7 +325,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={fetchDashboard}
-            className="text-xs font-medium text-red-600 hover:underline"
+            className="text-xs font-medium text-negative hover:underline"
           >
             Falha ao atualizar. Tentar novamente
           </button>
@@ -346,7 +334,7 @@ export default function DashboardPage() {
         <div
           role="group"
           aria-label="Período do dashboard"
-          className="inline-flex rounded-xl border-2 border-(--color-border) p-1 gap-1 bg-white shadow-sm"
+          className="inline-flex gap-1 rounded-[var(--radius)] border border-line p-1"
         >
           {PERIODS.map((p) => {
             const active = period === p.key;
@@ -358,19 +346,11 @@ export default function DashboardPage() {
                 onClick={() => setPeriod(p.key)}
                 aria-pressed={active}
                 disabled={loading}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:cursor-wait ${
+                className={`px-3.5 min-h-[36px] rounded-[calc(var(--radius)-4px)] text-[13px] font-medium transition-colors duration-[var(--dur-fast)] disabled:cursor-wait ${
                   active
-                    ? "text-white"
-                    : "text-gray-500 hover:bg-gray-100"
+                    ? "bg-ink text-paper"
+                    : "text-ink-2 hover:text-ink"
                 }`}
-                style={
-                  active
-                    ? {
-                        backgroundColor:
-                          "var(--color-interactive)",
-                      }
-                    : undefined
-                }
               >
                 {p.label}
               </button>
@@ -379,98 +359,70 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Cards */}
+      {/* Números */}
 
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 ">
+      <section aria-label="Resumo do período">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
+          <ValueCard
+            title="Saldo do período"
+            value={formatCurrency(cardsData.monthlyBalance)}
+            tone="ink"
+          />
 
-        <ValueCard
-          title="Saldo do Mês"
-          value={formatCurrency(
-            cardsData.monthlyBalance
-          )}
-          icon={
-            <Wallet className="text-(--color-neutral-alert)" />
-          }
-          textColor="text-(--color-neutral-alert)"
-          bgColor="bg-(--color-surface)"
-          iconBgColor="bg-(--color-neutral-alert)/20"
-        />
+          <ValueCard
+            title="Entradas"
+            value={formatCurrency(cardsData.entry)}
+            tone="positive"
+          />
 
-        <ValueCard
-          title="Entradas"
-          value={formatCurrency(
-            cardsData.entry
-          )}
-          icon={
-            <DollarSign className="text-(--color-positive)" />
-          }
-          textColor="text-(--color-positive)"
-          bgColor="bg-(--color-surface)"
-          iconBgColor="bg-(--color-positive)/20"
-        />
+          <ValueCard
+            title="Saídas"
+            value={formatCurrency(cardsData.expenses)}
+            tone="negative"
+          />
 
-        <ValueCard
-          title="Saídas"
-          value={formatCurrency(
-            cardsData.expenses
-          )}
-          icon={
-            <ArrowDownLeft className="text-(--color-alert)" />
-          }
-          textColor="text-(--color-alert)"
-          bgColor="bg-(--color-surface)"
-          iconBgColor="bg-(--color-alert)/20"
-        />
-
-        <ValueCard
-          title="Contas a Pagar"
-          value={formatCurrency(
-            cardsData.accountsPayable
-          )}
-          icon={
-            <Banknote className="text-(--color-middle-alert)" />
-          }
-          textColor="text-(--color-middle-alert)"
-          bgColor="bg-(--color-surface)"
-          iconBgColor="bg-(--color-middle-alert)/20"
-        />
-      </div>
+          <ValueCard
+            title="Contas a pagar"
+            value={formatCurrency(cardsData.accountsPayable)}
+            tone="warn"
+          />
+        </div>
+      </section>
 
       {/* Conteúdo */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4 min-h-[480px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-10 min-h-[480px]">
 
         {/* gráficos */}
 
-        <div className="grid grid-rows-2 gap-4">
-
-          <div className="border-2 border-(--color-border) rounded-xl shadow-lg">
-
+        <div className="flex flex-col gap-10 min-w-0">
+          <section aria-label="Distribuição" className="border-t border-line pt-5">
             <GraficoDonut
               entry={cardsData.entry}
               expenses={cardsData.expenses}
-              accountsPayable={
-                cardsData.accountsPayable
-              }
+              accountsPayable={cardsData.accountsPayable}
             />
-          </div>
+          </section>
 
-              <InsightCards cards={insightCards} />
+          <InsightCards cards={insightCards} />
         </div>
 
         {/* transações */}
 
-        <div className="border-2 border-(--color-border) rounded-xl shadow-lg">
-            <div className="flex justify-start py-3 px-3 ml-4">
+        <section aria-label="Últimas transações" className="border-t border-line pt-5 min-w-0">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-[15px] font-medium text-ink">
+              Últimas transações
+            </h2>
 
-              <span className="text-md text-(--color-text-primary) font-semibold">
-                Últimas transações
-              </span>
-            </div>
-          <div className="border-t-2 border-(--color-border) max-h-[440px] overflow-y-auto">
+            <span className="text-[13px] text-ink-3">
+              {transactionList.totalElements} no período
+            </span>
+          </div>
 
+          <div className="max-h-[440px] overflow-y-auto">
             {transactionList.content.length === 0 ? (
-              <p className="px-6 py-12 text-center text-gray-400 text-sm">
+              <p className="py-12 text-center text-sm text-ink-3">
                 Nenhuma transação neste período.
               </p>
             ) : (
@@ -479,7 +431,7 @@ export default function DashboardPage() {
               />
             )}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

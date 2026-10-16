@@ -43,17 +43,17 @@ const data: DataItem[] = useMemo(
     {
         name: "Entradas",
         value: entry,
-        fill: "var(--color-positive)",
+        fill: "var(--positive)",
     },
     {
         name: "Saídas",
         value: expenses,
-        fill: "var(--color-alert)",
+        fill: "var(--negative)",
     },
     {
         name: "Contas",
         value: accountsPayable,
-        fill: "var(--color-middle-alert)",
+        fill: "var(--warn)",
     },
     ],
     [entry, expenses, accountsPayable]
@@ -81,7 +81,7 @@ return (
 
     <div
         className={`shrink-0 ${
-        isDesktop ? "w-[320px] h-[230px]" : "w-40 h-40"
+        isDesktop ? "w-[280px] h-[230px]" : "w-40 h-40"
         }`}
     >
         <ResponsiveContainer width="100%" height="100%">
@@ -93,7 +93,7 @@ return (
             cy="50%"
             innerRadius={isDesktop ? 80 : 42}
             outerRadius={isDesktop ? 100 : 62}
-            stroke="white"
+            stroke="var(--paper)"
             strokeWidth={2}
             onMouseEnter={handlePieEnter}
             />
@@ -102,7 +102,7 @@ return (
             x="50%"
             y="44%"
             textAnchor="middle"
-            className={`fill-gray-500 transition-opacity duration-300 ${
+            className={`fill-ink-3 transition-opacity duration-300 ${
                 visible ? "opacity-100" : "opacity-0"
             }`}
             style={{
@@ -117,7 +117,7 @@ return (
             y="56%"
             textAnchor="middle"
             dominantBaseline="middle"
-            className={`fill-gray-800 font-bold transition-opacity duration-300 ${
+            className={`fill-ink font-light tabular-nums transition-opacity duration-300 ${
                 visible ? "opacity-100" : "opacity-0"
             }`}
             style={{
@@ -134,11 +134,11 @@ return (
 
     <div className="flex-1 min-w-0 w-full lg:w-auto">
         <h3
-        className={`font-semibold text-gray-900 mb-3 ${
+        className={`font-medium text-ink mb-3 ${
             isDesktop ? "text-base" : "text-sm"
         }`}
         >
-        Resumo das Categorias
+        Distribuição
         </h3>
 
         <div className="flex flex-col gap-2 lg:gap-3">
@@ -149,12 +149,12 @@ return (
             <div
                 key={item.name}
                 onMouseEnter={() => handlePieEnter(null, index)}
-                className={`flex items-center justify-between cursor-pointer rounded-xl transition-all ${
+                className={`flex items-center justify-between cursor-pointer rounded-[var(--radius)] transition-colors duration-[var(--dur-fast)] ${
                 isDesktop ? "px-3 py-3" : "px-2 py-2"
                 } ${
                 isActive
-                    ? "bg-(--color-surface-active)/40"
-                    : "hover:bg-(--color-surface-active)/40"
+                    ? "bg-surface"
+                    : ""
                 }`}
             >
                 <div className="flex items-center gap-2 lg:gap-3 min-w-0">
@@ -166,7 +166,7 @@ return (
                 />
 
                 <span
-                    className={`truncate text-gray-700 ${
+                    className={`truncate text-ink-2 ${
                     isDesktop ? "text-sm" : "text-xs"
                     }`}
                 >
@@ -176,7 +176,7 @@ return (
 
                 <div className="flex items-center gap-2 lg:gap-4">
                 <span
-                    className={`font-semibold text-gray-900 whitespace-nowrap ${
+                    className={`font-medium tabular-nums text-ink whitespace-nowrap ${
                     isDesktop ? "text-sm" : "text-xs"
                     }`}
                 >
@@ -184,7 +184,7 @@ return (
                 </span>
 
                 <span
-                    className={`text-gray-400 w-8 text-right ${
+                    className={`text-ink-3 w-8 text-right ${
                     isDesktop ? "text-sm" : "text-xs"
                     }`}
                 >

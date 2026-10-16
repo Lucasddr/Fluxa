@@ -1,4 +1,4 @@
-import { TrendingUp, Tag, Calendar, Info } from "lucide-react";
+import { TrendingUp, Tag, Calendar, Info, TriangleAlert, CircleCheck } from "lucide-react";
 
 // ─── DTOs (espelham o que vem do back) ───────────────────────────────────────
 
@@ -39,10 +39,28 @@ function formatBRL(value: number): string {
   });
 }
 
-// ─── Card: Sua Economia ───────────────────────────────────────────────────────
+function SectionHead({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2 text-ink-2">
+        {icon}
+        <span className="text-[13px]">{label}</span>
+      </div>
+
+      <Info size={15} className="text-ink-3" aria-hidden />
+    </div>
+  );
+}
+
+// ─── Card: Sua Economia ─────────────────────────────────────────────────────
 
 function EconomyCard({ data }: { data: EconomyCardDTO }) {
-
   const rawProgress =
     (data.savingsPercentage / data.goalPercentage) * 100;
 
@@ -51,116 +69,62 @@ function EconomyCard({ data }: { data: EconomyCardDTO }) {
   const reachedGoal = data.savingsPercentage >= data.goalPercentage;
 
   const isNegative = data.savingsPercentage < 0;
+  const tone = isNegative ? "text-negative" : "text-positive";
+  const bar = isNegative
+    ? "bg-negative"
+    : reachedGoal
+      ? "bg-positive"
+      : "bg-positive/60";
 
   return (
-    <div className="rounded-2xl bg-white border-2 border-(--color-border) shadow-lg p-5 flex flex-col gap-2">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isNegative ? "bg-red-50" : "bg-emerald-50"
-            }`}
-          >
-            <TrendingUp
-              size={16}
-              className={
-                isNegative
-                  ? "text-red-500"
-                  : "text-emerald-500"
-              }
-            />
-          </div>
+    <div className="border-t border-line pt-4 flex flex-col gap-1.5">
+      <SectionHead
+        icon={<TrendingUp size={15} aria-hidden />}
+        label="Sua economia"
+      />
 
-          <span className="text-sm font-medium text-gray-500">
-            Sua economia
-          </span>
-        </div>
-
-        <Info
-          size={15}
-          className="text-gray-300 cursor-pointer hover:text-gray-400"
-        />
-      </div>
-
-      {/* Valor principal */}
-      <p
-        className={`text-xl font-bold ${
-          isNegative
-            ? "text-red-500"
-            : "text-emerald-500"
-        }`}
-      >
+      <p className={`text-[26px] font-light tabular-nums leading-none ${tone}`}>
         {data.savingsPercentage}%
       </p>
 
-      <p className="text-sm text-gray-500 -mt-1">
+      <p className="text-sm text-ink-2">
         {isNegative
           ? `Você gastou ${Math.abs(
               data.savingsPercentage
-            )}% a mais do que recebeu este mês.`
-          : `Você economizou ${data.savingsPercentage}% da sua renda este mês.`}
+            )}% a mais do que recebeu no período.`
+          : `Você economizou ${data.savingsPercentage}% da sua renda no período.`}
       </p>
 
-      {/* Info box */}
-      <div
-        className={`rounded-lg px-3 py-2 ${
-          isNegative
-            ? "bg-red-50"
-            : "bg-emerald-50"
-        }`}
-      >
-        <p
-          className={`text-sm font-medium ${
-            isNegative
-              ? "text-red-700"
-              : "text-emerald-700"
-          }`}
-        >
-          {isNegative ? (
-            <>
-              Seu saldo ficou em{" "}
-              <span className="font-semibold">
-                {formatBRL(data.savedAmount)}
-              </span>{" "}
-              para uma renda de{" "}
-              <span className="font-semibold">
-                {formatBRL(data.totalIncome)}
-              </span>
-              .
-            </>
-          ) : (
-            <>
-              Você guardou{" "}
-              <span className="font-semibold">
-                {formatBRL(data.savedAmount)}
-              </span>{" "}
-              de{" "}
-              <span className="font-semibold">
-                {formatBRL(data.totalIncome)}
-              </span>{" "}
-              recebidos.
-            </>
-          )}
-        </p>
-      </div>
+      <p className="text-sm text-ink-2">
+        {isNegative ? (
+          <>
+            Saldo de {formatBRL(data.savedAmount)} para uma renda de{" "}
+            {formatBRL(data.totalIncome)}.
+          </>
+        ) : (
+          <>
+            {formatBRL(data.savedAmount)} guardados de{" "}
+            {formatBRL(data.totalIncome)} recebidos.
+          </>
+        )}
+      </p>
 
-      {/* Barra de progresso */}
-      <div className="flex flex-col gap-1">
-        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="flex flex-col gap-1 mt-1">
+        <div
+          className="w-full h-1 bg-line rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Progresso da meta de economia"
+        >
           <div
-            className={`h-full rounded-full transition-all ${
-              isNegative
-                ? "bg-red-500"
-                : reachedGoal
-                ? "bg-emerald-500"
-                : "bg-emerald-400"
-            }`}
+            className={`h-full rounded-full transition-all ${bar}`}
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-3">
           Meta recomendada: {data.goalPercentage}%
         </p>
       </div>
@@ -172,102 +136,61 @@ function EconomyCard({ data }: { data: EconomyCardDTO }) {
 
 function MostExpenseCategoryCard({ data }: { data: MostExpenseCategoryDTO }) {
   return (
-    <div className="rounded-2xl bg-white border-2 border-(--color-border) shadow-lg p-5 flex flex-col gap-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-            <Tag size={16} className="text-amber-500" />
-          </div>
-          <span className="text-sm font-medium text-gray-500">Maior gasto</span>
-        </div>
-        <Info size={15} className="text-gray-300 cursor-pointer hover:text-gray-400" />
-      </div>
+    <div className="border-t border-line pt-4 flex flex-col gap-1.5">
+      <SectionHead
+        icon={<Tag size={15} aria-hidden />}
+        label="Maior gasto"
+      />
 
-      {/* Nome da categoria */}
-      <p className="text-xl font-bold text-amber-500 leading-tight">
+      <p className="text-[26px] font-light leading-tight text-ink">
         {data.categoryName}
       </p>
 
-      <p className="text-sm text-gray-500 -mt-1">
-        Foi sua maior categoria de gastos neste mês.
+      <p className="text-sm text-ink-2">
+        {formatBRL(data.totalSpent)} gastos (
+        {data.percentageOfExpenses}% das saídas).
       </p>
 
-      {/* Info box — gastos */}
-      <div className="rounded-l bg-amber-50 px-4 py-3">
-        <p className="text-sm text-amber-600 font-medium">
-          <span className="font-semibold">{formatBRL(data.totalSpent)}</span> gastos
-        </p>
-        <p className="text-xs text-amber-500">
-          ({data.percentageOfExpenses}% do total de saídas)
-        </p>
-      </div>
-
-      {/* Sugestão */}
-      <div className="flex items-start gap-2 px-1">
-        <p className="text-xs text-gray-400">
-          Considere reduzir {data.suggestedReduction}% e economize{" "}
-          <span className="font-medium text-gray-500">
-            {formatBRL(data.savingIfReduced)}
-          </span>
-          .
-        </p>
-      </div>
+      <p className="text-xs text-ink-3">
+        Reduzindo {data.suggestedReduction}%, você economiza{" "}
+        {formatBRL(data.savingIfReduced)}.
+      </p>
     </div>
   );
 }
 
-// ─── Card: Compromissos Futuros (Parcelas) ────────────────────────────────────
+// ─── Card: Compromissos Futuros (Parcelas) ───────────────────────────────────
+
 function InstallmentsAmountCard({ data }: { data: InstallmentsAmountDTO }) {
   return (
-    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Calendar size={16} className="text-blue-500" />
-          </div>
-          <span className="text-sm font-medium text-gray-500">
-            Compromissos futuros
-          </span>
-        </div>
-        <Info size={15} className="text-gray-300 cursor-pointer hover:text-gray-400" />
-      </div>
+    <div className="border-t border-line pt-4 flex flex-col gap-1.5">
+      <SectionHead
+        icon={<Calendar size={15} aria-hidden />}
+        label="Compromissos futuros"
+      />
 
-      {/* Valor */}
-      <p className="text-2xl font-bold text-blue-500">
+      <p className="text-[26px] font-light tabular-nums leading-none text-ink">
         {formatBRL(data.totalAmount)}
       </p>
 
-      <p className="text-sm text-gray-500 -mt-1">
-        {data.hasInstallments
-          ? "Você possui parcelas e contas a pagar."
-          : "Você não possui contas a pagar futuras."}
-      </p>
-
-      {/* Mensagem de status */}
-      <div className="rounded-xl bg-blue-50 px-4 py-3 flex items-start gap-2">
+      <p className="text-sm text-ink-2 flex items-center gap-1.5">
         {data.hasInstallments ? (
           <>
-            <span className="text-blue-400 mt-0.5">⚠️</span>
-            <p className="text-sm text-blue-600">
-              Fique atento aos vencimentos para evitar juros.
-            </p>
+            <TriangleAlert size={14} className="text-warn shrink-0" aria-hidden />
+            Fique atento aos vencimentos para evitar juros.
           </>
         ) : (
           <>
-            <span className="text-blue-400 mt-0.5">✅</span>
-            <p className="text-sm text-blue-600">
-              Continue assim e mantenha suas finanças em dia!
-            </p>
+            <CircleCheck size={14} className="text-positive shrink-0" aria-hidden />
+            Nenhuma conta a pagar à frente.
           </>
         )}
-      </div>
+      </p>
     </div>
   );
 }
 
-// ─── Orquestrador ─────────────────────────────────────────────────────────────
+// ─── Orquestrador ────────────────────────────────────────────────────────────
 
 function InsightCard({ data }: { data: InsightCardDTO }) {
   switch (data.type) {
@@ -280,18 +203,28 @@ function InsightCard({ data }: { data: InsightCardDTO }) {
   }
 }
 
-// ─── Export principal ─────────────────────────────────────────────────────────
+// ─── Export principal ────────────────────────────────────────────────────────
 
 type InsightCardsProps = {
   cards: InsightCardDTO[];
 };
 
 export default function InsightCards({ cards }: InsightCardsProps) {
+  if (cards.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 ">
-      {cards.map((card, index) => (
-        <InsightCard key={index} data={card} />
-      ))}
-    </div>
+    <section aria-label="Leituras do período">
+      <h2 className="text-[15px] font-medium text-ink mb-4">
+        Leituras
+      </h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+        {cards.map((card, index) => (
+          <InsightCard key={index} data={card} />
+        ))}
+      </div>
+    </section>
   );
 }
