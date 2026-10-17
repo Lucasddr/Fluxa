@@ -103,7 +103,7 @@ public class AuthService {
     public TokenPair refresh(String token){
 
         if (token == null) {
-            throw new RuntimeException("Refresh token não recebido");
+            throw new InvalidCredentialsException("Refresh token não recebido");
         }
 
         RefreshToken refreshToken = refreshTokenService.validate(token);

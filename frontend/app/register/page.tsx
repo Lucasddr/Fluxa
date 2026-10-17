@@ -179,7 +179,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               loading={loading}
-              disabled={!formValid || loading || success}
+              disabled={loading || success}
             >
               Criar conta
             </Button>

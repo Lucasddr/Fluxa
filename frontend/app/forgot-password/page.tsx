@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               loading={loading}
-              disabled={!emailValid || loading}
+              disabled={loading}
             >
               Enviar link
             </Button>

@@ -152,6 +152,12 @@ class AuthServiceTest {
     }
 
     @Test
+    void refreshWithoutTokenThrowsUnauthorizedCredentialsException() {
+        assertThrows(InvalidCredentialsException.class,
+                () -> authService.refresh(null));
+    }
+
+    @Test
     void registerAdminCreatesAdmin() {
         authService.registerAdmin(
                 new RegisterDTO("Admin User", EMAIL, PASSWORD));

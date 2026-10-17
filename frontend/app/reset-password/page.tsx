@@ -137,7 +137,7 @@ function ResetPasswordForm() {
           <Button
             type="submit"
             loading={loading}
-            disabled={!formValid || loading}
+            disabled={loading}
           >
             Redefinir senha
           </Button>

@@ -147,7 +147,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               loading={loading}
-              disabled={!formValid || loading}
+              disabled={loading}
             >
               Entrar
             </Button>
