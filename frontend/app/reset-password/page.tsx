@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { resetPassword } from "@/services/auth";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
 import FormAlert from "@/app/components/ui/FormAlert";
 
 function ResetPasswordForm() {
@@ -20,6 +23,8 @@ function ResetPasswordForm() {
   const passwordValid = password.length >= 8;
   const confirmValid = confirm === password && confirm.length > 0;
   const formValid = passwordValid && confirmValid && token.length > 0;
+
+  const confirmError = touched && !confirmValid && confirm.length > 0;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -56,92 +61,88 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-        <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg text-center space-y-4">
-          <h1 className="text-2xl font-bold text-teal-900">
+      <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
+        <main id="main" className="w-full max-w-sm text-center space-y-4" tabIndex={-1}>
+          <h1 className="text-2xl font-light tracking-tight">
             Link inválido
           </h1>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-ink-2">
             Este link de recuperação está incompleto. Solicite um novo link.
           </p>
 
           <Link
             href="/forgot-password"
-            className="inline-block text-sm font-medium text-teal-700 hover:underline"
+            className="inline-block text-sm font-medium text-ink hover:underline"
           >
             Solicitar novo link
           </Link>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-      <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg">
-        <h1 className="text-3xl font-bold text-teal-900 text-center mb-2">
+    <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
+      <main id="main" className="w-full max-w-sm" tabIndex={-1}>
+        <p className="text-center text-[13px] text-ink-3 mb-2">
+          Fluxa
+        </p>
+
+        <h1 className="text-center text-3xl font-light tracking-tight mb-2">
           Redefinir senha
         </h1>
 
-        <p className="text-sm text-slate-500 text-center mb-6">
+        <p className="text-sm text-ink-2 text-center mb-8">
           Escolha uma nova senha (mínimo 8 caracteres).
         </p>
 
         {errorMessage && (
-          <div className="mb-4">
+          <div className="mb-5">
             <FormAlert>{errorMessage}</FormAlert>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
           <div>
-            <label className="text-sm font-medium text-teal-900">
-              Nova senha
-            </label>
+            <Label htmlFor="reset-password">Nova senha</Label>
 
-            <input
+            <Input
+              id="reset-password"
               type="password"
+              autoComplete="new-password"
               value={password}
               placeholder="••••••••"
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched(true)}
-              className="w-full mt-1 p-3 rounded-lg border bg-white text-slate-700 border-teal-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+              error={touched && !passwordValid ? "A senha deve ter pelo menos 8 caracteres" : undefined}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-teal-900">
-              Confirmar nova senha
-            </label>
+            <Label htmlFor="reset-confirm">Confirmar nova senha</Label>
 
-            <input
+            <Input
+              id="reset-confirm"
               type="password"
+              autoComplete="new-password"
               value={confirm}
               placeholder="••••••••"
               onChange={(e) => setConfirm(e.target.value)}
               onBlur={() => setTouched(true)}
-              className="w-full mt-1 p-3 rounded-lg border bg-white text-slate-700 border-teal-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+              error={confirmError ? "As senhas devem coincidir" : undefined}
             />
-
-            {touched && !confirmValid && (
-              <p className="text-xs text-red-500 mt-1">
-                as senhas devem coincidir
-              </p>
-            )}
           </div>
 
-          <button
+          <Button
             type="submit"
+            loading={loading}
             disabled={!formValid || loading}
-            className="w-full p-3 rounded-lg font-semibold text-white
-                      bg-teal-700 hover:bg-teal-800 transition
-                        disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Salvando..." : "Redefinir senha"}
-          </button>
+            Redefinir senha
+          </Button>
         </form>
-      </div>
+      </main>
     </div>
   );
 }

@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import FormAlert from "@/app/components/ui/FormAlert";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
+import Select from "@/app/components/ui/Select";
+import Textarea from "@/app/components/ui/Textarea";
+
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
   createCreditPurchase,
@@ -99,6 +105,8 @@ export default function CreditPurchaseModal({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     selectCategories()
       .then(async (res) => {
         if (!res.ok) {
@@ -106,9 +114,16 @@ export default function CreditPurchaseModal({
         }
 
         const data: CategoryOption[] = await res.json();
-        setCategories(data.filter((c) => c.kind === "EXPENSE"));
+
+        if (!cancelled) {
+          setCategories(data.filter((c) => c.kind === "EXPENSE"));
+        }
       })
       .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const qty = Math.max(1, Math.min(120, Number(form.installmentsQty) || 1));
@@ -242,9 +257,6 @@ export default function CreditPurchaseModal({
     }
   }
 
-  const inputClass =
-    "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 transition";
-
   return (
     <AppDialog
       open
@@ -257,76 +269,58 @@ export default function CreditPurchaseModal({
       description={description}
       footer={
         <>
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancelar
-          </button>
+          </Button>
 
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: "var(--color-interactive)",
-            }}
-          >
-            {loading ? "Salvando..." : submitLabel}
-          </button>
+          <Button onClick={handleSave} loading={loading} disabled={loading}>
+            {submitLabel}
+          </Button>
         </>
       }
     >
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1.5">
-          Título
-        </label>
+        <Label htmlFor="purchase-title">Título</Label>
 
-        <input
+        <Input
+          id="purchase-title"
           type="text"
           placeholder="Ex.: Geladeira"
           value={form.title}
           onChange={(e) =>
             setForm((f) => ({ ...f, title: e.target.value }))
           }
-          className={inputClass}
+          error={errors.title}
         />
-
-        {errors.title && (
-          <p className="text-xs text-red-500 mt-1">{errors.title}</p>
-        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1.5">
-            Estabelecimento{" "}
-            <span className="text-gray-400 font-normal">(opcional)</span>
-          </label>
+          <Label htmlFor="purchase-merchant" optional>
+            Estabelecimento
+          </Label>
 
-          <input
+          <Input
+            id="purchase-merchant"
             type="text"
             placeholder="Ex.: Loja do centro"
             value={form.merchant}
             onChange={(e) =>
               setForm((f) => ({ ...f, merchant: e.target.value }))
             }
-            className={inputClass}
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1.5">
-            Categoria (despesa)
-          </label>
+          <Label htmlFor="purchase-category">Categoria (despesa)</Label>
 
-          <select
+          <Select
+            id="purchase-category"
             value={form.categoryId}
             onChange={(e) =>
               setForm((f) => ({ ...f, categoryId: e.target.value }))
             }
-            className={inputClass}
+            error={errors.categoryId}
           >
             <option value="">Selecionar...</option>
 
@@ -335,13 +329,7 @@ export default function CreditPurchaseModal({
                 {c.name}
               </option>
             ))}
-          </select>
-
-          {errors.categoryId && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.categoryId}
-            </p>
-          )}
+          </Select>
         </div>
       </div>
 
@@ -349,11 +337,10 @@ export default function CreditPurchaseModal({
         <>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Valor total (R$)
-              </label>
+              <Label htmlFor="purchase-total">Valor total (R$)</Label>
 
-              <input
+              <Input
+                id="purchase-total"
                 type="number"
                 min="0.01"
                 step="0.01"
@@ -362,22 +349,15 @@ export default function CreditPurchaseModal({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, totalAmount: e.target.value }))
                 }
-                className={inputClass}
+                error={errors.totalAmount}
               />
-
-              {errors.totalAmount && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.totalAmount}
-                </p>
-              )}
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Parcelas (1–120)
-              </label>
+              <Label htmlFor="purchase-qty">Parcelas (1–120)</Label>
 
-              <input
+              <Input
+                id="purchase-qty"
                 type="number"
                 min="1"
                 max="120"
@@ -397,39 +377,30 @@ export default function CreditPurchaseModal({
                     syncManualRows(nextQty, total, form.firstDueDate);
                   }
                 }}
-                className={inputClass}
+                error={errors.installmentsQty}
               />
-
-              {errors.installmentsQty && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.installmentsQty}
-                </p>
-              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Data da compra
-              </label>
+              <Label htmlFor="purchase-date">Data da compra</Label>
 
-              <input
+              <Input
+                id="purchase-date"
                 type="date"
                 value={form.purchaseDate}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, purchaseDate: e.target.value }))
                 }
-                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Primeiro vencimento
-              </label>
+              <Label htmlFor="purchase-first-due">Primeiro vencimento</Label>
 
-              <input
+              <Input
+                id="purchase-first-due"
                 type="date"
                 value={form.firstDueDate}
                 onChange={(e) => {
@@ -439,21 +410,13 @@ export default function CreditPurchaseModal({
                     syncManualRows(qty, total, e.target.value);
                   }
                 }}
-                className={inputClass}
+                error={errors.firstDueDate}
               />
-
-              {errors.firstDueDate && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.firstDueDate}
-                </p>
-              )}
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
-              Valores das parcelas
-            </label>
+            <Label>Valores das parcelas</Label>
 
             <div className="flex gap-2">
               {(
@@ -472,11 +435,10 @@ export default function CreditPurchaseModal({
                       syncManualRows(qty, total, form.firstDueDate);
                     }
                   }}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition
-                  ${
+                  className={`flex-1 py-2 px-3 rounded-[var(--radius)] text-sm font-medium border transition-colors ${
                     equalValues === opt.value
-                      ? "bg-teal-50 border-teal-300 text-teal-700"
-                      : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                      ? "bg-ink text-paper border-ink"
+                      : "border-line text-ink-2 hover:text-ink hover:border-ink-3"
                   }`}
                 >
                   {opt.label}
@@ -487,12 +449,15 @@ export default function CreditPurchaseModal({
             {!equalValues ? (
               <div className="mt-3 flex flex-col gap-2 max-h-56 overflow-y-auto">
                 {manualRows.map((row, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
-                    <span className="text-xs text-gray-500 font-medium">
+                  <div
+                    key={i}
+                    className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center"
+                  >
+                    <span className="text-xs text-ink-2 font-medium">
                       {i + 1}ª
                     </span>
 
-                    <input
+                    <Input
                       type="number"
                       min="0.01"
                       step="0.01"
@@ -504,11 +469,11 @@ export default function CreditPurchaseModal({
                           )
                         )
                       }
-                      className={inputClass}
+                      error={errors[`row-${i}`]}
                       aria-label={`Valor da parcela ${i + 1}`}
                     />
 
-                    <input
+                    <Input
                       type="date"
                       value={row.dueDate}
                       onChange={(e) =>
@@ -518,19 +483,18 @@ export default function CreditPurchaseModal({
                           )
                         )
                       }
-                      className={inputClass}
                       aria-label={`Vencimento da parcela ${i + 1}`}
                     />
                   </div>
                 ))}
 
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-ink-3">
                   Soma: R$ {manualSum.toFixed(2)} · Total: R${" "}
                   {total.toFixed(2)}
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className="text-xs text-ink-3 mt-1.5">
                 {qty} parcela(s) de ~R${" "}
                 {qty > 0 ? (total / qty).toFixed(2) : "0,00"}, vencendo
                 mensalmente. Centavos de arredondamento vão para a última.
@@ -538,7 +502,7 @@ export default function CreditPurchaseModal({
             )}
 
             {errors.installments && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs text-negative mt-1">
                 {errors.installments}
               </p>
             )}
@@ -547,19 +511,18 @@ export default function CreditPurchaseModal({
       )}
 
       <div>
-        <label className="text-sm font-medium text-gray-700 block mb-1.5">
-          Observações{" "}
-          <span className="text-gray-400 font-normal">(opcional)</span>
-        </label>
+        <Label htmlFor="purchase-notes" optional>
+          Observações
+        </Label>
 
-        <textarea
+        <Textarea
+          id="purchase-notes"
           placeholder="Ex.: Garantia de 12 meses"
           value={form.notes}
           onChange={(e) =>
             setForm((f) => ({ ...f, notes: e.target.value }))
           }
           rows={2}
-          className={`${inputClass} resize-none`}
         />
       </div>
 

@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { forgotPassword } from "@/services/auth";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
 import FormAlert from "@/app/components/ui/FormAlert";
 
 export default function ForgotPasswordPage() {
@@ -41,86 +44,75 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-      <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg">
-        <h1 className="text-3xl font-bold text-teal-900 text-center mb-2">
+    <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
+      <main id="main" className="w-full max-w-sm" tabIndex={-1}>
+        <p className="text-center text-[13px] text-ink-3 mb-2">
+          Fluxa
+        </p>
+
+        <h1 className="text-center text-3xl font-light tracking-tight mb-2">
           Esqueci minha senha
         </h1>
 
-        <p className="text-sm text-slate-500 text-center mb-6">
+        <p className="text-sm text-ink-2 text-center mb-8">
           Digite seu e-mail para receber o link de recuperação.
         </p>
 
         {errorMessage && (
-          <div className="mb-4">
+          <div className="mb-5">
             <FormAlert>{errorMessage}</FormAlert>
           </div>
         )}
 
         {sent ? (
           <div className="text-center space-y-4">
-            <p className="text-sm text-slate-600 bg-teal-50 border border-teal-200 rounded-lg px-3 py-3">
+            <p className="text-sm text-ink-2 border border-positive/30 bg-positive-subtle text-positive rounded-[var(--radius)] px-4 py-3">
               Se o e-mail existir, você receberá um link de recuperação.
             </p>
 
             <Link
               href="/login"
-              className="inline-block text-sm font-medium text-teal-700 hover:underline"
+              className="inline-block text-sm font-medium text-ink hover:underline"
             >
               Voltar para o login
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
             <div>
-              <label className="text-sm font-medium text-teal-900">
-                Email
-              </label>
+              <Label htmlFor="forgot-email">Email</Label>
 
-              <input
+              <Input
+                id="forgot-email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 placeholder="email@exemplo.com"
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => setTouched(true)}
-                className={`w-full mt-1 p-3 rounded-lg border bg-white text-slate-700
-                  focus:outline-none focus:ring-2 transition
-                  ${
-                    emailError
-                      ? "border-red-500 focus:ring-red-300"
-                      : "border-teal-200 focus:ring-teal-400"
-                  }
-                `}
+                error={emailError ? "Email inválido" : undefined}
               />
-
-              {emailError && (
-                <p className="text-xs text-red-500 mt-1">
-                  email inválido
-                </p>
-              )}
             </div>
 
-            <button
+            <Button
               type="submit"
+              loading={loading}
               disabled={!emailValid || loading}
-              className="w-full p-3 rounded-lg font-semibold text-white
-                        bg-teal-700 hover:bg-teal-800 transition
-                          disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Enviando..." : "Enviar link"}
-            </button>
+              Enviar link
+            </Button>
 
             <p className="text-center">
               <Link
                 href="/login"
-                className="text-sm font-medium text-teal-700 hover:underline"
+                className="text-sm font-medium text-ink-2 hover:text-ink transition-colors"
               >
                 Voltar para o login
               </Link>
             </p>
           </form>
         )}
-      </div>
+      </main>
     </div>
   );
 }

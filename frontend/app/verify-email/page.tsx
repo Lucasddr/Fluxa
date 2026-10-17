@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { sendVerification, verifyEmail } from "@/services/auth";
+import Button from "@/app/components/ui/Button";
 import FormAlert from "@/app/components/ui/FormAlert";
 
 type Status = "loading" | "ok" | "error" | "none";
@@ -78,30 +79,31 @@ function VerifyEmailContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-white via-slate-50 to-teal-50">
-      <div className="w-full max-w-md bg-white border border-teal-100 rounded-2xl p-8 shadow-lg text-center space-y-4">
-        <h1 className="text-2xl font-bold text-teal-900">
+    <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
+      <main id="main" className="w-full max-w-sm text-center space-y-4" tabIndex={-1}>
+        <p className="text-[13px] text-ink-3 mb-2">
+          Fluxa
+        </p>
+
+        <h1 className="text-2xl font-light tracking-tight">
           Verificação de e-mail
         </h1>
 
         {status === "loading" && (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-ink-2">
             Verificando seu e-mail...
           </p>
         )}
 
         {status === "ok" && (
           <>
-            <p className="text-sm text-slate-600 bg-teal-50 border border-teal-200 rounded-lg px-3 py-3">
+            <p className="text-sm text-positive border border-positive/30 bg-positive-subtle rounded-[var(--radius)] px-4 py-3">
               E-mail verificado com sucesso.
             </p>
 
-            <Link
-              href="/login"
-              className="inline-block text-sm font-medium text-teal-700 hover:underline"
-            >
-              Ir para o login
-            </Link>
+            <Button asChild variant="secondary" className="w-full">
+              <Link href="/login">Ir para o login</Link>
+            </Button>
           </>
         )}
 
@@ -111,19 +113,17 @@ function VerifyEmailContent() {
 
         {(status === "error" || status === "none") && (
           <div className="space-y-3">
-            <button
-              type="button"
+            <Button
               onClick={handleResend}
+              loading={resending}
               disabled={resending}
-              className="w-full p-3 rounded-lg font-semibold text-white
-                        bg-teal-700 hover:bg-teal-800 transition
-                          disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full"
             >
-              {resending ? "Enviando..." : "Reenviar e-mail"}
-            </button>
+              Reenviar e-mail
+            </Button>
 
             {resent && (
-              <p className="text-sm text-slate-600 bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-positive border border-positive/30 bg-positive-subtle rounded-[var(--radius)] px-4 py-2">
                 E-mail reenviado. Verifique sua caixa de entrada.
               </p>
             )}
@@ -131,14 +131,14 @@ function VerifyEmailContent() {
             <p>
               <Link
                 href="/login"
-                className="text-sm font-medium text-teal-700 hover:underline"
+                className="text-sm font-medium text-ink-2 hover:text-ink transition-colors"
               >
                 Voltar para o login
               </Link>
             </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

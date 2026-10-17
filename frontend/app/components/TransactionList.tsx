@@ -1,5 +1,3 @@
-"use client";
-
 import TransactionItem from "./TransactionItem";
 
 type Transaction = {
@@ -15,19 +13,17 @@ type Props= {
 }
 
 export default function TransactionList({ data }: Props) {
-return (
-    <div className="flex flex-col gap-2 rounded-xl py-2">
-    {data.map((t) => (
+  return (
+    <div className="flex flex-col gap-2 rounded-[var(--radius)] py-2">
+      {data.map((t) => (
         <TransactionItem
-        key={t.id}
-        id={t.id}
-        title={t.title}
-        amount={t.amount}
-        date={t.date}
-        kind={t.kind}
+          key={t.id}
+          title={t.title}
+          amount={t.amount}
+          date={t.date}
+          kind={t.kind}
         />
-        
-    ))}
+      ))}
     </div>
-);
+  );
 }

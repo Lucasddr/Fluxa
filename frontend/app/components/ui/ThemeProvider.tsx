@@ -11,28 +11,36 @@ import {
 
 type Theme = "light" | "dark";
 
+const STORAGE_KEY = "fluxa-theme";
+
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved === "light" || saved === "dark") {
+      return saved;
+    }
+  } catch {
+    // storage indisponível — segue no claro
+  }
+
+  return "light";
+}
+
 const ThemeContext = createContext<{
   theme: Theme;
   toggle: () => void;
 }>({ theme: "light", toggle: () => {} });
 
-const STORAGE_KEY = "fluxa-theme";
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-
-      if (saved === "light" || saved === "dark") {
-        setTheme(saved);
-        document.documentElement.dataset.theme = saved;
-      }
-    } catch {
-      // storage indisponível — segue no claro
-    }
-  }, []);
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   const toggle = useCallback(() => {
     setTheme((prev) => {
@@ -43,8 +51,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       } catch {
         // ignora
       }
-
-      document.documentElement.dataset.theme = next;
 
       return next;
     });

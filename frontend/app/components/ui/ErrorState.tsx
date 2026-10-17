@@ -1,5 +1,8 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
+import Button from "./Button";
+
 type ErrorStateProps = {
   message: string;
   onRetry: () => void;
@@ -8,17 +11,16 @@ type ErrorStateProps = {
 export default function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 px-6 py-12">
-      <p role="alert" className="text-sm text-negative text-center">
-        {message}
-      </p>
+      <div className="flex items-center gap-2 text-negative">
+        <AlertCircle className="w-4 h-4" aria-hidden />
+        <p role="alert" className="text-sm text-center">
+          {message}
+        </p>
+      </div>
 
-      <button
-        type="button"
-        onClick={onRetry}
-        className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
-      >
+      <Button onClick={onRetry}>
         Tentar novamente
-      </button>
+      </Button>
     </div>
   );
 }

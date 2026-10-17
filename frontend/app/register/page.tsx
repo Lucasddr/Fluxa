@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { register } from "@/services/auth";
 import ThemeToggle from "@/app/components/ui/ThemeToggle";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
+import FormAlert from "@/app/components/ui/FormAlert";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,7 +27,6 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // validações
   const nameValid = name.trim().length >= 2;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const passwordValid = password.length >= 8;
@@ -62,7 +65,6 @@ export default function RegisterPage() {
         password: password.trim(),
       });
 
-      // leitura segura da resposta
       const text = await res.text();
 
       let data = null;
@@ -78,14 +80,11 @@ export default function RegisterPage() {
         throw new Error(data?.message || "Erro ao cadastrar");
       }
 
-      // sucesso
       setSuccess(true);
 
-      // redireciona após 1.5s
       setTimeout(() => {
         router.push("/login");
       }, 1500);
-
     } catch (err) {
       setErrorMessage(
         err instanceof Error
@@ -97,18 +96,13 @@ export default function RegisterPage() {
     }
   }
 
-  const inputClass = (invalid: boolean) =>
-    `w-full mt-1.5 px-3.5 min-h-[48px] rounded-[var(--radius)] border bg-surface text-ink text-[15px] transition-colors duration-[var(--dur-fast)] focus:outline-none focus:border-ink-3 placeholder:text-ink-3 ${
-      invalid ? "border-negative" : "border-line"
-    }`;
-
   return (
     <div className="min-h-dvh flex flex-col bg-paper text-ink">
       <div className="flex justify-end p-4">
         <ThemeToggle />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 pb-16">
+      <main id="main" className="flex-1 flex items-center justify-center px-4 pb-16" tabIndex={-1}>
         <div className="w-full max-w-sm">
           <p className="text-center text-[13px] text-ink-3 mb-2">
             Fluxa
@@ -121,28 +115,23 @@ export default function RegisterPage() {
           {success && (
             <div
               role="status"
-              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-positive/40 text-positive text-sm"
+              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-positive/30 text-positive text-sm bg-positive-subtle"
             >
               Conta criada com sucesso! Redirecionando...
             </div>
           )}
 
           {errorMessage && (
-            <div
-              role="alert"
-              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-negative/40 text-negative text-sm"
-            >
-              {errorMessage}
+            <div className="mb-5">
+              <FormAlert>{errorMessage}</FormAlert>
             </div>
           )}
 
           <form onSubmit={handleRegister} className="flex flex-col gap-5" noValidate>
             <div>
-              <label htmlFor="register-name" className="text-sm text-ink-2">
-                Nome
-              </label>
+              <Label htmlFor="register-name">Nome</Label>
 
-              <input
+              <Input
                 id="register-name"
                 type="text"
                 autoComplete="name"
@@ -151,22 +140,14 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
                 onBlur={() => markTouched("name")}
                 aria-invalid={nameError}
-                className={inputClass(nameError)}
+                error={nameError ? "Nome muito curto" : undefined}
               />
-
-              {nameError && (
-                <p className="text-xs text-negative mt-1.5">
-                  Nome muito curto
-                </p>
-              )}
             </div>
 
             <div>
-              <label htmlFor="register-email" className="text-sm text-ink-2">
-                Email
-              </label>
+              <Label htmlFor="register-email">Email</Label>
 
-              <input
+              <Input
                 id="register-email"
                 type="email"
                 autoComplete="email"
@@ -175,22 +156,14 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => markTouched("email")}
                 aria-invalid={emailError}
-                className={inputClass(emailError)}
+                error={emailError ? "Email inválido" : undefined}
               />
-
-              {emailError && (
-                <p className="text-xs text-negative mt-1.5">
-                  Email inválido
-                </p>
-              )}
             </div>
 
             <div>
-              <label htmlFor="register-password" className="text-sm text-ink-2">
-                Senha
-              </label>
+              <Label htmlFor="register-password">Senha</Label>
 
-              <input
+              <Input
                 id="register-password"
                 type="password"
                 autoComplete="new-password"
@@ -199,23 +172,17 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => markTouched("password")}
                 aria-invalid={passwordError}
-                className={inputClass(passwordError)}
+                error={passwordError ? "A senha deve ter pelo menos 8 caracteres" : undefined}
               />
-
-              {passwordError && (
-                <p className="text-xs text-negative mt-1.5">
-                  A senha deve ter pelo menos 8 caracteres
-                </p>
-              )}
             </div>
 
-            <button
+            <Button
               type="submit"
+              loading={loading}
               disabled={!formValid || loading || success}
-              className="w-full min-h-[48px] rounded-[var(--radius)] font-medium text-[15px] text-accent-ink bg-accent transition-opacity duration-[var(--dur-fast)] disabled:opacity-40"
             >
-              {loading ? "Criando conta..." : "Criar conta"}
-            </button>
+              Criar conta
+            </Button>
           </form>
 
           <p className="mt-8 text-center text-sm text-ink-2">
@@ -237,7 +204,7 @@ export default function RegisterPage() {
             .
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,27 +1,28 @@
-import { TrendingUp, Tag, Calendar, Info, TriangleAlert, CircleCheck } from "lucide-react";
+import { TrendingUp, Tag, Calendar, Info } from "lucide-react";
+import { formatCurrency } from "../utils/Formatters";
 
 // ─── DTOs (espelham o que vem do back) ───────────────────────────────────────
 
 type EconomyCardDTO = {
   type: "economy";
-  savingsPercentage: number;       // ex: 18
-  savedAmount: number;             // ex: 2340.00
-  totalIncome: number;             // ex: 13000.00
-  goalPercentage: number;          // ex: 20
+  savingsPercentage: number;
+  savedAmount: number;
+  totalIncome: number;
+  goalPercentage: number;
 };
 
 type MostExpenseCategoryDTO = {
   type: "most_expense_category";
-  categoryName: string;            // ex: "Mercado"
-  totalSpent: number;              // ex: 820.00
-  percentageOfExpenses: number;    // ex: 40
-  suggestedReduction: number;      // ex: 10  (%)
-  savingIfReduced: number;        // ex: 82.00
+  categoryName: string;
+  totalSpent: number;
+  percentageOfExpenses: number;
+  suggestedReduction: number;
+  savingIfReduced: number;
 };
 
 type InstallmentsAmountDTO = {
   type: "installments_amount";
-  totalAmount: number;             // ex: 0.00
+  totalAmount: number;
   hasInstallments: boolean;
 };
 
@@ -31,13 +32,6 @@ type InsightCardDTO =
   | InstallmentsAmountDTO;
 
 // ─── Utilitário ──────────────────────────────────────────────────────────────
-
-function formatBRL(value: number): string {
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 function SectionHead({
   icon,
@@ -98,13 +92,13 @@ function EconomyCard({ data }: { data: EconomyCardDTO }) {
       <p className="text-sm text-ink-2">
         {isNegative ? (
           <>
-            Saldo de {formatBRL(data.savedAmount)} para uma renda de{" "}
-            {formatBRL(data.totalIncome)}.
+            Saldo de {formatCurrency(data.savedAmount)} para uma renda de{" "}
+            {formatCurrency(data.totalIncome)}.
           </>
         ) : (
           <>
-            {formatBRL(data.savedAmount)} guardados de{" "}
-            {formatBRL(data.totalIncome)} recebidos.
+            {formatCurrency(data.savedAmount)} guardados de{" "}
+            {formatCurrency(data.totalIncome)} recebidos.
           </>
         )}
       </p>
@@ -147,13 +141,13 @@ function MostExpenseCategoryCard({ data }: { data: MostExpenseCategoryDTO }) {
       </p>
 
       <p className="text-sm text-ink-2">
-        {formatBRL(data.totalSpent)} gastos (
+        {formatCurrency(data.totalSpent)} gastos (
         {data.percentageOfExpenses}% das saídas).
       </p>
 
       <p className="text-xs text-ink-3">
         Reduzindo {data.suggestedReduction}%, você economiza{" "}
-        {formatBRL(data.savingIfReduced)}.
+        {formatCurrency(data.savingIfReduced)}.
       </p>
     </div>
   );
@@ -170,21 +164,13 @@ function InstallmentsAmountCard({ data }: { data: InstallmentsAmountDTO }) {
       />
 
       <p className="text-[26px] font-light tabular-nums leading-none text-ink">
-        {formatBRL(data.totalAmount)}
+        {formatCurrency(data.totalAmount)}
       </p>
 
-      <p className="text-sm text-ink-2 flex items-center gap-1.5">
-        {data.hasInstallments ? (
-          <>
-            <TriangleAlert size={14} className="text-warn shrink-0" aria-hidden />
-            Fique atento aos vencimentos para evitar juros.
-          </>
-        ) : (
-          <>
-            <CircleCheck size={14} className="text-positive shrink-0" aria-hidden />
-            Nenhuma conta a pagar à frente.
-          </>
-        )}
+      <p className="text-sm text-ink-2">
+        {data.hasInstallments
+          ? "Fique atento aos vencimentos para evitar juros."
+          : "Nenhuma conta a pagar à frente."}
       </p>
     </div>
   );

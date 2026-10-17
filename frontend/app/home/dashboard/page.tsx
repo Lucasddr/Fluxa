@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { LogOut, User } from "lucide-react";
 
 import ValueCard from "@/app/components/ValueCard";
 import InsightCards from "@/app/components/InsightCards";
 import GraficoDonut from "@/app/components/GraficoDonut";
 import TransactionList from "@/app/components/TransactionList";
-import { useRouter } from "next/navigation";
-
-import {
-  LogOut,
-  User,
-} from "lucide-react";
+import MenuListModal from "@/app/components/modals/MenuListmodal";
+import Skeleton from "@/app/components/ui/Skeleton";
+import PageHeader from "@/app/components/ui/PageHeader";
 
 import { logout } from "@/services/auth";
 import {
@@ -22,9 +21,6 @@ import {
 
 import { formatCurrency } from "@/app/utils/Formatters";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
-
-import MenuListModal from "@/app/components/modals/MenuListmodal";
-import Skeleton from "@/app/components/ui/Skeleton";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -55,24 +51,24 @@ type PageResponse<T> = {
 
 type EconomyCardDTO = {
   type: "economy";
-  savingsPercentage: number;       // ex: 18
-  savedAmount: number;             // ex: 2340.00
-  totalIncome: number;             // ex: 13000.00
-  goalPercentage: number;          // ex: 20
+  savingsPercentage: number;
+  savedAmount: number;
+  totalIncome: number;
+  goalPercentage: number;
 };
 
 type MostExpenseCategoryDTO = {
   type: "most_expense_category";
-  categoryName: string;            // ex: "Mercado"
-  totalSpent: number;              // ex: 820.00
-  percentageOfExpenses: number;    // ex: 40
-  suggestedReduction: number;      // ex: 10  (%)
-  savingIfReduced: number;        // ex: 82.00
+  categoryName: string;
+  totalSpent: number;
+  percentageOfExpenses: number;
+  suggestedReduction: number;
+  savingIfReduced: number;
 };
 
 type InstallmentsAmountDTO = {
   type: "installments_amount";
-  totalAmount: number;             // ex: 0.00
+  totalAmount: number;
   hasInstallments: boolean;
 };
 
@@ -102,30 +98,19 @@ function toISODate(d: Date): string {
 // ─── página ────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const router = useRouter();
 
-    const router = useRouter();
-
-  const [cardsData, setCardsData] =
-    useState<DashboardDTO | null>(null);
-
+  const [cardsData, setCardsData] = useState<DashboardDTO | null>(null);
   const [transactionList, setTransactionList] =
     useState<PageResponse<Transaction> | null>(null);
-
-  const [insightCards, setInsightCards] =
-  useState<InsightCardDTO[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [loadError, setLoadError] =
-    useState<string | null>(null);
-
-  const [period, setPeriod] =
-    useState<PeriodKey>("30d");
+  const [insightCards, setInsightCards] = useState<InsightCardDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<PeriodKey>("30d");
+  const [retryKey, setRetryKey] = useState(0);
 
   const { start, end } = useMemo(() => {
-    const days =
-      PERIODS.find((p) => p.key === period)?.days ?? 30;
+    const days = PERIODS.find((p) => p.key === period)?.days ?? 30;
 
     const endDate = new Date();
     const startDate = new Date();
@@ -149,11 +134,11 @@ export default function DashboardPage() {
 
   // ─── fetch dashboard ────────────────────────────────────────
 
-  const fetchDashboard =
-    useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false;
 
+    async function loadDashboard() {
       try {
-
         setLoading(true);
         setLoadError(null);
 
@@ -167,58 +152,49 @@ export default function DashboardPage() {
           fetchInsightCards(start, end),
         ]);
 
-      const failed = [
-        dashboardResponse,
-        transactionResponse,
-        insightsResponse,
-      ].find((r) => !r.ok);
+        const failed = [
+          dashboardResponse,
+          transactionResponse,
+          insightsResponse,
+        ].find((r) => !r.ok);
 
-      if (failed) {
-        throw new HttpError(failed.status);
-      }
+        if (failed) {
+          throw new HttpError(failed.status);
+        }
 
-        const dashboardData:
-          DashboardDTO =
-          await dashboardResponse.json();
-
-        const transactionsData:
-          PageResponse<Transaction> =
+        const dashboardData: DashboardDTO = await dashboardResponse.json();
+        const transactionsData: PageResponse<Transaction> =
           await transactionResponse.json();
+        const insightsData: InsightCardDTO[] = await insightsResponse.json();
 
-        const insightsData: InsightCardDTO[] =
-          await insightsResponse.json();
-
-        setCardsData(dashboardData);
-
-        setTransactionList(transactionsData);
-
-        setInsightCards(insightsData);
-
+        if (!cancelled) {
+          setCardsData(dashboardData);
+          setTransactionList(transactionsData);
+          setInsightCards(insightsData);
+        }
       } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
 
-        console.error(
-          "Erro ao carregar dashboard:",
-          error
-        );
-
-        setLoadError(
-          error instanceof HttpError
-            ? friendlyHttpError(error.status)
-            : "Não foi possível carregar o dashboard. Tente novamente."
-        );
-
+        if (!cancelled) {
+          setLoadError(
+            error instanceof HttpError
+              ? friendlyHttpError(error.status)
+              : "Não foi possível carregar o dashboard. Tente novamente."
+          );
+        }
       } finally {
-
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
+    }
 
-    }, [start, end]);
+    void loadDashboard();
 
-  // ─── load inicial ───────────────────────────────────────────
-
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    return () => {
+      cancelled = true;
+    };
+  }, [start, end, retryKey]);
 
   // ─── loading / erro ─────────────────────────────────────────
 
@@ -246,16 +222,13 @@ export default function DashboardPage() {
   if (loadError && (!cardsData || !transactionList)) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 h-full min-h-[400px]">
-        <p
-          role="alert"
-          className="text-sm text-negative"
-        >
+        <p role="alert" className="text-sm text-negative">
           {loadError}
         </p>
 
         <button
           type="button"
-          onClick={fetchDashboard}
+          onClick={() => setRetryKey((k) => k + 1)}
           className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
         >
           Tentar novamente
@@ -272,45 +245,32 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 w-full">
-
-      {/* Header */}
-
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-light tracking-tight text-ink">
-            Olá, {cardsData.user}
-          </h1>
-
-          <p className="mt-1 flex items-center gap-2 text-sm text-ink-2">
-            <span
-              aria-hidden
-              className="inline-block w-1.5 h-1.5 rounded-full bg-positive"
-            />
-            {cardsData.accountName}
-          </p>
-        </div>
-
-        <MenuListModal
-          trigger={
-            <button
-              type="button"
-              aria-label="Abrir menu do usuário"
-              className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] border border-line text-ink-2 transition-colors duration-[var(--dur-fast)] hover:text-ink hover:border-ink-3"
-            >
-              <User className="w-[18px] h-[18px]" />
-            </button>
-          }
-          actions={[
-            {
-              label: "Sair",
-              icon: LogOut,
-              onClick: () => {
-                handleLogout();
+      <PageHeader
+        title={`Olá, ${cardsData.user}`}
+        subtitle={cardsData.accountName}
+        action={
+          <MenuListModal
+            trigger={
+              <button
+                type="button"
+                aria-label="Abrir menu do usuário"
+                className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] border border-line text-ink-2 transition-colors duration-[var(--dur-fast)] hover:text-ink hover:border-ink-3"
+              >
+                <User className="w-[18px] h-[18px]" />
+              </button>
+            }
+            actions={[
+              {
+                label: "Sair",
+                icon: LogOut,
+                onClick: () => {
+                  handleLogout();
+                },
               },
-            },
-          ]}
-        />
-      </div>
+            ]}
+          />
+        }
+      />
 
       {/* Período + retry */}
 
@@ -324,7 +284,7 @@ export default function DashboardPage() {
         {loadError && cardsData && (
           <button
             type="button"
-            onClick={fetchDashboard}
+            onClick={() => setRetryKey((k) => k + 1)}
             className="text-xs font-medium text-negative hover:underline"
           >
             Falha ao atualizar. Tentar novamente
@@ -392,7 +352,6 @@ export default function DashboardPage() {
       {/* Conteúdo */}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-10 min-h-[480px]">
-
         {/* gráficos */}
 
         <div className="flex flex-col gap-10 min-w-0">
@@ -426,9 +385,7 @@ export default function DashboardPage() {
                 Nenhuma transação neste período.
               </p>
             ) : (
-              <TransactionList
-                data={transactionList.content}
-              />
+              <TransactionList data={transactionList.content} />
             )}
           </div>
         </section>

@@ -1,8 +1,6 @@
-
 "use client";
 
 import { useState } from "react";
-
 import {
   ShoppingCart,
   Home,
@@ -25,8 +23,12 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import FormAlert from "@/app/components/ui/FormAlert";
-import { friendlyHttpError, HttpError } from "@/app/utils/http";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
+import Textarea from "@/app/components/ui/Textarea";
 
+import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
   createCategory,
   updateCategory,
@@ -57,94 +59,34 @@ export type CategoryFormData = {
 // ─── icons ─────────────────────────────────────────────────────
 
 const IconOptions = [
-  {
-    label: "Carrinho",
-    value: "ShoppingCart",
-    component: ShoppingCart,
-  },
-  {
-    label: "Casa",
-    value: "Home",
-    component: Home,
-  },
-  {
-    label: "Carro",
-    value: "Car",
-    component: Car,
-  },
-  {
-    label: "Saúde",
-    value: "Heart",
-    component: Heart,
-  },
-  {
-    label: "Educação",
-    value: "GraduationCap",
-    component: GraduationCap,
-  },
-  {
-    label: "Lazer",
-    value: "Smile",
-    component: Smile,
-  },
-  {
-    label: "Investimento",
-    value: "TrendingUp",
-    component: TrendingUp,
-  },
-  {
-    label: "Trabalho",
-    value: "Briefcase",
-    component: Briefcase,
-  },
-  {
-    label: "Energia",
-    value: "Zap",
-    component: Zap,
-  },
-  {
-    label: "Café",
-    value: "Coffee",
-    component: Coffee,
-  },
-  {
-    label: "Música",
-    value: "Music",
-    component: Music,
-  },
-  {
-    label: "Viagem",
-    value: "Plane",
-    component: Plane,
-  },
-  {
-    label: "Roupas",
-    value: "Shirt",
-    component: Shirt,
-  },
-  {
-    label: "Alimentação",
-    value: "Utensils",
-    component: Utensils,
-  },
-  {
-    label: "Dinheiro",
-    value: "DollarSign",
-    component: DollarSign,
-  },
+  { label: "Carrinho", value: "ShoppingCart", component: ShoppingCart },
+  { label: "Casa", value: "Home", component: Home },
+  { label: "Carro", value: "Car", component: Car },
+  { label: "Saúde", value: "Heart", component: Heart },
+  { label: "Educação", value: "GraduationCap", component: GraduationCap },
+  { label: "Lazer", value: "Smile", component: Smile },
+  { label: "Investimento", value: "TrendingUp", component: TrendingUp },
+  { label: "Trabalho", value: "Briefcase", component: Briefcase },
+  { label: "Energia", value: "Zap", component: Zap },
+  { label: "Café", value: "Coffee", component: Coffee },
+  { label: "Música", value: "Music", component: Music },
+  { label: "Viagem", value: "Plane", component: Plane },
+  { label: "Roupas", value: "Shirt", component: Shirt },
+  { label: "Alimentação", value: "Utensils", component: Utensils },
+  { label: "Dinheiro", value: "DollarSign", component: DollarSign },
 ];
 
 // ─── colors ────────────────────────────────────────────────────
 
 const PresetColors = [
-  "#22C55E",
-  "#EF4444",
-  "#F59E0B",
-  "#3B82F6",
-  "#8B5CF6",
-  "#EC4899",
-  "#14B8A6",
-  "#F97316",
+  "#1D6F4A",
+  "#B3322A",
+  "#B7791F",
+  "#2563EB",
+  "#7C3AED",
+  "#DB2777",
+  "#0D9488",
+  "#EA580C",
 ];
 
 // ─── component ─────────────────────────────────────────────────
@@ -159,37 +101,25 @@ export default function CategoryModal({
   mode = "create",
   categoryId,
 }: CategoryModalProps) {
-
   const isEdit = mode === "edit";
 
-  const [form, setForm] =
-    useState<CategoryFormData>({
-      name: initialData?.name ?? "",
-      kind: initialData?.kind ?? "EXPENSE",
-      icon: initialData?.icon ?? "ShoppingCart",
-      description: initialData?.description ?? "",
-      color: initialData?.color ?? "#22C55E",
-      status: initialData?.status ?? true,
-    });
+  const [form, setForm] = useState<CategoryFormData>({
+    name: initialData?.name ?? "",
+    kind: initialData?.kind ?? "EXPENSE",
+    icon: initialData?.icon ?? "ShoppingCart",
+    description: initialData?.description ?? "",
+    color: initialData?.color ?? "#1D6F4A",
+    status: initialData?.status ?? true,
+  });
 
   const [loading, setLoading] = useState(false);
-
   const [errors, setErrors] = useState<
     Partial<Record<keyof CategoryFormData, string>>
   >({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const [serverError, setServerError] =
-    useState<string | null>(null);
-
-  // ─── selected icon ───────────────────────────────────────────
-
-  const selectedIcon =
-    IconOptions.find((i) => i.value === form.icon);
-
-  const SelectedIconComponent =
-    selectedIcon?.component ?? ShoppingCart;
-
-  // ─── validation ──────────────────────────────────────────────
+  const selectedIcon = IconOptions.find((i) => i.value === form.icon);
+  const SelectedIconComponent = selectedIcon?.component ?? ShoppingCart;
 
   function validate() {
     const e: typeof errors = {};
@@ -201,10 +131,7 @@ export default function CategoryModal({
     return e;
   }
 
-  // ─── save ────────────────────────────────────────────────────
-
   async function handleSave() {
-
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
@@ -232,24 +159,16 @@ export default function CategoryModal({
       }
 
       await onSave();
-
       onClose();
-
     } catch (error) {
-
-      console.error(
-        "Erro ao salvar categoria:",
-        error
-      );
+      console.error("Erro ao salvar categoria:", error);
 
       setServerError(
         error instanceof HttpError
           ? friendlyHttpError(error.status)
           : "Não foi possível salvar. Tente novamente."
       );
-
     } finally {
-
       setLoading(false);
     }
   }
@@ -266,347 +185,207 @@ export default function CategoryModal({
       description={description}
       footer={
         <>
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg border shadow-lg border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancelar
-          </button>
+          </Button>
 
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="px-5 py-2 rounded-lg shadow-lg text-sm font-semibold text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor:
-                "var(--color-interactive)",
-            }}
-          >
-            {loading
-              ? "Salvando..."
-              : submitLabel}
-          </button>
+          <Button onClick={handleSave} loading={loading} disabled={loading}>
+            {submitLabel}
+          </Button>
         </>
       }
     >
+      {/* Tipo + Nome */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tipo</Label>
 
-          {/* Tipo + Nome */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-2">
+            {(["EXPENSE", "INCOME"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                disabled={isEdit}
+                onClick={() =>
+                  setForm((f) => ({ ...f, kind: t }))
+                }
+                className={`flex-1 py-2 px-3 rounded-[var(--radius)] text-sm font-medium border transition-colors duration-[var(--dur-fast)] disabled:opacity-50 disabled:cursor-not-allowed ${
+                  form.kind === t
+                    ? t === "EXPENSE"
+                      ? "bg-negative-subtle border-negative/30 text-negative"
+                      : "bg-positive-subtle border-positive/30 text-positive"
+                    : "border-line text-ink-2 hover:text-ink hover:border-ink-3"
+                }`}
+              >
+                {t === "EXPENSE" ? "↙ Despesa" : "↗ Receita"}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Tipo
-              </label>
+        <div>
+          <Label htmlFor="category-name">Nome da categoria</Label>
 
-              <div className="flex gap-2">
+          <Input
+            id="category-name"
+            type="text"
+            placeholder="Ex.: Alimentação"
+            value={form.name}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, name: e.target.value }));
+              setErrors((e2) => ({ ...e2, name: undefined }));
+            }}
+            error={errors.name}
+          />
+        </div>
+      </div>
 
-                {(["EXPENSE", "INCOME"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    disabled={isEdit}
-                    onClick={() =>
-                      setForm((f) => ({
-                        ...f,
-                        kind: t,
-                      }))
-                    }
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition disabled:opacity-50 disabled:cursor-not-allowed
-                    ${
-                      form.kind === t
-                        ? t === "EXPENSE"
-                          ? "bg-red-50 border-red-300 text-red-600"
-                          : "bg-green-50 border-green-300 text-green-600"
-                        : "border-gray-200 text-gray-500 hover:bg-gray-50"
+      {/* Ícone */}
+      <div>
+        <Label>Ícone</Label>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center gap-3 text-left min-h-[48px] px-3 rounded-[var(--radius)] border border-line bg-surface hover:bg-line-subtle transition-colors"
+            >
+              <span
+                className="w-9 h-9 rounded-[var(--radius)] flex items-center justify-center shrink-0"
+                style={{ backgroundColor: form.color + "22" }}
+              >
+                <SelectedIconComponent
+                  className="w-5 h-5"
+                  style={{ color: form.color }}
+                />
+              </span>
+
+              <span className="flex-1 text-sm text-ink">
+                {selectedIcon?.label ?? "Selecionar ícone"}
+              </span>
+
+              <span className="text-ink-3 text-xs">▾</span>
+            </button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="start"
+              sideOffset={4}
+              collisionPadding={8}
+              className="z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-48 overflow-y-auto bg-paper border border-line rounded-[var(--radius)] p-2 shadow-md"
+            >
+              <div className="grid grid-cols-5 gap-1">
+                {IconOptions.map(({ label, value, component: IconComp }) => (
+                  <DropdownMenu.Item
+                    key={value}
+                    onSelect={() => {
+                      setForm((f) => ({ ...f, icon: value }));
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-[var(--radius-sm)] outline-none cursor-pointer transition-colors text-xs text-ink-2 hover:bg-line-subtle data-[highlighted]:bg-line-subtle ${
+                      form.icon === value ? "bg-line-subtle" : ""
                     }`}
                   >
-                    {t === "EXPENSE"
-                      ? "↙ Despesa"
-                      : "↗ Receita"}
-                  </button>
+                    <IconComp className="w-4 h-4" />
+                    <span className="leading-tight text-center">{label}</span>
+                  </DropdownMenu.Item>
                 ))}
               </div>
-            </div>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                Nome da categoria
-              </label>
+      {/* Descrição */}
+      <div>
+        <Label htmlFor="category-description" optional>
+          Descrição
+        </Label>
 
-              <input
-                type="text"
-                placeholder="Ex.: Alimentação"
-                value={form.name}
-                onChange={(e) => {
-                  setForm((f) => ({
-                    ...f,
-                    name: e.target.value,
-                  }));
+        <Textarea
+          id="category-description"
+          placeholder="Ex.: Despesas com alimentação em restaurantes, mercado, etc."
+          value={form.description}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, description: e.target.value }))
+          }
+          rows={3}
+        />
+      </div>
 
-                  setErrors((e2) => ({
-                    ...e2,
-                    name: undefined,
-                  }));
-                }}
-                className={`w-full px-3 py-2 rounded-lg border text-sm text-gray-800 focus:outline-none focus:ring-2 transition
-                ${
-                  errors.name
-                    ? "border-red-400 focus:ring-red-200"
-                    : "border-gray-200 focus:ring-(--color-interactive)/30"
+      {/* Cor */}
+      <div>
+        <Label htmlFor="category-color">Cor</Label>
+
+        <div className="flex items-center gap-2 px-3.5 min-h-[48px] rounded-[var(--radius)] border border-line bg-surface">
+          <div
+            className="w-5 h-5 rounded-full shrink-0"
+            style={{ backgroundColor: form.color }}
+          />
+
+          <input
+            id="category-color"
+            type="text"
+            value={form.color}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, color: e.target.value }))
+            }
+            className="flex-1 text-sm text-ink focus:outline-none bg-transparent"
+            placeholder="#1D6F4A"
+          />
+        </div>
+
+        <div className="flex gap-1.5 mt-2 flex-wrap">
+          {PresetColors.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, color: c }))}
+              className={`w-6 h-6 rounded-full border-2 transition ${
+                form.color === c
+                  ? "border-ink scale-110"
+                  : "border-transparent"
+              }`}
+              style={{ backgroundColor: c }}
+              aria-label={`Cor ${c}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Status */}
+      <div className="border border-line rounded-[var(--radius)]">
+        <button
+          type="button"
+          onClick={() =>
+            setForm((f) => ({ ...f, status: !f.status }))
+          }
+          className="w-full flex items-center justify-between px-4 py-3"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`relative w-10 h-5 rounded-full transition-colors duration-200 shrink-0 ${
+                form.status ? "bg-ink" : "bg-line"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
+                  form.status ? "translate-x-5" : "translate-x-0"
                 }`}
               />
+            </div>
 
-              {errors.name && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.name}
-                </p>
-              )}
-
-              <p className="text-xs text-gray-400 mt-1">
-                Nome que identifica a categoria
+            <div className="text-left">
+              <p className="text-sm text-ink">Categoria ativa</p>
+              <p className="text-xs text-ink-3">
+                Define se essa categoria ficará ativa
               </p>
             </div>
           </div>
+        </button>
+      </div>
 
-          {/* Ícone */}
-          <div>
-
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
-              Ícone
-            </label>
-
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  type="button"
-                  className="w-full flex items-center gap-3 text-left"
-                >
-                  <span
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{
-                      backgroundColor: form.color + "22",
-                    }}
-                  >
-                    <SelectedIconComponent
-                      className="w-5 h-5"
-                      style={{
-                        color: form.color,
-                      }}
-                    />
-                  </span>
-
-                  <span className="flex-1 flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition">
-                    <span>
-                      {selectedIcon?.label ??
-                        "Selecionar ícone"}
-                    </span>
-
-                    <span className="text-gray-400">
-                      ▾
-                    </span>
-                  </span>
-                </button>
-              </DropdownMenu.Trigger>
-
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  align="start"
-                  sideOffset={4}
-                  collisionPadding={8}
-                  className="z-[60] w-[var(--radix-dropdown-menu-trigger-width)] max-h-40 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg p-2"
-                >
-                  <div className="grid grid-cols-5 gap-1">
-
-                    {IconOptions.map(
-                      ({
-                        label,
-                        value,
-                        component: IconComp,
-                      }) => (
-                        <DropdownMenu.Item
-                          key={value}
-                          onSelect={() => {
-                            setForm((f) => ({
-                              ...f,
-                              icon: value,
-                            }));
-                          }}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-lg outline-none cursor-pointer transition text-xs text-gray-600 data-[highlighted]:bg-gray-100
-                          ${
-                            form.icon === value
-                              ? "bg-gray-100"
-                              : ""
-                          }`}
-                        >
-                          <IconComp className="w-4 h-4" />
-
-                          <span className="leading-tight text-center">
-                            {label}
-                          </span>
-                        </DropdownMenu.Item>
-                      )
-                    )}
-                  </div>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-
-            <p className="text-xs text-gray-400 mt-1.5">
-              Escolha um ícone para representar a categoria
-            </p>
-          </div>
-
-          {/* Descrição */}
-          <div>
-
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
-              Descrição{" "}
-              <span className="text-gray-400 font-normal">
-                (opcional)
-              </span>
-            </label>
-
-            <textarea
-              placeholder="Ex.: Despesas com alimentação em restaurantes, mercado, etc."
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  description: e.target.value,
-                }))
-              }
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 transition"
-            />
-
-            <p className="text-xs text-gray-400 mt-1">
-              Descreva brevemente o propósito desta categoria
-            </p>
-          </div>
-
-          {/* Cor */}
-          <div>
-
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
-              Cor
-            </label>
-
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200">
-
-              <div
-                className="w-5 h-5 rounded-full shrink-0"
-                style={{
-                  backgroundColor: form.color,
-                }}
-              />
-
-              <input
-                type="text"
-                value={form.color}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    color: e.target.value,
-                  }))
-                }
-                className="flex-1 text-sm text-gray-700 focus:outline-none bg-transparent"
-                placeholder="#22C55E"
-              />
-            </div>
-
-            <div className="flex gap-1.5 mt-2 flex-wrap">
-
-              {PresetColors.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      color: c,
-                    }))
-                  }
-                  className={`w-5 h-5 rounded-full border-2 transition
-                  ${
-                    form.color === c
-                      ? "border-gray-400 scale-110"
-                      : "border-transparent"
-                  }`}
-                  style={{
-                    backgroundColor: c,
-                  }}
-                />
-              ))}
-            </div>
-
-            <p className="text-xs text-gray-400 mt-1">
-              Cor que representa a categoria
-            </p>
-          </div>
-
-          {/* Status */}
-          <div>
-
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
-              Status
-            </label>
-
-            <div className="border border-gray-200 rounded-xl">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setForm((f) => ({
-                    ...f,
-                    status: !f.status,
-                  }))
-                }
-                className="w-full flex items-center justify-between px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-
-                  <div
-                    className={`relative w-10 h-5 rounded-full transition-colors duration-200 shrink-0
-                    ${
-                      form.status
-                        ? "bg-[var(--color-interactive)]"
-                        : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200
-                      ${
-                        form.status
-                          ? "translate-x-5"
-                          : "translate-x-0"
-                      }`}
-                    />
-                  </div>
-
-                  <div className="text-left">
-
-                    <p className="text-sm font-medium text-gray-800">
-                      Categoria ativa
-                    </p>
-
-                    <p className="text-xs text-gray-400">
-                      Define se essa categoria ficará ativa
-                    </p>
-                  </div>
-                </div>
-
-                <span className="text-gray-400 text-xs">
-                  ▾
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {serverError && (
-            <FormAlert>{serverError}</FormAlert>
-          )}
-
+      {serverError && <FormAlert>{serverError}</FormAlert>}
     </AppDialog>
   );
 }

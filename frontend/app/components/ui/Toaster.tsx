@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -68,10 +69,10 @@ export default function ToasterProvider({
           <div
             key={t.id}
             role={t.kind === "error" ? "alert" : "status"}
-            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${
+            className={`flex items-center justify-between gap-3 rounded-[var(--radius)] border px-4 py-3 text-sm font-medium shadow-md transition-all duration-[var(--dur)] ease-[var(--ease-out)] ${
               t.kind === "error"
-                ? "bg-red-600 border-red-700 text-white"
-                : "bg-gray-900 border-gray-800 text-white"
+                ? "bg-negative-subtle border-negative/30 text-negative"
+                : "bg-ink border-ink text-paper"
             }`}
           >
             <span>{t.message}</span>
@@ -80,9 +81,9 @@ export default function ToasterProvider({
               type="button"
               onClick={() => dismiss(t.id)}
               aria-label="Fechar notificação"
-              className="shrink-0 opacity-70 hover:opacity-100 transition"
+              className="shrink-0 p-1 rounded-[var(--radius-sm)] opacity-70 hover:opacity-100 transition-opacity"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         ))}

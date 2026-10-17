@@ -1,50 +1,102 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import Button from "./components/ui/Button";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-br from-white via-slate-50 to-teal-50">
+    <div className="min-h-dvh flex flex-col bg-paper text-ink">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-line">
+        <span className="text-lg font-medium tracking-tight">Fluxa</span>
 
-      {/* CONTEÚDO CENTRAL */}
-      <main className="flex flex-1 items-center justify-center px-6">
-        <div className="max-w-2xl text-center">
-
-          {/* LOGO / NOME */}
-          <h1 className="text-5xl font-bold text-teal-900 mb-4">
-            Fluxa
-          </h1>
-
-          {/* SLOGAN */}
-          <p className="text-lg text-slate-600 mb-8">
-            Um sistema inteligente para organizar, conectar e acelerar seus fluxos de trabalho.
-            Simples. Rápido. E feito pra escalar com você 🚀
-          </p>
-
-          {/* BOTÃO LOGIN */}
-          <Link href="/login">
-            <button className="px-6 py-3 rounded-xl bg-teal-700 text-white font-semibold hover:bg-teal-800 transition shadow-md">
-              Entrar no sistema
-            </button>
+        <nav className="flex shrink-0 items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm text-ink-2 hover:text-ink transition-colors"
+          >
+            Entrar
           </Link>
 
-          {/* CTA CADASTRO */}
-          <p className="mt-6 text-sm text-slate-500">
-            Não tem uma conta?{" "}
-            <Link
-              href="/register"
-              className="text-teal-700 font-medium hover:underline"
-            >
-              Cadastre-se
-            </Link>
-          </p>
+          <Button asChild size="sm">
+            <Link href="/register">Criar conta</Link>
+          </Button>
+        </nav>
+      </header>
 
+      <main
+        id="main"
+        className="flex w-full flex-1 items-center justify-center px-6 py-16 sm:py-20"
+        tabIndex={-1}
+      >
+        <div className="grid w-full min-w-0 max-w-5xl grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)] lg:gap-20">
+          <section className="min-w-0">
+            <p className="mb-5 text-xs font-medium uppercase tracking-[0.16em] text-ink-3">
+              Finanças pessoais, com clareza
+            </p>
+
+            <h1 className="mb-6 max-w-2xl text-4xl font-light leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Saiba o que entrou, saiu e ainda vai vencer.
+            </h1>
+
+            <p className="mb-9 max-w-xl text-base leading-relaxed text-ink-2 sm:text-lg">
+              Receitas, despesas e compromissos futuros no mesmo lugar — para
+              decidir com números, não com suposições.
+            </p>
+
+            <div className="flex flex-col items-start gap-3 sm:flex-row">
+              <Button asChild size="lg">
+                <Link href="/register">
+                  <span className="inline-flex items-center gap-2">
+                    Começar agora
+                    <ArrowRight className="w-4 h-4" aria-hidden />
+                  </span>
+                </Link>
+              </Button>
+
+              <Button asChild variant="secondary" size="lg">
+                <Link href="/login">Já tenho conta</Link>
+              </Button>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="overview-title"
+            className="min-w-0 border-l border-line pl-6 sm:pl-8"
+          >
+            <h2
+              id="overview-title"
+              className="mb-5 text-xs font-medium uppercase tracking-[0.16em] text-ink-3"
+            >
+              Uma visão para o mês inteiro
+            </h2>
+            <ul className="divide-y divide-line border-y border-line">
+              <li className="py-4 text-sm font-medium text-ink sm:text-base">
+                Entradas e despesas
+              </li>
+              <li className="py-4 text-sm font-medium text-ink sm:text-base">
+                Contas a pagar e parcelas
+              </li>
+              <li className="py-4 text-sm font-medium text-ink sm:text-base">
+                Saldo e movimentações recentes
+              </li>
+            </ul>
+          </section>
         </div>
       </main>
 
-      {/* FOOTER */}
-      <footer className="py-6 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} Fluxa — todos os direitos reservados
-      </footer>
+      <footer className="px-6 py-6 border-t border-line">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-3">
+          <span>© {new Date().getFullYear()} Fluxa — todos os direitos reservados</span>
 
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="hover:text-ink transition-colors">
+              Termos de uso
+            </Link>
+            <Link href="/privacy" className="hover:text-ink transition-colors">
+              Privacidade
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

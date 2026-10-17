@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, me } from "@/services/auth";
 import ThemeToggle from "@/app/components/ui/ThemeToggle";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Label from "@/app/components/ui/Label";
+import FormAlert from "@/app/components/ui/FormAlert";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,7 +37,6 @@ export default function LoginPage() {
     };
   }, [router]);
 
-  // validações
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const passwordValid = password.length >= 8;
 
@@ -67,15 +70,14 @@ export default function LoginPage() {
 
       if (!res.ok) {
         if (res.status === 401) {
-          setErrorMessage("Credenciais inválidas")
+          setErrorMessage("Credenciais inválidas");
         } else {
-          setErrorMessage("Erro ao conectar com o servidor. Tente novamente mais tarde")
+          setErrorMessage("Erro ao conectar com o servidor. Tente novamente mais tarde");
         }
-        return
+        return;
       }
 
       router.push("/home");
-
     } catch (err) {
       setErrorMessage(
         err instanceof Error
@@ -87,18 +89,13 @@ export default function LoginPage() {
     }
   }
 
-  const inputClass = (invalid: boolean) =>
-    `w-full mt-1.5 px-3.5 min-h-[48px] rounded-[var(--radius)] border bg-surface text-ink text-[15px] transition-colors duration-[var(--dur-fast)] focus:outline-none focus:border-ink-3 placeholder:text-ink-3 ${
-      invalid ? "border-negative" : "border-line"
-    }`;
-
   return (
     <div className="min-h-dvh flex flex-col bg-paper text-ink">
       <div className="flex justify-end p-4">
         <ThemeToggle />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 pb-16">
+      <main id="main" className="flex-1 flex items-center justify-center px-4 pb-16" tabIndex={-1}>
         <div className="w-full max-w-sm">
           <p className="text-center text-[13px] text-ink-3 mb-2">
             Fluxa
@@ -109,21 +106,16 @@ export default function LoginPage() {
           </h1>
 
           {errorMessage && (
-            <div
-              role="alert"
-              className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-negative/40 text-negative text-sm"
-            >
-              {errorMessage}
+            <div className="mb-5">
+              <FormAlert>{errorMessage}</FormAlert>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5" noValidate>
             <div>
-              <label htmlFor="login-email" className="text-sm text-ink-2">
-                Email
-              </label>
+              <Label htmlFor="login-email">Email</Label>
 
-              <input
+              <Input
                 id="login-email"
                 type="email"
                 autoComplete="email"
@@ -132,22 +124,14 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => markTouched("email")}
                 aria-invalid={emailError}
-                className={inputClass(emailError)}
+                error={emailError ? "Email inválido" : undefined}
               />
-
-              {emailError && (
-                <p className="text-xs text-negative mt-1.5">
-                  Email inválido
-                </p>
-              )}
             </div>
 
             <div>
-              <label htmlFor="login-password" className="text-sm text-ink-2">
-                Senha
-              </label>
+              <Label htmlFor="login-password">Senha</Label>
 
-              <input
+              <Input
                 id="login-password"
                 type="password"
                 autoComplete="current-password"
@@ -156,23 +140,17 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => markTouched("password")}
                 aria-invalid={passwordError}
-                className={inputClass(passwordError)}
+                error={passwordError ? "A senha deve ter pelo menos 8 caracteres" : undefined}
               />
-
-              {passwordError && (
-                <p className="text-xs text-negative mt-1.5">
-                  A senha deve ter pelo menos 8 caracteres
-                </p>
-              )}
             </div>
 
-            <button
+            <Button
               type="submit"
+              loading={loading}
               disabled={!formValid || loading}
-              className="w-full min-h-[48px] rounded-[var(--radius)] font-medium text-[15px] text-accent-ink bg-accent transition-opacity duration-[var(--dur-fast)] disabled:opacity-40"
             >
-              {loading ? "Entrando..." : "Entrar"}
-            </button>
+              Entrar
+            </Button>
 
             <p className="text-center text-sm">
               <Link
@@ -201,7 +179,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

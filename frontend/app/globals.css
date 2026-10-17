@@ -1,51 +1,82 @@
 @import "tailwindcss";
 
-/* Quiet Ledger — token block. Every number in the UI traces back here.
-   Ratio 1.250 (major third). Space base 0.25rem. One radius. No shadows. */
+/* Quiet Ledger — design tokens for Opsire.
+   Every visual value in the UI traces back to this block.
+   Palette: neutral graphite/obsidian with semantic accents.
+   Type ratio: 1.250 (major third). Space base: 0.25rem. */
 
 :root {
   /* TYPE */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-md: 1.125rem;   /* 18px */
+  --text-lg: 1.25rem;    /* 20px */
+  --text-xl: 1.5rem;     /* 24px */
+  --text-2xl: 1.875rem;  /* 30px */
+  --text-3xl: 2.25rem;   /* 36px */
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
   /* COLOR — light (default) */
-  --paper: #faf9f7;
-  --surface: #ffffff;
-  --ink: #232326;
-  --ink-2: #5c5c60;
-  --ink-3: #9a9aa0;
-  --line: #e7e5e0;
-  --accent: #232326;
-  --accent-ink: #faf9f7;
-  --positive: #1f7a52;
-  --negative: #b3352b;
-  --warn: #b7791f;
+  --paper: #F5F5F5;
+  --surface: #FFFFFF;
+  --ink: #171717;
+  --ink-2: #454545;
+  --ink-3: #6E6E6E;
+  --line: #E5E5E5;
+  --line-subtle: #F0F0F0;
+  --accent: #171717;
+  --accent-ink: #F5F5F5;
+  --accent-hover: #252525;
+  --positive: #1D6F4A;
+  --positive-subtle: #E8F5EE;
+  --negative: #B3322A;
+  --negative-subtle: #FDF2F1;
+  --warn: #B7791F;
+  --warn-subtle: #FDF6E9;
 
   /* FORM */
   --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 1rem;
   --border: 1px solid var(--line);
-  --shadow: none;
+  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08);
 
   /* MOTION */
   --dur-fast: 120ms;
-  --dur: 220ms;
+  --dur: 200ms;
+  --dur-slow: 300ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --paper: #161618;
-  --surface: #1e1e21;
-  --ink: #f0efeb;
-  --ink-2: #b8b7b3;
-  --ink-3: #7e7e85;
-  --line: #2d2d32;
-  --accent: #ecebe6;
-  --accent-ink: #161618;
-  --positive: #4cc38a;
-  --negative: #e0685c;
-  --warn: #d9a441;
+  --paper: #0F0F10;
+  --surface: #1A1A1B;
+  --ink: #F5F5F5;
+  --ink-2: #A3A3A3;
+  --ink-3: #949494;
+  --line: #2A2A2B;
+  --line-subtle: #202021;
+  --accent: #F5F5F5;
+  --accent-ink: #171717;
+  --accent-hover: #E5E5E5;
+  --positive: #4CC38A;
+  --positive-subtle: #132B20;
+  --negative: #E8716A;
+  --negative-subtle: #341414;
+  --warn: #E4B255;
+  --warn-subtle: #2E230E;
 
   color-scheme: dark;
 }
@@ -57,38 +88,57 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-line: var(--line);
+  --color-line-subtle: var(--line-subtle);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-hover: var(--accent-hover);
   --color-positive: var(--positive);
+  --color-positive-subtle: var(--positive-subtle);
   --color-negative: var(--negative);
+  --color-negative-subtle: var(--negative-subtle);
   --color-warn: var(--warn);
+  --color-warn-subtle: var(--warn-subtle);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
 }
 
-/* Legacy aliases — removidos ao fim do refactor */
+/* Legacy aliases — DEPRECATED, kept for compatibility during migration.
+   Prefer the tokens above in new code. */
 :root {
   --background: var(--paper);
   --foreground: var(--ink);
-  --color-primary: #232326;
+  --color-primary: var(--ink);
   --color-interactive: var(--ink-2);
   --color-surface-active: var(--line);
   --color-surface-secondary: var(--line);
   --color-text-secondary: var(--ink-2);
   --color-alert: var(--negative);
-  --color-positive: var(--positive);
   --color-middle-alert: var(--warn);
   --color-neutral-alert: var(--ink-2);
   --color-text-primary: var(--ink);
   --color-border: var(--line);
 }
 
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
@@ -96,15 +146,29 @@ body {
   color: var(--paper);
 }
 
-/* Focus — never suppressed, Quiet Ledger style */
+/* Focus — never suppressed */
 :focus-visible {
   outline: 2px solid var(--ink-2);
   outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Chrome, Edge, Safari */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -114,4 +178,48 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--line);
   border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-3);
+}
+
+/* Utility: screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--radius);
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
 }

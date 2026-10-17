@@ -36,6 +36,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <a href="#main" className="skip-link">
+          Pular para o conteúdo
+        </a>
+
         <ThemeProvider>
           <ToasterProvider>{children}</ToasterProvider>
         </ThemeProvider>

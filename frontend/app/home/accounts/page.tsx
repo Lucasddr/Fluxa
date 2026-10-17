@@ -1,11 +1,7 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
-
+import { Fragment, useEffect, useState } from "react";
 import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Plus,
   Pencil,
   MoreVertical,
@@ -22,6 +18,12 @@ import DetailRow from "@/app/components/ui/DetailRow";
 import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
 import Skeleton from "@/app/components/ui/Skeleton";
+import PageHeader from "@/app/components/ui/PageHeader";
+import Button from "@/app/components/ui/Button";
+import Pagination from "@/app/components/ui/Pagination";
+import Badge from "@/app/components/ui/Badge";
+import EmptyState from "@/app/components/ui/EmptyState";
+
 import { useToast } from "@/app/components/ui/Toaster";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
@@ -95,11 +97,11 @@ function formatDate(iso: string) {
 // ─── badges ────────────────────────────────────────────────────
 
 function InstallmentBadge({ status }: { status: InstallmentStatus }) {
-  const styles: Record<InstallmentStatus, string> = {
-    PENDING: "bg-amber-50 text-amber-600 border border-amber-200",
-    OVERDUE: "bg-red-50 text-red-600 border border-red-200",
-    PAID: "bg-green-50 text-green-600 border border-green-100",
-    CANCELED: "bg-gray-100 text-gray-500 border border-gray-200",
+  const variants: Record<InstallmentStatus, React.ComponentProps<typeof Badge>["variant"]> = {
+    PENDING: "warn",
+    OVERDUE: "negative",
+    PAID: "positive",
+    CANCELED: "neutral",
   };
 
   const labels: Record<InstallmentStatus, string> = {
@@ -109,42 +111,11 @@ function InstallmentBadge({ status }: { status: InstallmentStatus }) {
     CANCELED: "Cancelada",
   };
 
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${styles[status]}`}
-    >
-      {labels[status]}
-    </span>
-  );
-}
-
-// ─── select ────────────────────────────────────────────────────
-
-function FilterSelect({
-  value,
-  onChange,
-  children,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="relative min-w-0">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700"
-      >
-        {children}
-      </select>
-
-      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-    </div>
-  );
+  return <Badge variant={variants[status]}>{labels[status]}</Badge>;
 }
 
 // ─── page ──────────────────────────────────────────────────────
+
 export default function ContasPage() {
   const { toast } = useToast();
 
@@ -179,37 +150,55 @@ export default function ContasPage() {
   const [installmentSaving, setInstallmentSaving] = useState(false);
   const [installmentError, setInstallmentError] = useState<string | null>(null);
 
+  const [retryKey, setRetryKey] = useState(0);
+
   // ─── fetch ───────────────────────────────────────────────────
 
-  const fetchPurchases = useCallback(async () => {
-    try {
-      setLoading(true);
-      setListError(null);
+  useEffect(() => {
+    let cancelled = false;
 
-      const response = await listCreditPurchases(page, itemsPerPage);
+    async function loadPurchases() {
+      try {
+        setLoading(true);
+        setListError(null);
 
-      if (!response.ok) {
-        throw new HttpError(response.status);
+        const response = await listCreditPurchases(page, itemsPerPage);
+
+        if (!response.ok) {
+          throw new HttpError(response.status);
+        }
+
+        const data: PageResponse<Purchase> = await response.json();
+
+        if (!cancelled) {
+          setPurchases(data);
+          setLoaded(true);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar compras parceladas:", error);
+
+        const message =
+          error instanceof HttpError
+            ? friendlyHttpError(error.status)
+            : "Não foi possível carregar as contas. Tente novamente.";
+
+        if (!cancelled) {
+          setListError(message);
+          toast(message, "error");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-
-      const data: PageResponse<Purchase> = await response.json();
-
-      setPurchases(data);
-      setLoaded(true);
-    } catch (error) {
-      console.error("Erro ao buscar compras parceladas:", error);
-
-      const message =
-        error instanceof HttpError
-          ? friendlyHttpError(error.status)
-          : "Não foi possível carregar as contas. Tente novamente.";
-
-      setListError(message);
-      toast(message, "error");
-    } finally {
-      setLoading(false);
     }
-  }, [page, itemsPerPage, toast]);
+
+    void loadPurchases();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, itemsPerPage, toast, retryKey]);
 
   async function openDetails(purchase: Purchase) {
     setDetailsLoading(true);
@@ -261,20 +250,14 @@ export default function ContasPage() {
   // ─── pay ─────────────────────────────────────────────────────
 
   function newIdempotencyKey(): string {
-    if (
-      typeof crypto !== "undefined" &&
-      "randomUUID" in crypto
-    ) {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
       return crypto.randomUUID();
     }
 
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-      /[xy]/g,
-      (c) => {
-        const r = (Math.random() * 16) | 0;
-        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-      }
-    );
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
   }
 
   async function handlePay(installment: Installment) {
@@ -285,10 +268,7 @@ export default function ContasPage() {
     setPayingId(installment.id);
 
     try {
-      const res = await payInstallment(
-        installment.id,
-        newIdempotencyKey()
-      );
+      const res = await payInstallment(installment.id, newIdempotencyKey());
 
       if (!res.ok) {
         if (res.status === 409) {
@@ -302,7 +282,7 @@ export default function ContasPage() {
         `Parcela ${installment.number}/${installment.installmentsQty} paga. Virou lançamento no extrato.`
       );
 
-      await fetchPurchases();
+      setRetryKey((k) => k + 1);
 
       if (details) {
         await refreshDetails(details.id);
@@ -388,7 +368,7 @@ export default function ContasPage() {
           : "Parcela atualizada."
       );
 
-      await fetchPurchases();
+      setRetryKey((k) => k + 1);
 
       if (details) {
         await refreshDetails(details.id);
@@ -425,7 +405,7 @@ export default function ContasPage() {
         throw new HttpError(res.status);
       }
 
-      await fetchPurchases();
+      setRetryKey((k) => k + 1);
 
       setDeletingPurchase(null);
       setDetails(null);
@@ -443,12 +423,6 @@ export default function ContasPage() {
     }
   }
 
-  // ─── effects ─────────────────────────────────────────────────
-
-  useEffect(() => {
-    fetchPurchases();
-  }, [fetchPurchases]);
-
   function PurchaseMenu({ purchase }: { purchase: Purchase }) {
     return (
       <MenuListModal
@@ -456,7 +430,7 @@ export default function ContasPage() {
           <button
             type="button"
             aria-label="Abrir opções da conta"
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+            className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -492,49 +466,35 @@ export default function ContasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contas</h1>
-
-          <p className="text-sm text-gray-400 mt-1">
-            Compras parceladas e compromissos futuros.
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            setModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md"
-          style={{
-            backgroundColor: "var(--color-interactive)",
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          Nova compra parcelada
-        </button>
-      </div>
+      <PageHeader
+        title="Contas"
+        subtitle="Compras parceladas e compromissos futuros."
+        action={
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="w-4 h-4" />
+            Nova compra parcelada
+          </Button>
+        }
+      />
 
       {/* lista */}
-      <div className="bg-white border border-(--color-border) rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div className="rounded-[var(--radius)] border border-line bg-surface overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="text-base font-medium text-ink">
               Compras parceladas
             </h2>
 
-            <p className="text-sm mt-0.5">
-              <span className="text-(--color-interactive) font-semibold">
+            <p className="text-sm mt-0.5 text-ink-3">
+              <span className="text-ink font-medium">
                 {purchases?.totalElements ?? 0}
-              </span>
-
-              <span className="text-gray-400"> contas encontradas</span>
+              </span>{" "}
+              contas encontradas
             </p>
           </div>
         </div>
 
-        <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 bg-line-subtle border-b border-line text-xs font-medium text-ink-2 uppercase tracking-wide">
           <span>Compra</span>
           <span>Total</span>
           <span>Progresso</span>
@@ -554,50 +514,57 @@ export default function ContasPage() {
             <Skeleton className="h-16" />
           </div>
         ) : listError && !loaded ? (
-          <ErrorState message={listError} onRetry={fetchPurchases} />
+          <ErrorState
+            message={listError}
+            onRetry={() => setRetryKey((k) => k + 1)}
+          />
         ) : purchases?.content.length === 0 ? (
-          <div className="px-6 py-10 text-center text-sm text-gray-400">
-            Nenhuma compra parcelada. Crie a primeira acima.
-          </div>
+          <EmptyState
+            title="Nenhuma compra parcelada"
+            description="Crie sua primeira compra parcelada para acompanhar os compromissos futuros."
+            action={
+              <Button onClick={() => setModalOpen(true)} size="sm">
+                <Plus className="w-4 h-4" />
+                Nova compra parcelada
+              </Button>
+            }
+          />
         ) : (
           purchases?.content.map((purchase) => (
             <Fragment key={purchase.id}>
-              <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/80 hover:bg-gray-50/60 transition items-center">
+              <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 border-b border-line items-center hover:bg-line-subtle/60 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-teal-50">
-                    <CreditCard className="w-4 h-4 text-teal-700" />
+                  <div className="w-9 h-9 rounded-[var(--radius)] flex items-center justify-center shrink-0 bg-line-subtle">
+                    <CreditCard className="w-4 h-4 text-ink-2" />
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">
+                    <p className="text-sm font-medium text-ink">
                       {purchase.title}
                     </p>
 
                     {purchase.merchant && (
-                      <p className="text-xs text-gray-400">
-                        {purchase.merchant}
-                      </p>
+                      <p className="text-xs text-ink-3">{purchase.merchant}</p>
                     )}
                   </div>
                 </div>
 
-                <p className="text-sm font-semibold text-gray-800">
+                <p className="text-sm font-medium text-ink">
                   {formatBRL(purchase.totalAmount)}
                 </p>
 
                 <div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-ink-2">
                     {purchase.paidCount}/{purchase.installmentsQty} pagas
                   </p>
 
-                  <div className="h-1.5 mt-1 rounded-full bg-gray-100 overflow-hidden">
+                  <div className="h-1.5 mt-1 rounded-full bg-line overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-teal-600 transition-all"
+                      className="h-full rounded-full bg-ink transition-all"
                       style={{
                         width: `${
                           purchase.installmentsQty > 0
-                            ? (purchase.paidCount /
-                                purchase.installmentsQty) *
+                            ? (purchase.paidCount / purchase.installmentsQty) *
                               100
                             : 0
                         }%`,
@@ -606,9 +573,7 @@ export default function ContasPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500">
-                  {purchase.categoryName}
-                </p>
+                <p className="text-sm text-ink-2">{purchase.categoryName}</p>
 
                 <div className="relative">
                   <PurchaseMenu purchase={purchase} />
@@ -616,22 +581,21 @@ export default function ContasPage() {
               </div>
 
               {/* Card mobile */}
-              <div className="lg:hidden px-4 py-4 border-b border-(--color-border)/80">
+              <div className="lg:hidden px-4 py-4 border-b border-line">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-teal-50">
-                      <CreditCard className="w-4 h-4 text-teal-700" />
+                    <div className="w-9 h-9 rounded-[var(--radius)] flex items-center justify-center shrink-0 bg-line-subtle">
+                      <CreditCard className="w-4 h-4 text-ink-2" />
                     </div>
 
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">
+                      <p className="text-sm font-medium text-ink truncate">
                         {purchase.title}
                       </p>
 
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-ink-3">
                         {formatBRL(purchase.totalAmount)} ·{" "}
-                        {purchase.paidCount}/{purchase.installmentsQty}{" "}
-                        pagas
+                        {purchase.paidCount}/{purchase.installmentsQty} pagas
                       </p>
                     </div>
                   </div>
@@ -641,14 +605,13 @@ export default function ContasPage() {
                   </div>
                 </div>
 
-                <div className="h-1.5 mt-2 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-1.5 mt-2 rounded-full bg-line overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-teal-600 transition-all"
+                    className="h-full rounded-full bg-ink transition-all"
                     style={{
                       width: `${
                         purchase.installmentsQty > 0
-                          ? (purchase.paidCount /
-                              purchase.installmentsQty) *
+                          ? (purchase.paidCount / purchase.installmentsQty) *
                             100
                           : 0
                       }%`,
@@ -661,44 +624,18 @@ export default function ContasPage() {
         )}
 
         {/* paginação */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-          <p className="text-sm text-gray-400">
-            Página {(purchases?.number ?? 0) + 1}
-          </p>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-              disabled={page === 0}
-              className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-50"
-            >
-              <ChevronLeft className="w-4 h-4 text-gray-500" />
-            </button>
-
-            <button
-              onClick={() => setPage((prev) => prev + 1)}
-              disabled={page >= (purchases?.totalPages ?? 1) - 1}
-              className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-50"
-            >
-              <ChevronRight className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Itens:</span>
-
-            <FilterSelect
-              value={String(itemsPerPage)}
-              onChange={(v) => {
-                setItemsPerPage(Number(v));
-                setPage(0);
-              }}
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-            </FilterSelect>
-          </div>
+        <div className="border-t border-line px-4 sm:px-6">
+          <Pagination
+            currentPage={purchases?.number ?? page}
+            totalPages={purchases?.totalPages ?? 0}
+            totalItems={purchases?.totalElements ?? 0}
+            pageSize={itemsPerPage}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setPage(0);
+            }}
+          />
         </div>
       </div>
 
@@ -711,7 +648,7 @@ export default function ContasPage() {
           onClose={() => setModalOpen(false)}
           onSave={async () => {
             setPage(0);
-            await fetchPurchases();
+            setRetryKey((k) => k + 1);
             toast("Compra parcelada criada com sucesso.");
           }}
         />
@@ -733,7 +670,7 @@ export default function ContasPage() {
           }}
           onClose={() => setEditingPurchase(null)}
           onSave={async () => {
-            await fetchPurchases();
+            setRetryKey((k) => k + 1);
 
             if (details && details.id === editingPurchase.id) {
               await refreshDetails(details.id);
@@ -761,7 +698,7 @@ export default function ContasPage() {
                 <button
                   type="button"
                   onClick={() => setDetails(null)}
-                  className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] border border-line text-sm font-medium text-ink-2 transition-colors hover:text-ink hover:border-ink-3"
                 >
                   Voltar
                 </button>
@@ -772,7 +709,7 @@ export default function ContasPage() {
                     setDeleteError(null);
                     setDeletingPurchase(details);
                   }}
-                  className="px-5 py-2 rounded-lg border border-red-300 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] border border-negative/50 text-sm font-medium text-negative transition-colors hover:bg-negative hover:text-white"
                 >
                   Excluir
                 </button>
@@ -795,10 +732,7 @@ export default function ContasPage() {
                     });
                     setDetails(null);
                   }}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
-                  style={{
-                    backgroundColor: "var(--color-interactive)",
-                  }}
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
                 >
                   Editar
                 </button>
@@ -834,17 +768,15 @@ export default function ContasPage() {
               />
 
               <div className="mt-4">
-                <p className="text-sm font-semibold text-gray-800 mb-2">
-                  Parcelas ({details.paidCount}/{details.installmentsQty}{" "}
-                  pagas)
+                <p className="text-sm font-medium text-ink mb-2">
+                  Parcelas ({details.paidCount}/{details.installmentsQty} pagas)
                 </p>
 
                 {(() => {
                   const nextDue = details.installments
                     .filter(
                       (inst) =>
-                        inst.status === "PENDING" ||
-                        inst.status === "OVERDUE"
+                        inst.status === "PENDING" || inst.status === "OVERDUE"
                     )
                     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
 
@@ -853,29 +785,30 @@ export default function ContasPage() {
                   }
 
                   return (
-                    <div className="mb-3 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-teal-700 text-white shadow-md">
+                    <div className="mb-3 flex items-center justify-between gap-3 px-4 py-3 rounded-[var(--radius)] bg-ink text-paper">
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-teal-100">
+                        <p className="text-xs font-medium text-ink-3">
                           Próximo vencimento · {nextDue.number}/
                           {nextDue.installmentsQty}
                         </p>
 
-                        <p className="text-lg font-bold leading-tight">
+                        <p className="text-lg font-light leading-tight tabular-nums">
                           {formatBRL(nextDue.amount)}{" "}
-                          <span className="text-xs font-medium text-teal-100">
+                          <span className="text-xs font-medium text-ink-3">
                             vence {formatDate(nextDue.dueDate)}
                           </span>
                         </p>
                       </div>
 
-                      <button
-                        type="button"
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handlePay(nextDue)}
+                        loading={payingId === nextDue.id}
                         disabled={payingId === nextDue.id}
-                        className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-teal-800 hover:bg-teal-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {payingId === nextDue.id ? "Pagando..." : "Pagar"}
-                      </button>
+                        Pagar
+                      </Button>
                     </div>
                   );
                 })()}
@@ -884,15 +817,15 @@ export default function ContasPage() {
                   {details.installments.map((inst) => (
                     <div
                       key={inst.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-gray-100"
+                      className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-[var(--radius)] border border-line"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800">
+                        <p className="text-sm font-medium text-ink">
                           {inst.number}/{inst.installmentsQty} ·{" "}
                           {formatBRL(inst.amount)}
                         </p>
 
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-ink-3">
                           vence {formatDate(inst.dueDate)}
                         </p>
                       </div>
@@ -909,7 +842,7 @@ export default function ContasPage() {
                                 disabled={payingId === inst.id}
                                 aria-label={`Pagar parcela ${inst.number}`}
                                 title="Pagar (vira lançamento)"
-                                className="p-1.5 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Check className="w-4 h-4" />
                               </button>
@@ -919,7 +852,7 @@ export default function ContasPage() {
                                 onClick={() => openEditInstallment(inst)}
                                 aria-label={`Editar parcela ${inst.number}`}
                                 title="Editar valor/vencimento"
-                                className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition"
+                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-surface transition-colors"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -956,7 +889,7 @@ export default function ContasPage() {
                   }
                 }}
                 disabled={installmentSaving}
-                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 min-h-[44px] rounded-[var(--radius)] border border-line text-sm font-medium text-ink-2 transition-colors hover:text-ink hover:border-ink-3 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
@@ -965,10 +898,7 @@ export default function ContasPage() {
                 type="button"
                 onClick={handleSaveInstallment}
                 disabled={installmentSaving}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  backgroundColor: "var(--color-interactive)",
-                }}
+                className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {installmentSaving ? "Salvando..." : "Salvar"}
               </button>
@@ -984,11 +914,10 @@ export default function ContasPage() {
                   setInstallmentForm((f) => ({ ...f, scope: s }))
                 }
                 aria-pressed={installmentForm.scope === s}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition
-                ${
+                className={`flex-1 py-2 px-3 rounded-[var(--radius)] text-sm font-medium border transition-colors ${
                   installmentForm.scope === s
-                    ? "bg-teal-50 border-teal-300 text-teal-700"
-                    : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                    ? "bg-ink text-paper border-ink"
+                    : "border-line text-ink-2 hover:text-ink hover:border-ink-3"
                 }`}
               >
                 {s === "ONE" ? "Só esta" : "Desta em diante"}
@@ -998,11 +927,12 @@ export default function ContasPage() {
 
           {installmentForm.scope === "ONE" && (
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <label htmlFor="installment-amount" className="block text-sm text-ink-2 mb-1.5">
                 Valor (R$)
               </label>
 
               <input
+                id="installment-amount"
                 type="number"
                 min="0.01"
                 step="0.01"
@@ -1013,13 +943,14 @@ export default function ContasPage() {
                     amount: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 transition"
+                className="w-full px-3.5 min-h-[48px] rounded-[var(--radius)] border border-line bg-surface text-sm text-ink placeholder:text-ink-3 focus:outline-none focus:border-ink-3"
+                placeholder="0,00"
               />
             </div>
           )}
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
+            <label className="block text-sm text-ink-2 mb-1.5">
               {installmentForm.scope === "FOLLOWING"
                 ? "Novo vencimento desta (as próximas acompanham)"
                 : "Vencimento"}
@@ -1034,7 +965,7 @@ export default function ContasPage() {
                   dueDate: e.target.value,
                 }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 transition"
+              className="w-full px-3.5 min-h-[48px] rounded-[var(--radius)] border border-line text-[15px] text-ink bg-surface focus:outline-none focus:border-ink-3 transition-colors"
             />
           </div>
 
@@ -1063,7 +994,7 @@ export default function ContasPage() {
                   }
                 }}
                 disabled={deleting}
-                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 min-h-[44px] rounded-[var(--radius)] border border-line text-sm font-medium text-ink-2 transition-colors hover:text-ink hover:border-ink-3 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
@@ -1072,19 +1003,22 @@ export default function ContasPage() {
                 type="button"
                 onClick={handleDeletePurchase}
                 disabled={deleting}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-white bg-negative transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {deleting ? "Excluindo..." : "Excluir tudo"}
               </button>
             </>
           }
         >
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-ink-2">
             Tem certeza que deseja excluir{" "}
-            <strong>&quot;{deletingPurchase.title}&quot;</strong>?
+            <strong className="text-ink">
+              &quot;{deletingPurchase.title}&quot;
+            </strong>
+            ?
           </p>
 
-          <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+          <div className="mt-3 rounded-[var(--radius)] bg-warn-subtle border border-warn/20 p-3 text-sm text-warn">
             <p>
               Serão apagados juntos: a compra, as{" "}
               <strong>
@@ -1092,15 +1026,14 @@ export default function ContasPage() {
               </strong>{" "}
               e{" "}
               <strong>
-                {deletingPurchase.generatedTransactionsCount}{" "}
-                lançamento(s)
+                {deletingPurchase.generatedTransactionsCount} lançamento(s)
               </strong>{" "}
               gerados no extrato
               {deletingPurchase.paidCount > 0 && (
                 <>
                   {" "}
-                  (incluindo {deletingPurchase.paidCount} parcela(s) já
-                  paga(s) — histórico)
+                  (incluindo {deletingPurchase.paidCount} parcela(s) já paga(s)
+                  — histórico)
                 </>
               )}
               .

@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: fluxa-postgres
+    environment:
+      POSTGRES_DB: fluxa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ld0423
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fluxa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fluxa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build: ./backend
+    container_name: fluxa-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "8080:8080"
+    networks:
+      - fluxa
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: fluxa-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - fluxa
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  fluxa:
+    driver: bridge
