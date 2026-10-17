@@ -10,7 +10,7 @@ export default function FormAlert({ children }: FormAlertProps) {
   return (
     <p
       role="alert"
-      className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+      className="text-sm text-negative border border-negative/40 rounded-[var(--radius)] px-3.5 py-2.5"
     >
       {children}
     </p>

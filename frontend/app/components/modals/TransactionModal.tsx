@@ -262,14 +262,15 @@ export default function TransactionModal({
     err?: string
   ) =>
     `
-      w-full px-3 py-2 rounded-lg border
-      text-sm text-gray-800 bg-white
-      focus:outline-none focus:ring-2
-      transition-all duration-200
+      w-full px-3.5 min-h-[48px] rounded-[var(--radius)] border
+      text-[15px] text-ink bg-surface
+      focus:outline-none focus:border-ink-3
+      transition-colors duration-[var(--dur-fast)]
+      placeholder:text-ink-3
       ${
         err
-          ? "border-red-400 focus:ring-red-200"
-          : "border-gray-200 focus:ring-(--color-interactive)/30"
+          ? "border-negative"
+          : "border-line"
       }
     `;
 
@@ -295,12 +296,11 @@ export default function TransactionModal({
             onClick={onClose}
             disabled={saving}
             className="
-              px-5 py-2 rounded-lg
-              border border-gray-200
-              text-sm font-medium text-gray-600
-              hover:bg-gray-100 hover:border-gray-300
-              transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-gray-200
+              px-5 min-h-[44px] rounded-[var(--radius)]
+              border border-line
+              text-sm font-medium text-ink-2
+              hover:text-ink hover:border-ink-3
+              transition-colors duration-[var(--dur-fast)]
               disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
@@ -312,18 +312,11 @@ export default function TransactionModal({
             onClick={handleSave}
             disabled={saving}
             className="
-              px-5 py-2 rounded-lg
-              text-sm font-semibold text-white
-              transition-all duration-200
-              hover:brightness-110
-              active:scale-[0.98]
-              focus:outline-none focus:ring-2 focus:ring-offset-1
-              disabled:opacity-50 disabled:cursor-not-allowed
+              px-5 min-h-[44px] rounded-[var(--radius)]
+              text-sm font-medium text-accent-ink bg-accent
+              transition-opacity duration-[var(--dur-fast)]
+              disabled:opacity-40 disabled:cursor-not-allowed
             "
-            style={{
-              backgroundColor:
-                "var(--color-interactive)",
-            }}
           >
             {saving ? "Salvando..." : submitLabel}
           </button>
@@ -336,7 +329,7 @@ export default function TransactionModal({
 
             <div>
 
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <label className="text-sm text-ink-2 block mb-1.5">
                 Tipo
               </label>
 
@@ -372,18 +365,17 @@ export default function TransactionModal({
                     })
                   }
                     className={`
-                      flex-1 py-2 px-3 rounded-lg
+                      flex-1 py-2 px-3 rounded-[var(--radius)] min-h-[44px]
                       text-sm font-medium border
-                      transition-all duration-200
-                      focus:outline-none focus:ring-2 focus:ring-offset-1
+                      transition-colors duration-[var(--dur-fast)]
                       disabled:opacity-50 disabled:cursor-not-allowed
                       ${
                         form.kind === t
                           ? t ===
                             "INCOME"
-                            ? "bg-green-50 border-green-300 text-green-600 focus:ring-green-200"
-                            : "bg-red-50 border-red-300 text-red-600 focus:ring-red-200"
-                          : "border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300"
+                            ? "bg-ink text-paper border-ink"
+                            : "bg-ink text-paper border-ink"
+                          : "border-line text-ink-2 hover:text-ink hover:border-ink-3"
                       }
                     `}
                   >
@@ -398,18 +390,18 @@ export default function TransactionModal({
             {/* Valor */}
             <div>
 
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <label className="text-sm text-ink-2 block mb-1.5">
                 Valor
               </label>
 
               <div
                 className={`
-                  flex items-center border rounded-lg overflow-hidden
-                  transition-all duration-200
+                  flex items-center border rounded-[var(--radius)] overflow-hidden
+                  transition-colors duration-[var(--dur-fast)]
                   ${
                     errors.amount
-                      ? "border-red-400"
-                      : "border-gray-200 focus-within:ring-2 focus-within:ring-(--color-interactive)/30"
+                      ? "border-negative"
+                      : "border-line focus-within:border-ink-3"
                   }
                 `}
               >
@@ -425,15 +417,16 @@ export default function TransactionModal({
                     )
                   }
                   className="
-                    w-full px-3 py-2
-                    text-sm text-gray-800
-                    focus:outline-none bg-white
+                    w-full px-3.5 min-h-[48px]
+                    text-[15px] text-ink
+                    focus:outline-none bg-surface
+                    placeholder:text-ink-3
                   "
                 />
               </div>
 
               {errors.amount && (
-                <p className="text-xs text-red-500 mt-1">
+                <p className="text-xs text-negative mt-1.5">
                   {errors.amount}
                 </p>
               )}
@@ -445,7 +438,7 @@ export default function TransactionModal({
 
             <div>
 
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <label className="text-sm text-ink-2 block mb-1.5">
                 Categoria
               </label>
 
@@ -494,7 +487,7 @@ export default function TransactionModal({
               </select>
 
               {errors.categoryId && (
-                <p className="text-xs text-red-500 mt-1">
+                <p className="text-xs text-negative mt-1.5">
                   {errors.categoryId}
                 </p>
               )}
@@ -502,7 +495,7 @@ export default function TransactionModal({
 
             <div>
 
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">
+              <label className="text-sm text-ink-2 block mb-1.5">
                 Data
               </label>
 
@@ -523,7 +516,7 @@ export default function TransactionModal({
           {/* Forma de pagamento */}
           <div>
 
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
+            <label className="text-sm text-ink-2 block mb-1.5">
               Forma de Pagamento
             </label>
 
@@ -556,7 +549,7 @@ export default function TransactionModal({
             </select>
 
             {errors.paymentMethod && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs text-negative mt-1.5">
                 {errors.paymentMethod}
               </p>
             )}
@@ -565,7 +558,7 @@ export default function TransactionModal({
           {/* Nome */}
           <div>
 
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
+            <label className="text-sm text-ink-2 block mb-1.5">
               Nome
             </label>
 
@@ -585,7 +578,7 @@ export default function TransactionModal({
             />
 
             {errors.description && (
-              <p className="text-xs text-red-500 mt-1">
+              <p className="text-xs text-negative mt-1.5">
                 {errors.description}
               </p>
             )}
@@ -594,10 +587,10 @@ export default function TransactionModal({
           {/* Descrição */}
           <div>
 
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">
+            <label className="text-sm text-ink-2 block mb-1.5">
               Descrição{" "}
 
-              <span className="text-gray-400 font-normal">
+              <span className="text-ink-3 font-normal">
                 (opcional)
               </span>
             </label>
@@ -614,17 +607,16 @@ export default function TransactionModal({
               }
               rows={3}
               className="
-                w-full px-3 py-2 rounded-lg border border-gray-200
-                text-sm text-gray-800 resize-none
-                focus:outline-none focus:ring-2
-                focus:ring-(--color-interactive)/30
-                transition-all duration-200
+                w-full px-3.5 py-2.5 rounded-[var(--radius)] border border-line
+                text-[15px] text-ink resize-none bg-surface
+                focus:outline-none focus:border-ink-3
+                transition-colors duration-[var(--dur-fast)]
               "
             />
           </div>
 
           {/* Recorrente */}
-          <div className="border border-gray-200 rounded-xl">
+          <div className="border border-line rounded-[var(--radius)]">
 
             <button
               type="button"
@@ -646,19 +638,19 @@ export default function TransactionModal({
                 <div
                   className={`
                     relative w-10 h-5 rounded-full
-                    transition-colors duration-200 shrink-0
+                    transition-colors duration-[var(--dur-fast)] shrink-0
                     ${
                       form.recurring
-                        ? "bg-[var(--color-interactive)]"
-                        : "bg-gray-300"
+                        ? "bg-ink"
+                        : "bg-line"
                     }
                   `}
                 >
                   <span
                     className={`
                       absolute top-0.5 left-0.5
-                      w-4 h-4 bg-white rounded-full shadow
-                      transition-transform duration-200
+                      w-4 h-4 bg-white rounded-full
+                      transition-transform duration-[var(--dur-fast)]
                       ${
                         form.recurring
                           ? "translate-x-5"
@@ -670,17 +662,17 @@ export default function TransactionModal({
 
                 <div className="text-left">
 
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm text-ink">
                     Transação recorrente
                   </p>
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3">
                     Repete esta transação automaticamente
                   </p>
                 </div>
               </div>
 
-              <span className="text-gray-400 text-xs">
+              <span className="text-ink-3 text-xs" aria-hidden>
                 ▾
               </span>
             </button>

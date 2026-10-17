@@ -3,7 +3,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
-  SlidersHorizontal,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -126,14 +125,15 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-label="Filtro"
         className={`${
           fullWidth ? "w-full sm:w-auto" : ""
-        } appearance-none pl-3 pr-8 py-2 text-sm border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30 cursor-pointer`}
+        } appearance-none pl-3.5 pr-9 min-h-[44px] text-sm border border-line rounded-[var(--radius)] bg-surface text-ink-2 focus:outline-none focus:border-ink-3 transition-colors cursor-pointer`}
       >
         {children}
       </select>
 
-      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3 pointer-events-none" aria-hidden />
     </div>
   );
 }
@@ -146,18 +146,13 @@ function KindBadge({
   kind: "EXPENSE" | "INCOME";
 }) {
   return (
-    <div
-      className={`inline-flex items-center w-8/12 px-2.5 py-1 rounded-full text-center text-xs font-medium
-      ${
-        kind === "INCOME"
-          ? "bg-green-50 text-(--color-positive) border border-green-100"
-          : "bg-red-50 text-(--color-alert) border border-red-100"
+    <span
+      className={`text-[13px] ${
+        kind === "INCOME" ? "text-positive" : "text-negative"
       }`}
     >
-      <p className="w-full">
-        {formatKind(kind)}
-      </p>
-    </div>
+      {formatKind(kind)}
+    </span>
   );
 }
 
@@ -175,13 +170,13 @@ function CategoryBadge({
 
   return (
     <span
-      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
-      style={{
-        backgroundColor: safeColor + "18",
-        color: safeColor,
-        borderColor: safeColor + "40",
-      }}
+      className="inline-flex items-center gap-1.5 text-[13px] text-ink-2"
     >
+      <span
+        aria-hidden
+        className="inline-block w-2 h-2 rounded-full"
+        style={{ backgroundColor: safeColor }}
+      />
       {safeName}
     </span>
   );
@@ -589,9 +584,9 @@ export default function TransactionsPage() {
           <button
             type="button"
             aria-label="Opções da transação"
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+            className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
           >
-            <MoreVertical className="w-4 h-4" />
+            <MoreVertical className="w-[18px] h-[18px]" />
           </button>
         }
         actions={[
@@ -632,15 +627,15 @@ export default function TransactionsPage() {
 
       {/* Header */}
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
 
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-[28px] font-light tracking-tight text-ink">
             Transações
           </h1>
 
-          <p className="text-sm text-gray-400 mt-1">
-            Veja e gerencie todas as suas transações.
+          <p className="text-sm text-ink-3 mt-1">
+            {sorted.length} {sorted.length === 1 ? "encontrada" : "encontradas"}
           </p>
         </div>
 
@@ -648,34 +643,31 @@ export default function TransactionsPage() {
           onClick={() =>
             openCreateModal()
           }
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-md hover:opacity-90 transition"
-          style={{
-            backgroundColor:
-              "var(--color-interactive)",
-          }}
+          className="flex items-center gap-2 px-4 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40 shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Nova Transação
+          Nova
         </button>
       </div>
 
       {/* Filtros */}
 
-      <div className="bg-white border border-(--color-border) rounded-2xl p-4 shadow-sm flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
 
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[180px]">
 
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3" aria-hidden />
 
           <input
-            type="text"
-            placeholder="Buscar transações..."
+            type="search"
+            placeholder="Buscar..."
+            aria-label="Buscar transações"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-(--color-interactive)/30"
+            className="w-full min-h-[44px] pl-9 pr-3 text-sm border border-line rounded-[var(--radius)] bg-surface text-ink placeholder:text-ink-3 focus:outline-none focus:border-ink-3 transition-colors"
           />
         </div>
 
@@ -732,45 +724,18 @@ export default function TransactionsPage() {
             </option>
           ))}
         </FilterSelect>
-
-        <button className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition ml-auto">
-
-          <SlidersHorizontal className="w-4 h-4" />
-
-          Filtros
-        </button>
       </div>
 
-      {/* Tabela */}
+      {/* Lista */}
 
-      <div className="bg-white border border-(--color-border) rounded-2xl shadow-sm overflow-hidden">
+      <section aria-label="Transações" className="border-t border-line">
 
-        {/* Topo */}
+        <div className="flex items-center justify-between gap-2 py-3">
 
-        <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2 text-sm text-ink-2 min-w-0">
 
-          <div className="min-w-0">
-
-            <h2 className="text-base font-semibold text-gray-900">
-              Lista de Transações
-            </h2>
-
-            <p className="text-sm mt-0.5">
-
-              <span className="text-(--color-interactive) font-semibold">
-                {sorted.length}
-              </span>
-
-              <span className="text-gray-400">
-                {" "}transações encontradas
-              </span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
-
-            <span className="shrink-0">
-              Ordenar por:
+            <span className="shrink-0 hidden sm:inline">
+              Ordenar
             </span>
 
             <FilterSelect
@@ -796,31 +761,12 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* Cabeçalho (desktop) */}
-
-        <div className="hidden lg:grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.5fr_1fr_auto] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-
-          <span>Descrição</span>
-
-          <span>Categoria</span>
-
-          <span>Tipo</span>
-
-          <span>Data</span>
-
-          <span>Forma de Pagamento</span>
-
-          <span>Valor</span>
-
-          <span />
-        </div>
-
         {/* Linhas */}
 
         {loading ? (
 
           <div
-            className="flex flex-col gap-2 px-6 py-4"
+            className="flex flex-col gap-2 py-2"
             role="status"
             aria-label="Carregando transações"
           >
@@ -839,8 +785,10 @@ export default function TransactionsPage() {
 
         ) : paginated.length === 0 ? (
 
-          <div className="px-6 py-12 text-center text-gray-400 text-sm">
-            Nenhuma transação encontrada.
+          <div className="py-12 text-center text-sm text-ink-3">
+            {search || filterCategory !== "Todas as categorias" || filterkind !== "Todos os tipos" || filterPayment !== "ALL"
+              ? "Nada corresponde aos filtros."
+              : "Sem transações ainda — crie a primeira acima."}
           </div>
 
         ) : (
@@ -849,35 +797,31 @@ export default function TransactionsPage() {
 
             <Fragment key={t.id}>
             <div
-              className="hidden lg:grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 px-6 py-4 border-b border-(--color-border)/70 hover:bg-gray-50/60 transition items-center"
+              className="hidden lg:grid grid-cols-[2fr_1.2fr_1fr_1.5fr_1.2fr_1fr_auto] gap-4 py-3.5 border-b border-line items-center"
             >
 
               {/* Descrição */}
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
 
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0
-                  ${
-                    t.kind === "INCOME"
-                      ? "bg-green-50"
-                      : "bg-red-50"
-                  }`}
+                  aria-hidden
+                  className="w-9 h-9 rounded-[var(--radius)] flex items-center justify-center shrink-0 bg-surface"
                 >
                   {t.kind === "INCOME" ? (
-                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                    <ArrowUpRight className="w-4 h-4 text-positive" />
                   ) : (
-                    <ArrowDownLeft className="w-4 h-4 text-red-500" />
+                    <ArrowDownLeft className="w-4 h-4 text-negative" />
                   )}
                 </div>
 
-                <div>
+                <div className="min-w-0">
 
-                  <p className="text-sm font-semibold text-gray-800">
+                  <p className="text-[15px] text-ink truncate">
                     {t.title}
                   </p>
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3 truncate">
                     {t.subtitle}
                   </p>
                 </div>
@@ -898,49 +842,37 @@ export default function TransactionsPage() {
 
               <div>
 
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-ink-2">
                   {t.date}
                 </p>
 
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-ink-3">
                   {t.dateLabel}
                 </p>
               </div>
 
               {/* Pagamento */}
 
-              <div className="flex items-center gap-2">
-
-                <span className="text-sm text-gray-600">
-                  {formatPaymentMethod(t.paymentMethod)}
-                </span>
-              </div>
+              <span className="text-sm text-ink-2">
+                {formatPaymentMethod(t.paymentMethod)}
+              </span>
 
               {/* Valor */}
 
-              <div className="flex items-center gap-1">
+              <span
+                className={`text-[15px] tabular-nums
+                ${
+                  t.kind === "INCOME"
+                    ? "text-positive"
+                    : "text-negative"
+                }`}
+              >
+                {t.kind === "EXPENSE"
+                  ? "-"
+                  : "+"}
 
-                {t.kind === "INCOME" ? (
-                  <ArrowUpRight className="w-3.5 h-3.5 text-(--color-positive) shrink-0" />
-                ) : (
-                  <ArrowDownLeft className="w-4 h-4 text-(--color-alert)" />
-                )}
-
-                <span
-                  className={`text-sm font-semibold
-                  ${
-                    t.kind === "INCOME"
-                      ? "text-(--color-positive)"
-                      : "text-(--color-alert)"
-                  }`}
-                >
-                  {t.kind === "EXPENSE"
-                    ? "-"
-                    : ""}
-
-                  {formatCurrency(t.amount)}
-                </span>
-              </div>
+                {formatCurrency(t.amount)}
+              </span>
 
               {/* Ações */}
 
@@ -949,30 +881,26 @@ export default function TransactionsPage() {
 
             {/* Card mobile */}
 
-            <div className="lg:hidden px-4 py-4 border-b border-(--color-border)/70">
+            <div className="lg:hidden py-3.5 border-b border-line">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0
-                    ${
-                      t.kind === "INCOME"
-                        ? "bg-green-50"
-                        : "bg-red-50"
-                    }`}
+                    aria-hidden
+                    className="w-9 h-9 rounded-[var(--radius)] flex items-center justify-center shrink-0 bg-surface"
                   >
                     {t.kind === "INCOME" ? (
-                      <ArrowUpRight className="w-4 h-4 text-green-500" />
+                      <ArrowUpRight className="w-4 h-4 text-positive" />
                     ) : (
-                      <ArrowDownLeft className="w-4 h-4 text-red-500" />
+                      <ArrowDownLeft className="w-4 h-4 text-negative" />
                     )}
                   </div>
 
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">
+                    <p className="text-[15px] text-ink truncate">
                       {t.title}
                     </p>
 
-                    <p className="text-xs text-gray-400 truncate">
+                    <p className="text-xs text-ink-3 truncate">
                       {t.subtitle}
                     </p>
                   </div>
@@ -980,14 +908,14 @@ export default function TransactionsPage() {
 
                 <div className="flex items-center gap-1 shrink-0">
                   <span
-                    className={`text-sm font-semibold
+                    className={`text-[15px] tabular-nums
                     ${
                       t.kind === "INCOME"
-                        ? "text-(--color-positive)"
-                        : "text-(--color-alert)"
+                        ? "text-positive"
+                        : "text-negative"
                     }`}
                   >
-                    {t.kind === "EXPENSE" ? "-" : ""}
+                    {t.kind === "EXPENSE" ? "-" : "+"}
                     {formatCurrency(t.amount)}
                   </span>
 
@@ -1003,12 +931,8 @@ export default function TransactionsPage() {
 
                 <KindBadge kind={t.kind} />
 
-                <span className="text-xs text-gray-400">
-                  {t.date}
-                </span>
-
-                <span className="text-xs text-gray-400">
-                  {formatPaymentMethod(t.paymentMethod)}
+                <span className="text-xs text-ink-3">
+                  {t.date} · {formatPaymentMethod(t.paymentMethod)}
                 </span>
               </div>
             </div>
@@ -1018,9 +942,9 @@ export default function TransactionsPage() {
 
         {/* Paginação */}
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4 border-t border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4">
 
-          <p className="text-sm text-gray-400 min-w-0">
+          <p className="text-[13px] text-ink-3 min-w-0">
 
             Mostrando{" "}
 
@@ -1039,10 +963,10 @@ export default function TransactionsPage() {
 
             {" "}de{" "}
 
-            {sorted.length} transações
+            {sorted.length}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
 
             <button
               onClick={() =>
@@ -1051,9 +975,10 @@ export default function TransactionsPage() {
                 )
               }
               disabled={page === 1}
-              className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label="Página anterior"
+              className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] border border-line text-ink-2 transition-colors hover:text-ink hover:border-ink-3 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-500" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
 
             {Array.from(
@@ -1064,25 +989,19 @@ export default function TransactionsPage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition
+                aria-label={`Página ${p}`}
+                aria-current={p === page ? "page" : undefined}
+                className={`min-w-11 h-11 px-2 rounded-[var(--radius)] text-sm transition-colors
                   ${
                     p === page
-                      ? "text-white"
-                      : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      ? "bg-ink text-paper font-medium"
+                      : "text-ink-2 hover:text-ink"
                   }`}
-                style={
-                  p === page
-                    ? {
-                        backgroundColor:
-                          "var(--color-interactive)",
-                      }
-                    : {}
-                }
               >
                 {p}
               </button>
             ))}
-            
+
             <button
               onClick={() =>
                 setPage((p) =>
@@ -1095,16 +1014,17 @@ export default function TransactionsPage() {
               disabled={
                 page === totalPages
               }
-              className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label="Próxima página"
+              className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] border border-line text-ink-2 transition-colors hover:text-ink hover:border-ink-3 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-[13px] text-ink-3">
 
             <span>
-              Itens por página:
+              Por página
             </span>
 
             <FilterSelect
@@ -1130,7 +1050,7 @@ export default function TransactionsPage() {
             </FilterSelect>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Modal criar */}
 
@@ -1201,7 +1121,7 @@ export default function TransactionsPage() {
                     setDetailsOpen(false);
                     setDetailsTx(null);
                   }}
-                  className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] border border-line text-sm font-medium text-ink-2 transition-colors hover:text-ink hover:border-ink-3"
                 >
                   Voltar
                 </button>
@@ -1216,7 +1136,7 @@ export default function TransactionsPage() {
                       amount: detailsTx.amount,
                     });
                   }}
-                  className="px-5 py-2 rounded-lg border border-red-300 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] border border-negative/50 text-sm font-medium text-negative transition-colors hover:bg-negative hover:text-white"
                 >
                   Excluir
                 </button>
@@ -1228,11 +1148,7 @@ export default function TransactionsPage() {
                     setDetailsOpen(false);
                     setDetailsTx(null);
                   }}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:brightness-110"
-                  style={{
-                    backgroundColor:
-                      "var(--color-interactive)",
-                  }}
+                  className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
                 >
                   Editar
                 </button>
@@ -1325,7 +1241,7 @@ export default function TransactionsPage() {
                   }
                 }}
                 disabled={deleting}
-                className="px-5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 min-h-[44px] rounded-[var(--radius)] border border-line text-sm font-medium text-ink-2 transition-colors hover:text-ink hover:border-ink-3 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
@@ -1334,20 +1250,20 @@ export default function TransactionsPage() {
                 type="button"
                 onClick={handleDeleteTransaction}
                 disabled={deleting}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-white bg-negative transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {deleting ? "Excluindo..." : "Excluir"}
               </button>
             </>
           }
         >
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-ink-2">
             Tem certeza que deseja excluir{" "}
-            <strong>
+            <strong className="text-ink">
               &quot;{deletingTx.title}&quot;
             </strong>{" "}
             no valor de{" "}
-            <strong>
+            <strong className="text-ink tabular-nums">
               {formatCurrency(deletingTx.amount)}
             </strong>
             ?

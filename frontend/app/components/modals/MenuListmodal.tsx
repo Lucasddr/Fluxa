@@ -28,7 +28,7 @@ type MenuAction = {
             align="end"
             sideOffset={4}
             collisionPadding={8}
-            className="min-w-48 bg-white border border-(--color-border) rounded-xl shadow-lg overflow-hidden z-50"
+            className="min-w-48 bg-paper border border-line rounded-[var(--radius)] overflow-hidden z-50"
             >
             {actions.map((action) => {
                 const Icon = action.icon;
@@ -38,11 +38,11 @@ type MenuAction = {
                     key={action.label}
                     onSelect={action.onClick}
                     className={`
-                    flex items-center gap-3 px-4 py-3 text-sm cursor-pointer outline-none transition-colors
+                    flex items-center gap-3 px-4 min-h-[44px] text-sm cursor-pointer outline-none transition-colors duration-[var(--dur-fast)]
                     ${
                         action.danger
-                        ? "text-red-600 data-[highlighted]:bg-red-50"
-                        : "text-gray-700 data-[highlighted]:bg-gray-50"
+                        ? "text-negative data-[highlighted]:bg-surface"
+                        : "text-ink-2 data-[highlighted]:text-ink data-[highlighted]:bg-surface"
                     }
                     `}
                 >

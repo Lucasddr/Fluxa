@@ -24,16 +24,16 @@ export default function AppDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
 
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
-          <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-            <div>
-              <Dialog.Title className="text-lg font-semibold text-gray-900">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[var(--radius)] bg-paper border border-line focus:outline-none">
+          <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4 border-b border-line">
+            <div className="min-w-0">
+              <Dialog.Title className="text-lg font-medium tracking-tight text-ink truncate">
                 {title}
               </Dialog.Title>
 
-              <Dialog.Description className="text-sm text-gray-400 mt-0.5">
+              <Dialog.Description className="text-sm text-ink-3 mt-0.5 truncate">
                 {description}
               </Dialog.Description>
             </div>
@@ -42,7 +42,7 @@ export default function AppDialog({
               <button
                 type="button"
                 aria-label="Fechar"
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+                className="shrink-0 flex items-center justify-center w-11 h-11 rounded-[var(--radius)] text-ink-2 transition-colors duration-[var(--dur-fast)] hover:text-ink hover:bg-surface"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -54,7 +54,7 @@ export default function AppDialog({
           </div>
 
           {footer ? (
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/60">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-6 py-4 border-t border-line">
               {footer}
             </div>
           ) : null}
