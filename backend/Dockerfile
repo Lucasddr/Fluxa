@@ -15,8 +15,18 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nginx gettext-base supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/nginx/sites-enabled/default
+
 COPY --from=build /app/target/*.jar app.jar
+COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/supervisord.conf /etc/supervisor/conf.d/fluxa.conf
+COPY deploy/docker-entrypoint.sh /app/docker-entrypoint.sh
 
-EXPOSE 8080
+ENV PORT=10000
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 10000
+
+ENTRYPOINT ["/bin/sh", "/app/docker-entrypoint.sh"]

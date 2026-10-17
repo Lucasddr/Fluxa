@@ -1,22 +1,37 @@
 # Deploy — Fluxa (Sprint 10)
 
-> Três ambientes (decisão do usuário em 2026-10-16):
+> Ambientes atuais e planejados:
 > - **Local/dev**: `docker-compose` (`postgres:17` na `5433`) + `next start` na `:3001` via nginx `:80`.
-> - **Staging (prod de testes, gratuita)**: frontend na **Vercel** + backend no **Render**
->   (`https://fluxa-su89.onrender.com`, API na raiz, sem `/api`).
-> - **Prod pública (futura, paga)**: backend na **Railway** (mais rápida) + frontend na
->   **Vercel** + banco no **Supabase**. Só na hora do lançamento.
+> - **Produção pública atual**: frontend **Vercel** (`www.opsire.com.br`) + backend **Render** (`api.opsire.com.br`).
+> - **Migração futura**: backend **Railway** + frontend **Vercel** + banco **Supabase**.
 > Deploy é automático por plataforma a cada push na `main`; o workflow
 > `.github/workflows/ci.yml` só valida (gates) — não faz deploy.
 
 ## Arquitetura
 
-| Peça | Local/dev | Staging (testes) | Prod pública (futura) |
+| Peça | Local/dev | Produção atual | Migração futura |
 |---|---|---|---|
-| Backend | `docker compose` `:8080` | Render `https://fluxa-su89.onrender.com` | Railway, root `backend/`, Dockerfile |
+| Backend | `docker compose` `:8080` | Render `api.opsire.com.br` | Railway, root `backend/`, Dockerfile |
 | Frontend | `:3001` via nginx `:80` | Vercel (root `frontend/`) | Vercel (root `frontend/`) |
-| Banco | `postgres:17` local | (o do Render; ver painel) | Supabase (Flyway `V1–V8` no boot) |
-| `NEXT_PUBLIC_API_URL` | `http://26.220.230.81/api` | `https://fluxa-su89.onrender.com` (sem `/api`) | `https://<service>.up.railway.app/api` |
+| Banco | `postgres:17` local | Banco atual do serviço Render | Supabase (Flyway `V1–V8` no boot) |
+| `NEXT_PUBLIC_API_URL` | `http://26.220.230.81/api` | `https://api.opsire.com.br/api` | `https://<service>.up.railway.app/api` |
+
+## Backend no Render (produção atual)
+
+O Dockerfile do backend sobe Spring Boot e Nginx no mesmo serviço. O Nginx
+mantém as rotas antigas (`/auth/...`) e também publica `/api/...`, removendo o
+prefixo `/api` antes de encaminhar ao Spring. Para deixar o tráfego do navegador
+same-site com o frontend, configure o domínio customizado `api.opsire.com.br`
+no serviço Render e crie o CNAME indicado pelo painel do Render.
+
+No serviço Render, configure `PORT=10000`, `COOKIE_SECURE=true`,
+`COOKIE_SAME_SITE=None` e `CORS_ALLOWED_ORIGINS=https://www.opsire.com.br`.
+Mantenha `COOKIE_REFRESH_PATH=/auth`: o Nginx muda o caminho do cookie para
+`/api/auth` apenas nas respostas da rota com proxy. As rotas atuais sem `/api`
+continuam recebendo `Path=/auth`.
+
+Na Vercel, defina `NEXT_PUBLIC_API_URL=https://api.opsire.com.br/api` e faça um
+novo deploy para embutir a URL no frontend.
 
 ## Backend na Railway (prod futura)
 
@@ -35,16 +50,9 @@
 
 ## Frontend na Vercel
 
-> ⚠️ Status 2026-10-16: todos os deploys falham em 1-2s (build 0ms — falha no setup).
-> Causa provável: **Root Directory** na raiz do repo (sem `package.json`) em vez de
-> `frontend/`, + **zero env vars** configuradas. Corrigir no dashboard
-> (Settings → General → Root Directory = `frontend`; Settings → Environment
-> Variables → `NEXT_PUBLIC_API_URL` conforme a tabela acima); o próximo push na
-> `main` redeploya sozinho.
-
 1. Project a partir do repo, **Root Directory = `frontend`**, framework Next.js.
 2. Environment Variable: `NEXT_PUBLIC_API_URL` = URL do backend do ambiente
-   (staging: `https://fluxa-su89.onrender.com`; prod futura: `https://<service>.up.railway.app/api`).
+   (produção atual: `https://api.opsire.com.br/api`; migração futura: `https://<service>.up.railway.app/api`).
    Sem barra no final.
    - É **embutida no build** (`next build`) — trocar exige rebuild/redeploy.
 3. Deploy automático a cada push na `main` (Preview a cada PR).
@@ -56,7 +64,7 @@
 - Dev local continua no `docker-compose` (`DB_URL=jdbc:postgresql://postgres:5432/fluxa` dentro da rede do compose).
 - Nunca apontar dev para o Supabase de prod (risco de sujar dados reais).
 
-## Ordem de subida (primeiro deploy)
+## Ordem de subida (migração futura para Railway/Supabase)
 
 1. Supabase → anotar URL/usuário/senha.
 2. Railway (backend) com as variáveis → aguardar boot + Flyway OK nos logs.
