@@ -170,6 +170,60 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             @Param("end") LocalDate end);
 
     @Query("""
+        SELECT COALESCE(SUM(
+            CASE WHEN t.kind = 'INCOME' THEN t.amount ELSE -t.amount END
+        ), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.account.id = :accountId
+          AND t.occurredAt <= :end
+    """)
+    BigDecimal getAccountLedgerBalanceThrough(
+            @Param("userId") UUID userId,
+            @Param("accountId") UUID accountId,
+            @Param("end") LocalDate end);
+
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE WHEN t.kind = 'INCOME' THEN t.amount ELSE -t.amount END
+        ), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.account.id = :accountId
+          AND t.occurredAt <= :endInclusive
+          AND (
+              t.occurredAt > :startExclusive
+              OR (t.occurredAt = :startExclusive AND t.createdAt > :startRecordedAt)
+          )
+    """)
+    BigDecimal getAccountNetMovementBetween(
+            @Param("userId") UUID userId,
+            @Param("accountId") UUID accountId,
+            @Param("startExclusive") LocalDate startExclusive,
+            @Param("startRecordedAt") OffsetDateTime startRecordedAt,
+            @Param("endInclusive") LocalDate endInclusive);
+
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE WHEN t.kind = 'INCOME' THEN t.amount ELSE -t.amount END
+        ), 0)
+        FROM Transaction t
+        WHERE t.user.id = :userId
+          AND t.account.id = :accountId
+          AND t.occurredAt <= :endInclusive
+          AND (
+              t.occurredAt > :balanceAsOf
+              OR (t.occurredAt = :balanceAsOf AND t.createdAt > :recordedAt)
+          )
+    """)
+    BigDecimal getAccountNetMovementAfterObservation(
+            @Param("userId") UUID userId,
+            @Param("accountId") UUID accountId,
+            @Param("balanceAsOf") LocalDate balanceAsOf,
+            @Param("recordedAt") OffsetDateTime recordedAt,
+            @Param("endInclusive") LocalDate endInclusive);
+
+    @Query("""
         SELECT t FROM Transaction t
         LEFT JOIN FETCH t.category
         JOIN FETCH t.account

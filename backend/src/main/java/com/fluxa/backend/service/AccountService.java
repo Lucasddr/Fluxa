@@ -8,6 +8,7 @@ import com.fluxa.backend.dto.response.AccountResponseDTO;
 import com.fluxa.backend.exception.AccountInUseException;
 import com.fluxa.backend.exception.AccountNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
+import com.fluxa.backend.repository.AccountBalanceObservationRepository;
 import com.fluxa.backend.repository.CreditPurchaseRepository;
 import com.fluxa.backend.repository.TransactionRepository;
 import com.fluxa.backend.repository.UserRepository;
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final AccountBalanceObservationRepository balanceObservationRepository;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final CreditPurchaseRepository creditPurchaseRepository;
@@ -128,9 +130,10 @@ public class AccountService {
                 .orElseThrow(AccountNotFoundException::new);
 
         if (transactionRepository.existsByAccountIdAndUserId(accountId, userId)
-                || creditPurchaseRepository.existsByAccountIdAndUserId(accountId, userId)) {
+                || creditPurchaseRepository.existsByAccountIdAndUserId(accountId, userId)
+                || balanceObservationRepository.existsByAccountIdAndUserId(accountId, userId)) {
             throw new AccountInUseException(
-                    "Esta conta tem movimentações ou compromissos e não pode ser excluída.");
+                    "Esta conta tem movimentações, compromissos ou saldos conferidos e não pode ser excluída.");
         }
 
         List<Account> accounts = accountRepository.findAllForUser(userId);

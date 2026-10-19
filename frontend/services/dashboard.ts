@@ -2,9 +2,12 @@ import { api } from "./api";
 
 export function buildDashboard(
   start: string,
-  end: string
+  end: string,
+  horizonDays = 30
 ): Promise<Response> {
-  return api(`/dashboard/buildDashboard?start=${start}&end=${end}`);
+  return api(
+    `/dashboard/buildDashboard?start=${start}&end=${end}&horizonDays=${horizonDays}`
+  );
 }
 
 export function recentTransactions(

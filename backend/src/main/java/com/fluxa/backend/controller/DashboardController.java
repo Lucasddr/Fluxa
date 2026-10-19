@@ -28,7 +28,8 @@ public class DashboardController {
     @GetMapping("/buildDashboard")
     public ResponseEntity<?> buildDashboard (
             @RequestParam LocalDate start,
-            @RequestParam LocalDate end
+            @RequestParam LocalDate end,
+            @RequestParam(defaultValue = "30") int horizonDays
             ) {
 
         String rangeError = validateRange(start, end);
@@ -39,7 +40,13 @@ public class DashboardController {
             );
         }
 
-        DashboardDTO dto = new DashboardDTO(start, end);
+        if (horizonDays != 7 && horizonDays != 30 && horizonDays != 90) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", "horizonDays deve ser 7, 30 ou 90")
+            );
+        }
+
+        DashboardDTO dto = new DashboardDTO(start, end, horizonDays);
 
         return ResponseEntity.ok(
                dashboardService.buildDashboardDTO(dto)

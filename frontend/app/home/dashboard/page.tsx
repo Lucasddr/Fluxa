@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CheckCircle2, LogOut, User } from "lucide-react";
 
 import ValueCard from "@/app/components/ValueCard";
 import InsightCards from "@/app/components/InsightCards";
@@ -11,6 +12,7 @@ import TransactionList from "@/app/components/TransactionList";
 import MenuListModal from "@/app/components/modals/MenuListmodal";
 import Skeleton from "@/app/components/ui/Skeleton";
 import PageHeader from "@/app/components/ui/PageHeader";
+import Badge from "@/app/components/ui/Badge";
 
 import { logout } from "@/services/auth";
 import {
@@ -31,6 +33,13 @@ type DashboardDTO = {
   expenses: number;
   accountsPayable: number;
   monthlyBalance: number;
+  currentBalance: number;
+  availableBalance: number;
+  forecastDays: number;
+  balanceStatus: "NOT_RECONCILED" | "PENDING_REVIEW" | "RECONCILED" | "USER_ACCEPTED";
+  balanceDifference: number;
+  balanceAsOf: string | null;
+  pendingBalanceReviews: number;
 };
 
 type Transaction = {
@@ -89,6 +98,8 @@ const PERIODS: { key: PeriodKey; label: string; days: number }[] = [
   { key: "6m", label: "6M", days: 180 },
 ];
 
+const FORECAST_HORIZONS = [7, 30, 90] as const;
+
 function toISODate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -107,6 +118,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodKey>("30d");
+  const [forecastDays, setForecastDays] = useState<(typeof FORECAST_HORIZONS)[number]>(30);
   const [retryKey, setRetryKey] = useState(0);
 
   const { start, end } = useMemo(() => {
@@ -147,7 +159,7 @@ export default function DashboardPage() {
           transactionResponse,
           insightsResponse,
         ] = await Promise.all([
-          buildDashboard(start, end),
+          buildDashboard(start, end, forecastDays),
           recentTransactions(start, end),
           fetchInsightCards(start, end),
         ]);
@@ -194,7 +206,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [start, end, retryKey]);
+  }, [start, end, forecastDays, retryKey]);
 
   // ─── loading / erro ─────────────────────────────────────────
 
@@ -274,7 +286,7 @@ export default function DashboardPage() {
 
       {/* Período + retry */}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3">
         {loading && cardsData && (
           <span className="text-xs text-ink-3">
             Atualizando...
@@ -291,41 +303,79 @@ export default function DashboardPage() {
           </button>
         )}
 
-        <div
-          role="group"
-          aria-label="Período do dashboard"
-          className="inline-flex gap-1 rounded-[var(--radius)] border border-line p-1"
-        >
-          {PERIODS.map((p) => {
-            const active = period === p.key;
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-1 text-xs text-ink-3">Período histórico</p>
+            <div
+              role="group"
+              aria-label="Período histórico do dashboard"
+              className="inline-flex max-w-full gap-0.5 rounded-[var(--radius)] border border-line p-1"
+            >
+              {PERIODS.map((p) => {
+                const active = period === p.key;
 
-            return (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPeriod(p.key)}
-                aria-pressed={active}
-                disabled={loading}
-                className={`px-3.5 min-h-[36px] rounded-[calc(var(--radius)-4px)] text-[13px] font-medium transition-colors duration-[var(--dur-fast)] disabled:cursor-wait ${
-                  active
-                    ? "bg-ink text-paper"
-                    : "text-ink-2 hover:text-ink"
-                }`}
-              >
-                {p.label}
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setPeriod(p.key)}
+                    aria-pressed={active}
+                    disabled={loading}
+                    className={`min-h-[44px] min-w-0 flex-1 rounded-[calc(var(--radius)-4px)] px-2 text-[12px] font-medium transition-colors duration-[var(--dur-fast)] disabled:cursor-wait ${
+                      active ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-1 text-xs text-ink-3">Projeção de compromissos</p>
+            <div
+              role="group"
+              aria-label="Janela futura de compromissos"
+              className="inline-flex gap-1 rounded-[var(--radius)] border border-line p-1"
+            >
+              {FORECAST_HORIZONS.map((days) => {
+                const active = forecastDays === days;
+                return (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => setForecastDays(days)}
+                    aria-pressed={active}
+                    disabled={loading}
+                    className={`min-h-[44px] rounded-[calc(var(--radius)-4px)] px-3 text-[12px] font-medium transition-colors duration-[var(--dur-fast)] disabled:cursor-wait ${
+                      active ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"
+                    }`}
+                  >
+                    {days} dias
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
+
+      <BalanceTrustNotice dashboard={cardsData} />
 
       {/* Números */}
 
       <section aria-label="Resumo do período">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 lg:grid-cols-3">
           <ValueCard
-            title="Saldo do período"
-            value={formatCurrency(cardsData.monthlyBalance)}
+            title="Saldo disponível"
+            value={formatCurrency(cardsData.availableBalance)}
+            tone="ink"
+          />
+
+          <ValueCard
+            title="Saldo atual"
+            value={formatCurrency(cardsData.currentBalance)}
             tone="ink"
           />
 
@@ -342,9 +392,15 @@ export default function DashboardPage() {
           />
 
           <ValueCard
-            title="Contas a pagar"
+            title={`Compromissos (${forecastDays} dias)`}
             value={formatCurrency(cardsData.accountsPayable)}
             tone="warn"
+          />
+
+          <ValueCard
+            title="Fluxo líquido do período"
+            value={formatCurrency(cardsData.monthlyBalance)}
+            tone="ink"
           />
         </div>
       </section>
@@ -392,4 +448,58 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function BalanceTrustNotice({ dashboard }: { dashboard: DashboardDTO }) {
+  if (dashboard.balanceStatus === "RECONCILED") {
+    return (
+      <div className="flex flex-wrap items-center gap-2 border-l-2 border-positive pl-3 text-sm text-ink-2" role="status">
+        <CheckCircle2 className="h-4 w-4 text-positive" aria-hidden="true" />
+        <Badge variant="positive">Saldo conferido</Badge>
+        {dashboard.balanceAsOf && <span>em {formatBalanceDate(dashboard.balanceAsOf)}</span>}
+      </div>
+    );
+  }
+
+  if (dashboard.balanceStatus === "USER_ACCEPTED") {
+    return (
+      <div className="flex flex-wrap items-start gap-2 border-l-2 border-ink-3 pl-3 text-sm text-ink-2" role="status">
+        <Badge variant="neutral">Base escolhida por você</Badge>
+        <span>Os relatórios históricos continuam baseados nas transações registradas.</span>
+      </div>
+    );
+  }
+
+  const pending = dashboard.balanceStatus === "PENDING_REVIEW";
+  return (
+    <div
+      className="flex flex-wrap items-start gap-2 border-l-2 border-warn pl-3 text-sm text-ink-2"
+      role={pending ? "alert" : "status"}
+    >
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-ink">
+          {pending
+            ? `Revisão pendente${dashboard.pendingBalanceReviews > 1 ? ` (${dashboard.pendingBalanceReviews})` : ""}`
+            : "Saldo ainda não conferido"}
+        </p>
+        <p className="mt-0.5 text-xs text-ink-3">
+          Por padrão, o histórico usa as transações registradas. O saldo disponível pode estar incompleto até a conferência.
+          {pending && dashboard.pendingBalanceReviews === 1
+            ? ` Diferença: ${formatCurrency(dashboard.balanceDifference)}.`
+            : pending
+              ? " Revise cada conta para ver suas divergências."
+              : ""}
+        </p>
+      </div>
+      <Link href="/home/bank-accounts" className="min-h-[44px] inline-flex items-center text-sm font-medium text-ink underline underline-offset-4">
+        Conferir saldo
+      </Link>
+    </div>
+  );
+}
+
+function formatBalanceDate(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
 }

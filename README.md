@@ -32,7 +32,7 @@ Saldo Disponível = Saldo Real − Saldo Comprometido
 
 > **Estado real e pendências:** `docs/ROADMAP-FECHAMENTO-PENDENCIAS.md`
 
-Resumo (2026-10-16):
+Resumo da `main` em 2026-10-16 + progresso das branches locais em 2026-10-19:
 
 | Área | Status |
 |---|---|
@@ -43,7 +43,8 @@ Resumo (2026-10-16):
 | Dashboard com seletor de período + insights (economia, maior despesa) | ✅ |
 | Sessão: interceptor 401 + refresh único + auto-logout | ✅ |
 | **Compras no crédito parceladas (installments) — diferencial do produto** | 🟡 backend em andamento (service/repo/DTOs/V8); falta controller + UI |
-| **Módulo de Contas (multi-conta)** | ✅ implementado nesta branch: CRUD, conta padrão e seleção em transações/compras (`feat/account-management`) |
+| **Módulo de Contas (multi-conta)** | ✅ implementado na branch local `feat/account-management`: CRUD, padrão e seleção nos lançamentos/parcelas |
+| **Saldo conferido + projeções 7/30/90 dias** | ✅ implementado na branch local `feat/balance-reconciliation`; importação ainda em andamento |
 | **Navegação mobile** | ❌ pendente |
 | Insights/Reports/Configurações | 🟡 parcial/stub |
 

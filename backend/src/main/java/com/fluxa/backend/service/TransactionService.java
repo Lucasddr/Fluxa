@@ -42,6 +42,7 @@ public class TransactionService {
     public final CategoryRepository categoryRepository;
     public final TransactionRepository transactionRepository;
     public final UserRepository userRepository;
+    private final AccountBalanceService accountBalanceService;
 
 
     public boolean createTransaction(CreateTransactionDTO dto, String idempotencyKey){
@@ -120,6 +121,9 @@ public class TransactionService {
 
             return false;
         }
+
+        accountBalanceService.markPendingReviewForLedgerChange(
+                account.getId(), userId, transaction.getOccurredAt(), transaction.getCreatedAt());
 
         log.info("[TRANSACTION] new transaction created | user: {} | transactionId: {} | kind {}",
                 user.getId(),
@@ -206,6 +210,11 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findByIdAndUserId(transactionID, userId)
                 .orElseThrow(TransactionNotFoundException::new);
 
+        LocalDate affectedDate = transaction.getOccurredAt().isBefore(dto.occurredAt())
+                ? transaction.getOccurredAt()
+                : dto.occurredAt();
+        var transactionCreatedAt = transaction.getCreatedAt();
+
         Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)
                 .orElseThrow(CategoryNotFoundException::new);
 
@@ -217,14 +226,22 @@ public class TransactionService {
         transaction.setPaymentMethod(dto.paymentMethod());
         transaction.setObservation(dto.observation());
         transaction.setRecurrent(dto.recurring());
+        accountBalanceService.markPendingReviewForLedgerChange(
+                transaction.getAccount().getId(), userId, affectedDate, transactionCreatedAt);
     }
 
+    @Transactional
     public void deleteTransaction(UUID transactionId) {
         UUID userId = UserContext.getUserId();
 
         Transaction transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
                 .orElseThrow(TransactionNotFoundException::new);
 
+        UUID accountId = transaction.getAccount().getId();
+        LocalDate occurredAt = transaction.getOccurredAt();
+        var transactionCreatedAt = transaction.getCreatedAt();
         transactionRepository.delete(transaction);
+        accountBalanceService.markPendingReviewForLedgerChange(
+                accountId, userId, occurredAt, transactionCreatedAt);
     }
 }

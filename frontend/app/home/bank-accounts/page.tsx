@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Badge from "@/app/components/ui/Badge";
 import Button from "@/app/components/ui/Button";
 import AppDialog from "@/app/components/ui/Dialog";
+import BalanceObservationDialog from "@/app/components/accounts/BalanceObservationDialog";
 import EmptyState from "@/app/components/ui/EmptyState";
 import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
@@ -13,7 +14,9 @@ import Label from "@/app/components/ui/Label";
 import PageHeader from "@/app/components/ui/PageHeader";
 import Skeleton from "@/app/components/ui/Skeleton";
 import { useToast } from "@/app/components/ui/Toaster";
+import { formatCurrency } from "@/app/utils/Formatters";
 import {
+  listAccountBalanceSummaries,
   createAccount,
   deleteAccount,
   listAccounts,
@@ -21,18 +24,28 @@ import {
   setDefaultAccount,
   updateAccount,
 } from "@/services/accounts";
-import type { Account } from "@/services/accounts";
+import type { Account, AccountBalanceSummary } from "@/services/accounts";
+
+function formatBalanceDate(value: string | null) {
+  if (!value) return "";
+  const [year, month, day] = value.slice(0, 10).split("-");
+  return `${day}/${month}/${year}`;
+}
 
 function AccountActions({
   account,
   busy,
   onMakeDefault,
+  onBalance,
+  balanceLabel,
   onEdit,
   onDelete,
 }: {
   account: Account;
   busy: boolean;
   onMakeDefault: () => void;
+  onBalance: () => void;
+  balanceLabel: string;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -55,6 +68,14 @@ function AccountActions({
           Tornar padrão
         </Button>
       )}
+      <Button
+        variant="secondary"
+        className="col-span-2 sm:col-auto"
+        onClick={onBalance}
+        disabled={busy}
+      >
+        {balanceLabel}
+      </Button>
       <Button variant="ghost" className="sm:col-auto" onClick={onEdit} disabled={busy}>
         Editar
       </Button>
@@ -68,8 +89,10 @@ function AccountActions({
 export default function BankAccountsPage() {
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [balanceSummaries, setBalanceSummaries] = useState<AccountBalanceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [balanceLoadError, setBalanceLoadError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [busyAccountId, setBusyAccountId] = useState<string | null>(null);
 
@@ -82,6 +105,7 @@ export default function BankAccountsPage() {
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [balanceAccount, setBalanceAccount] = useState<Account | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +123,27 @@ export default function BankAccountsPage() {
         const data = (await response.json()) as Account[];
         if (!cancelled) {
           setAccounts(data);
+        }
+
+        try {
+          const balanceResponse = await listAccountBalanceSummaries();
+          if (!balanceResponse.ok) {
+            throw new Error(await responseErrorMessage(balanceResponse));
+          }
+          const summaries = (await balanceResponse.json()) as AccountBalanceSummary[];
+          if (!cancelled) {
+            setBalanceSummaries(summaries);
+            setBalanceLoadError(null);
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setBalanceSummaries([]);
+            setBalanceLoadError(
+              error instanceof Error
+                ? error.message
+                : "Não foi possível carregar os saldos das contas."
+            );
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -222,6 +267,28 @@ export default function BankAccountsPage() {
   }
 
   const contentLoading = loading && accounts === null;
+  const balanceByAccount = new Map(
+    balanceSummaries.map((summary) => [summary.accountId, summary])
+  );
+
+  function balanceStatusLabel(status: AccountBalanceSummary["status"]) {
+    switch (status) {
+      case "PENDING_REVIEW":
+        return "Revisão pendente";
+      case "RECONCILED":
+        return "Conferido";
+      case "USER_ACCEPTED":
+        return "Base escolhida";
+      default:
+        return "Não conferido";
+    }
+  }
+
+  function balanceStatusVariant(status: AccountBalanceSummary["status"]) {
+    if (status === "RECONCILED") return "positive" as const;
+    if (status === "PENDING_REVIEW" || status === "NOT_RECONCILED") return "warn" as const;
+    return "neutral" as const;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -246,6 +313,15 @@ export default function BankAccountsPage() {
           <p className="text-sm text-negative">{loadError}</p>
           <Button variant="secondary" onClick={() => setRetryKey((key) => key + 1)}>
             Tentar novamente
+          </Button>
+        </div>
+      )}
+
+      {balanceLoadError && accounts !== null && (
+        <div className="flex flex-wrap items-center gap-3" role="alert">
+          <p className="text-sm text-warn">{balanceLoadError}</p>
+          <Button variant="secondary" onClick={() => setRetryKey((key) => key + 1)}>
+            Atualizar saldos
           </Button>
         </div>
       )}
@@ -290,11 +366,32 @@ export default function BankAccountsPage() {
                     <h3 className="break-words font-medium text-ink">{account.name}</h3>
                   </div>
                   <p className="mt-1 text-sm text-ink-3">{account.currency}</p>
+                  {balanceByAccount.get(account.id) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-sm tabular-nums text-ink-2">
+                        Saldo calculado: {formatCurrency(balanceByAccount.get(account.id)!.currentBalance)}
+                      </span>
+                      <Badge variant={balanceStatusVariant(balanceByAccount.get(account.id)!.status)}>
+                        {balanceStatusLabel(balanceByAccount.get(account.id)!.status)}
+                      </Badge>
+                      <p className="w-full text-xs text-ink-3">
+                        {balanceByAccount.get(account.id)!.status === "PENDING_REVIEW"
+                          ? "Usando transações registradas até a revisão."
+                          : balanceByAccount.get(account.id)!.status === "NOT_RECONCILED"
+                            ? "Ainda não conferido com o saldo do banco."
+                            : `Conferência válida em ${formatBalanceDate(balanceByAccount.get(account.id)!.balanceAsOf)}.`}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <AccountActions
                   account={account}
                   busy={busyAccountId === account.id || saving || deleting}
                   onMakeDefault={() => void handleMakeDefault(account)}
+                  onBalance={() => setBalanceAccount(account)}
+                  balanceLabel={balanceByAccount.get(account.id)?.status === "PENDING_REVIEW"
+                    ? "Revisar saldo"
+                    : "Informar saldo"}
                   onEdit={() => openEdit(account)}
                   onDelete={() => {
                     setDeleteError(null);
@@ -356,7 +453,7 @@ export default function BankAccountsPage() {
           }
         }}
         title={`Excluir ${accountToDelete?.name ?? "conta"}?`}
-        description="Contas com movimentações ou compromissos não podem ser excluídas."
+        description="Contas com movimentações, compromissos ou saldos informados não podem ser excluídas."
         footer={
           <>
             <Button
@@ -383,6 +480,14 @@ export default function BankAccountsPage() {
         </p>
         {deleteError && <FormAlert>{deleteError}</FormAlert>}
       </AppDialog>
+
+      <BalanceObservationDialog
+        key={balanceAccount?.id ?? "closed"}
+        account={balanceAccount}
+        summary={balanceAccount ? balanceByAccount.get(balanceAccount.id) ?? null : null}
+        onClose={() => setBalanceAccount(null)}
+        onChanged={() => setRetryKey((key) => key + 1)}
+      />
     </div>
   );
 }

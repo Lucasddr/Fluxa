@@ -3,13 +3,14 @@
 > ### ℹ️ Modelagem original (v1) — referência conceitual
 >
 > Este é o desenho **original** do modelo. O estado real está nas migrations Flyway
-> (`backend/src/main/resources/db/migration/`, atualmente **V1–V9**) e nos ADRs
+> (`backend/src/main/resources/db/migration/`, atualmente **V1–V10**) e nos ADRs
 > (`docs/ARCHITECTURE-DECISIONS.md`).
 > Diferenças a observar: IDs são **UUID** (não BIGINT); `kind` (INCOME/EXPENSE) em vez de `type`;
 > **não há coluna de saldo calculado** em `accounts` (a V3 removeu); `is_default` seleciona
 > a conta padrão desde a V9; status de parcela é
 > `PENDING/PAID/OVERDUE/CANCELED` (a V8 alinhou o CHECK ao enum). A proposta de saldo materializado está em
 > `docs/fluxa-banco-de-dados-v2-ledger-saldo.md` (superada pelo ADR-001).
+> A V10 acrescenta `account_balance_observations`: valores informados/observados e revisões, não um saldo derivado sincronizado. Ver ADR-003.
 
 ## 1. Visão Geral
 

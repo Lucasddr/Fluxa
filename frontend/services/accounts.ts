@@ -7,6 +7,45 @@ export type Account = {
   isDefault: boolean;
 };
 
+export type BalanceTrustStatus =
+  | "NOT_RECONCILED"
+  | "PENDING_REVIEW"
+  | "RECONCILED"
+  | "USER_ACCEPTED";
+
+export type BalanceObservationStatus =
+  | "PENDING_REVIEW"
+  | "RECONCILED"
+  | "OBSERVED_ACCEPTED"
+  | "LEDGER_ACCEPTED";
+
+export type AccountBalanceSummary = {
+  accountId: string;
+  accountName: string;
+  latestObservationId: string | null;
+  currentBalance: number;
+  ledgerBalance: number;
+  observedBalance: number | null;
+  difference: number | null;
+  balanceAsOf: string | null;
+  recordedAt: string | null;
+  status: BalanceTrustStatus;
+  pendingReviewCount: number;
+};
+
+export type BalanceObservation = {
+  id: string;
+  accountId: string;
+  observedBalance: number;
+  ledgerBalance: number;
+  difference: number;
+  balanceAsOf: string;
+  recordedAt: string;
+  source: "MANUAL" | "STATEMENT";
+  status: BalanceObservationStatus;
+  reviewedAt: string | null;
+};
+
 function json(method: string, body: unknown): RequestInit {
   return {
     method,
@@ -17,6 +56,32 @@ function json(method: string, body: unknown): RequestInit {
 
 export function listAccounts(): Promise<Response> {
   return api("/accounts");
+}
+
+export function listAccountBalanceSummaries(): Promise<Response> {
+  return api("/accounts/balances");
+}
+
+export function listBalanceObservations(accountId: string): Promise<Response> {
+  return api(`/accounts/${accountId}/balance-observations`);
+}
+
+export function createBalanceObservation(
+  accountId: string,
+  data: { observedBalance: number; balanceAsOf: string }
+): Promise<Response> {
+  return api(`/accounts/${accountId}/balance-observations`, json("POST", data));
+}
+
+export function resolveBalanceObservation(
+  accountId: string,
+  observationId: string,
+  resolution: "USE_OBSERVED_BALANCE" | "USE_REGISTERED_TRANSACTIONS"
+): Promise<Response> {
+  return api(
+    `/accounts/${accountId}/balance-observations/${observationId}/resolve`,
+    json("POST", { resolution })
+  );
 }
 
 export function createAccount(data: { name: string }): Promise<Response> {

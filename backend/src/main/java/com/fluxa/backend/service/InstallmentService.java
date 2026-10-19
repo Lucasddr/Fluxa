@@ -42,6 +42,7 @@ public class InstallmentService {
     public final InstallmentRepository installmentRepository;
     public final TransactionRepository transactionRepository;
     public final UserRepository userRepository;
+    private final AccountBalanceService accountBalanceService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -143,6 +144,10 @@ public class InstallmentService {
         transaction.setIdempotencyKey(key);
 
         transactionRepository.saveAndFlush(transaction);
+
+        accountBalanceService.markPendingReviewForLedgerChange(
+                installment.getAccount().getId(), userId, transaction.getOccurredAt(),
+                transaction.getCreatedAt());
 
         installment.setStatus(InstallmentStatus.PAID);
 

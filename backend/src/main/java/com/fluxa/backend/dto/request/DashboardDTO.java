@@ -9,6 +9,11 @@ public record DashboardDTO(
         LocalDate start,
 
         @NotNull(message = "Data final é obrigatória")
-        LocalDate end
+        LocalDate end,
+
+        int horizonDays
 ) {
+    public DashboardDTO(LocalDate start, LocalDate end) {
+        this(start, end, 30);
+    }
 }

@@ -108,6 +108,28 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(BalanceObservationNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBalanceObservationNotFound(
+            BalanceObservationNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InvalidBalanceObservationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidBalanceObservation(
+            InvalidBalanceObservationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
     @ExceptionHandler(CategoryInUseException.class)
     public ResponseEntity<ErrorResponseDTO> handleCategoryInUseException(CategoryInUseException ex) {
 
