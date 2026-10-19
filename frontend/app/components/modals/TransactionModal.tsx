@@ -12,6 +12,8 @@ import Textarea from "@/app/components/ui/Textarea";
 
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import { selectCategories } from "@/services/categories";
+import { listAccounts, responseErrorMessage } from "@/services/accounts";
+import type { Account } from "@/services/accounts";
 import { formatCurrency } from "@/app/utils/Formatters";
 
 type TransactionModalProps = {
@@ -33,6 +35,7 @@ export type TransactionFormData = {
   observation: string;
   paymentMethod: string;
   recurring: boolean;
+  accountId: string;
 };
 
 type CategoriesSelect = {
@@ -64,6 +67,10 @@ export default function TransactionModal({
 
   const [categories, setCategories] = useState<CategoriesSelect[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
+  const [accountsRetryKey, setAccountsRetryKey] = useState(0);
 
   const [amountInput, setAmountInput] = useState(
     initialData?.amount ? formatCurrency(initialData.amount) : ""
@@ -78,6 +85,7 @@ export default function TransactionModal({
     paymentMethod: initialData?.paymentMethod ?? "",
     observation: initialData?.observation ?? "",
     recurring: initialData?.recurring ?? false,
+    accountId: initialData?.accountId ?? "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -120,6 +128,49 @@ export default function TransactionModal({
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchAccounts() {
+      try {
+        setAccountsLoading(true);
+        setAccountsError(null);
+        const response = await listAccounts();
+        if (!response.ok) {
+          throw new Error(await responseErrorMessage(response));
+        }
+
+        const data = (await response.json()) as Account[];
+        if (!cancelled) {
+          setAccounts(data);
+          setForm((current) => ({
+            ...current,
+            accountId:
+              current.accountId ||
+              data.find((account) => account.isDefault)?.id ||
+              data[0]?.id ||
+              "",
+          }));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAccountsError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar as contas."
+          );
+        }
+      } finally {
+        if (!cancelled) setAccountsLoading(false);
+      }
+    }
+
+    void fetchAccounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountsRetryKey]);
+
   function handleAmountChange(value: string) {
     const digits = value.replace(/\D/g, "");
     const amount = Number(digits) / 100;
@@ -138,6 +189,10 @@ export default function TransactionModal({
 
     if (!form.categoryId) {
       e.categoryId = "Selecione uma categoria";
+    }
+
+    if (!isEdit && !form.accountId) {
+      e.accountId = "Selecione uma conta";
     }
 
     if (!form.description.trim()) {
@@ -262,6 +317,39 @@ export default function TransactionModal({
           />
         </div>
       </div>
+
+      {!isEdit && (
+        <div>
+          <Label htmlFor="transaction-account">Conta</Label>
+          <Select
+            id="transaction-account"
+            value={form.accountId}
+            onChange={(event) => field("accountId", event.target.value)}
+            error={errors.accountId}
+            disabled={accountsLoading || Boolean(accountsError)}
+          >
+            <option value="">
+              {accountsLoading ? "Carregando contas…" : "Selecione uma conta"}
+            </option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}{account.isDefault ? " (padrão)" : ""}
+              </option>
+            ))}
+          </Select>
+          {accountsError && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <FormAlert>{accountsError}</FormAlert>
+              <Button
+                variant="secondary"
+                onClick={() => setAccountsRetryKey((key) => key + 1)}
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Categoria + Data */}
       <div className="grid grid-cols-2 gap-4">

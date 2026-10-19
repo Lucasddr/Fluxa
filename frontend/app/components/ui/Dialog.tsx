@@ -29,11 +29,11 @@ export default function AppDialog({
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[var(--radius)] bg-paper border border-line focus:outline-none">
           <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4 border-b border-line">
             <div className="min-w-0">
-              <Dialog.Title className="text-lg font-medium tracking-tight text-ink truncate">
+              <Dialog.Title className="min-w-0 break-words text-lg font-medium tracking-tight text-ink">
                 {title}
               </Dialog.Title>
 
-              <Dialog.Description className="text-sm text-ink-3 mt-0.5 truncate">
+              <Dialog.Description className="break-words text-sm text-ink-3 mt-0.5">
                 {description}
               </Dialog.Description>
             </div>

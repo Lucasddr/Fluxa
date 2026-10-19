@@ -47,11 +47,12 @@ type Transaction = {
   title: string;
   category: string | null;
   categoryColor: string | null;
-  subtitle: string;
+  subtitle: string | null;
   kind: "EXPENSE" | "INCOME";
   date: string;
   paymentMethod: string;
   dateLabel: string;
+  accountName: string;
 };
 
 type PageResponse<T> = {
@@ -73,6 +74,7 @@ type TransactionDetails = {
   paymentMethod: string;
   occurredAt: string;
   recurring: boolean;
+  accountName: string;
 };
 
 // ─── constantes ───────────────────────────────────────────────────────────────
@@ -250,7 +252,7 @@ export default function TransactionsPage() {
       list = list.filter(
         (t) =>
           t.title.toLowerCase().includes(search.toLowerCase()) ||
-          t.subtitle.toLowerCase().includes(search.toLowerCase())
+          (t.subtitle ?? "").toLowerCase().includes(search.toLowerCase())
       );
     }
 
@@ -581,7 +583,9 @@ export default function TransactionsPage() {
 
                   <div className="min-w-0">
                     <p className="text-[15px] text-ink truncate">{t.title}</p>
-                    <p className="text-xs text-ink-3 truncate">{t.subtitle}</p>
+                    <p className="text-xs text-ink-3 truncate">
+                      {t.subtitle ?? ""} · {t.accountName}
+                    </p>
                   </div>
                 </div>
 
@@ -640,7 +644,9 @@ export default function TransactionsPage() {
 
                     <div className="min-w-0">
                       <p className="text-[15px] text-ink truncate">{t.title}</p>
-                      <p className="text-xs text-ink-3 truncate">{t.subtitle}</p>
+                      <p className="text-xs text-ink-3 truncate">
+                        {t.subtitle ?? ""} · {t.accountName}
+                      </p>
                     </div>
                   </div>
 
@@ -797,6 +803,7 @@ export default function TransactionsPage() {
                 label="Categoria"
                 value={detailsTx.categoryName ?? "Sem categoria"}
               />
+              <DetailRow label="Conta" value={detailsTx.accountName} />
               <DetailRow
                 label="Data"
                 value={detailsTx.occurredAt.split("-").reverse().join("/")}

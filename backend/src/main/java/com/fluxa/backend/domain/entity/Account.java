@@ -34,6 +34,9 @@ public class Account {
     @Column(nullable = false, length = 3)
     private String currency;
 
+    @Column(name = "is_default", nullable = false)
+    private boolean isDefault;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private OffsetDateTime createdAt;

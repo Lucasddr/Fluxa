@@ -16,6 +16,7 @@ public record ListTransactionResponseDTO(
         String category,
         PaymentMethods paymentMethod,
         String dateLabel,
-        String categoryColor
+        String categoryColor,
+        String accountName
 ) {}
 

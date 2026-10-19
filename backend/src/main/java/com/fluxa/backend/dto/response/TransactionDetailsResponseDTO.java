@@ -17,6 +17,7 @@ public record TransactionDetailsResponseDTO(
         String categoryName,
         PaymentMethods paymentMethod,
         LocalDate occurredAt,
-        boolean recurring
+        boolean recurring,
+        String accountName
 ) {
 }

@@ -5,4 +5,5 @@ export type NavItem = {
     slug?: string;
     icon?: LucideIcon;
     label: string;
+    mobileLabel?: string;
 };

@@ -16,6 +16,11 @@ import {
   updateCreditPurchase,
 } from "@/services/credit-purchases";
 import { selectCategories } from "@/services/categories";
+import {
+  listAccounts,
+  responseErrorMessage,
+} from "@/services/accounts";
+import type { Account } from "@/services/accounts";
 
 // ─── types ─────────────────────────────────────────────────────
 
@@ -95,11 +100,16 @@ export default function CreditPurchaseModal({
     firstDueDate: todayISO(),
     categoryId: initialData?.categoryId ?? "",
     notes: initialData?.notes ?? "",
+    accountId: "",
   });
 
   const [equalValues, setEqualValues] = useState(true);
   const [manualRows, setManualRows] = useState<ManualRow[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
+  const [accountsRetryKey, setAccountsRetryKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,6 +135,49 @@ export default function CreditPurchaseModal({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchAccounts() {
+      try {
+        setAccountsLoading(true);
+        setAccountsError(null);
+        const response = await listAccounts();
+        if (!response.ok) {
+          throw new Error(await responseErrorMessage(response));
+        }
+
+        const data = (await response.json()) as Account[];
+        if (!cancelled) {
+          setAccounts(data);
+          setForm((current) => ({
+            ...current,
+            accountId:
+              current.accountId ||
+              data.find((account) => account.isDefault)?.id ||
+              data[0]?.id ||
+              "",
+          }));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAccountsError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar as contas."
+          );
+        }
+      } finally {
+        if (!cancelled) setAccountsLoading(false);
+      }
+    }
+
+    void fetchAccounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountsRetryKey]);
 
   const qty = Math.max(1, Math.min(120, Number(form.installmentsQty) || 1));
   const total = Number(form.totalAmount) || 0;
@@ -153,6 +206,10 @@ export default function CreditPurchaseModal({
     }
 
     if (!isEdit) {
+      if (!form.accountId) {
+        next.accountId = "Selecione a conta onde este compromisso será pago.";
+      }
+
       if (!(total > 0)) {
         next.totalAmount = "Informe um valor maior que zero.";
       }
@@ -220,6 +277,7 @@ export default function CreditPurchaseModal({
             installmentsQty: qty,
             firstDueDate: form.firstDueDate,
             categoryId: form.categoryId,
+            accountId: form.accountId,
             notes: form.notes || null,
             installments: equalValues
               ? null
@@ -293,6 +351,41 @@ export default function CreditPurchaseModal({
           error={errors.title}
         />
       </div>
+
+      {!isEdit && (
+        <div>
+          <Label htmlFor="purchase-account">Conta de pagamento</Label>
+          <Select
+            id="purchase-account"
+            value={form.accountId}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, accountId: event.target.value }))
+            }
+            error={errors.accountId}
+            disabled={accountsLoading || Boolean(accountsError)}
+          >
+            <option value="">
+              {accountsLoading ? "Carregando contas…" : "Selecione uma conta"}
+            </option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}{account.isDefault ? " (padrão)" : ""}
+              </option>
+            ))}
+          </Select>
+          {accountsError && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <FormAlert>{accountsError}</FormAlert>
+              <Button
+                variant="secondary"
+                onClick={() => setAccountsRetryKey((key) => key + 1)}
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

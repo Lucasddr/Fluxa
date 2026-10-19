@@ -10,6 +10,7 @@ import com.fluxa.backend.dto.response.DashboardRecentTransactionResponseDTO;
 import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
 import com.fluxa.backend.dto.response.TransactionDetailsResponseDTO;
 import com.fluxa.backend.exception.CategoryNotFoundException;
+import com.fluxa.backend.exception.AccountNotFoundException;
 import com.fluxa.backend.exception.InvalidInstallmentOperationException;
 import com.fluxa.backend.exception.TransactionNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
@@ -65,10 +66,10 @@ public class TransactionService {
             return false;
         }
 
-        UUID accountId = accountRepository.findByUserId(userId);
-
-        Account account = accountRepository.findByIdAndUserId(accountId,userId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+        Account account = (dto.accountId() == null
+                ? accountRepository.findDefaultForUser(userId)
+                : accountRepository.findByIdAndUserId(dto.accountId(), userId))
+                .orElseThrow(AccountNotFoundException::new);
 
         Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -169,7 +170,8 @@ public class TransactionService {
                                     category != null ? category.getName() : null,
                                     transaction.getPaymentMethod(),
                                     dataLabel,
-                                    category != null ? category.getColor() : null
+                                    category != null ? category.getColor() : null,
+                                    transaction.getAccount().getName()
                             );
                         });
     }
@@ -192,7 +194,8 @@ public class TransactionService {
                 category != null ? category.getName() : null,
                 transaction.getPaymentMethod(),
                 transaction.getOccurredAt(),
-                transaction.isRecurrent()
+                transaction.isRecurrent(),
+                transaction.getAccount().getName()
         );
     }
 

@@ -43,7 +43,7 @@ Resumo (2026-10-16):
 | Dashboard com seletor de período + insights (economia, maior despesa) | ✅ |
 | Sessão: interceptor 401 + refresh único + auto-logout | ✅ |
 | **Compras no crédito parceladas (installments) — diferencial do produto** | 🟡 backend em andamento (service/repo/DTOs/V8); falta controller + UI |
-| **Módulo de Contas (multi-conta)** | ❌ pendente |
+| **Módulo de Contas (multi-conta)** | ✅ implementado nesta branch: CRUD, conta padrão e seleção em transações/compras (`feat/account-management`) |
 | **Navegação mobile** | ❌ pendente |
 | Insights/Reports/Configurações | 🟡 parcial/stub |
 

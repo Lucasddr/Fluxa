@@ -33,6 +33,8 @@ public record CreateTransactionDTO(
         PaymentMethods paymentMethod,
 
         @NotNull(message = "Recorrência é obrigatória")
-        Boolean recurring
+        Boolean recurring,
+
+        UUID accountId
 ) {
 }

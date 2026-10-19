@@ -30,7 +30,7 @@ Notas de produção:
 - `CORS_ALLOWED_ORIGINS` deve incluir exatamente `https://www.opsire.com.br`.
 - Render: `NEXT_PUBLIC_API_URL` da Vercel = `https://api.opsire.com.br/api`; adicionar `api.opsire.com.br` como custom domain do serviço.
 - Railway: `NEXT_PUBLIC_API_URL` da Vercel = `https://<service>.up.railway.app/api`.
-- `DB_URL` de prod = JDBC do Supabase; primeiro boot aplica Flyway `V1–V8` sozinho.
+- `DB_URL` de prod = JDBC do Supabase; primeiro boot aplica Flyway `V1–V9` sozinho.
 
 ## Frontend (`frontend/.env.local`)
 
@@ -42,4 +42,4 @@ Notas de produção:
 
 - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` no `backend/docker-compose.yml`
   (**hoje com senha hardcoded `ld0423` — mover para env antes de qualquer deploy compartilhado**).
-- Migrations Flyway `V1`–`V8` aplicadas automaticamente no boot; nunca editar migration já aplicada.
+- Migrations Flyway `V1`–`V9` aplicadas automaticamente no boot; nunca editar migration já aplicada.

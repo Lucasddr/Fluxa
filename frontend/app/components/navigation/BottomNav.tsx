@@ -12,16 +12,17 @@ export default function BottomNav() {
       aria-label="Principal"
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-paper pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="flex items-center justify-around">
-        {navItems.map(({ href, slug, icon: Icon, label }) => {
+      <div className="grid grid-cols-5 items-center">
+        {navItems.map(({ href, slug, icon: Icon, label, mobileLabel }) => {
           const isActive = segment === slug;
 
           return (
             <Link
               key={slug}
               href={href}
+              aria-label={mobileLabel ? `${mobileLabel}, ${label}` : label}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-1 min-h-[56px] min-w-[64px] px-2 text-[11px] font-medium transition-colors duration-[var(--dur-fast)] ${
+              className={`flex w-full min-w-0 flex-col items-center justify-center gap-1 min-h-[56px] px-0.5 text-[10px] font-medium transition-colors duration-[var(--dur-fast)] sm:px-2 sm:text-[11px] ${
                 isActive
                   ? "text-ink"
                   : "text-ink-3 hover:text-ink-2"
@@ -35,7 +36,8 @@ export default function BottomNav() {
                   aria-hidden
                 />
               )}
-              <span className="leading-none">{label}</span>
+              <span className="hidden max-w-full truncate leading-none sm:inline">{label}</span>
+              <span className="max-w-full truncate leading-none sm:hidden">{mobileLabel ?? label}</span>
             </Link>
           );
         })}

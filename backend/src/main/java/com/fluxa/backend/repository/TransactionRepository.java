@@ -58,6 +58,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
                 SELECT t
                 FROM Transaction t
                 LEFT JOIN FETCH t.category
+                JOIN FETCH t.account
                 WHERE t.user.id = :userId
                 ORDER BY t.occurredAt DESC
             """,
@@ -76,6 +77,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
                 SELECT t
                 FROM Transaction t
                 LEFT JOIN FETCH t.category
+                JOIN FETCH t.account
                 WHERE t.user.id = :userId
                 AND t.occurredAt BETWEEN :start AND :end
                 ORDER BY t.occurredAt DESC
@@ -167,13 +169,23 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
             @Param("start") LocalDate start,
             @Param("end") LocalDate end);
 
-    Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+    @Query("""
+        SELECT t FROM Transaction t
+        LEFT JOIN FETCH t.category
+        JOIN FETCH t.account
+        WHERE t.id = :id AND t.user.id = :userId
+    """)
+    Optional<Transaction> findByIdAndUserId(
+            @Param("id") UUID id,
+            @Param("userId") UUID userId);
 
     Optional<Transaction> findByUserIdAndIdempotencyKey(UUID userId, String idempotencyKey);
 
     List<Transaction> findByUserIdAndInstallment_CreditPurchase_Id(UUID userId, UUID creditPurchaseId);
 
     boolean existsByUserIdAndCategory_Id(UUID userId, UUID categoryId);
+
+    boolean existsByAccountIdAndUserId(UUID accountId, UUID userId);
 
     boolean existsByUserIdAndAmountAndDescriptionAndOccurredAtAndPaymentMethodAndCategory_IdAndCreatedAtAfter(
             UUID userId,

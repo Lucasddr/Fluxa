@@ -69,9 +69,9 @@ public class CreditPurchaseService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        UUID accountId = accountRepository.findByUserId(userId);
-
-        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+        Account account = (dto.accountId() == null
+                ? accountRepository.findDefaultForUser(userId)
+                : accountRepository.findByIdAndUserId(dto.accountId(), userId))
                 .orElseThrow(AccountNotFoundException::new);
 
         Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)

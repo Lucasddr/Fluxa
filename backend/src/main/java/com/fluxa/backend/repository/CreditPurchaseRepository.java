@@ -14,5 +14,7 @@ public interface CreditPurchaseRepository extends JpaRepository<CreditPurchase, 
 
     Optional<CreditPurchase> findByIdAndUserId(UUID id, UUID userId);
 
+    boolean existsByAccountIdAndUserId(UUID accountId, UUID userId);
+
     Page<CreditPurchase> findByUserIdOrderByPurchaseDateDesc(UUID userId, Pageable pageable);
 }

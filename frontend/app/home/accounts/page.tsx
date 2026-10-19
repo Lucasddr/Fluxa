@@ -180,7 +180,7 @@ export default function ContasPage() {
         const message =
           error instanceof HttpError
             ? friendlyHttpError(error.status)
-            : "Não foi possível carregar as contas. Tente novamente.";
+            : "Não foi possível carregar as compras parceladas. Tente novamente.";
 
         if (!cancelled) {
           setListError(message);
@@ -429,7 +429,7 @@ export default function ContasPage() {
         trigger={
           <button
             type="button"
-            aria-label="Abrir opções da conta"
+            aria-label="Abrir opções da compra"
             className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
           >
             <MoreVertical className="w-4 h-4" />
@@ -467,7 +467,7 @@ export default function ContasPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Contas"
+        title="Parcelas"
         subtitle="Compras parceladas e compromissos futuros."
         action={
           <Button onClick={() => setModalOpen(true)}>
@@ -489,7 +489,7 @@ export default function ContasPage() {
               <span className="text-ink font-medium">
                 {purchases?.totalElements ?? 0}
               </span>{" "}
-              contas encontradas
+              compras encontradas
             </p>
           </div>
         </div>
@@ -506,7 +506,7 @@ export default function ContasPage() {
           <div
             className="flex flex-col gap-2 px-6 py-4"
             role="status"
-            aria-label="Carregando contas"
+            aria-label="Carregando compras parceladas"
           >
             <Skeleton className="h-16" />
             <Skeleton className="h-16" />
@@ -690,7 +690,7 @@ export default function ContasPage() {
               setDetails(null);
             }
           }}
-          title="Detalhes da conta"
+          title="Detalhes da compra"
           description={details?.title ?? "Carregando..."}
           footer={
             details ? (
@@ -982,7 +982,7 @@ export default function ContasPage() {
               setDeletingPurchase(null);
             }
           }}
-          title="Excluir conta?"
+          title="Excluir compra?"
           description="Esta ação não pode ser desfeita."
           footer={
             <>

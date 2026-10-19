@@ -53,8 +53,24 @@ public record CreateCreditPurchaseDTO(
          * No modo manual a soma deve ser igual ao totalAmount (400 se divergir).
          */
         @Size(max = 120, message = "Máximo de 120 parcelas manuais")
-        List<@Valid ManualInstallmentDTO> installments
+        List<@Valid ManualInstallmentDTO> installments,
+
+        UUID accountId
 ) {
+    public CreateCreditPurchaseDTO(
+            String title,
+            String merchant,
+            BigDecimal totalAmount,
+            LocalDate purchaseDate,
+            Integer installmentsQty,
+            LocalDate firstDueDate,
+            UUID categoryId,
+            String notes,
+            List<ManualInstallmentDTO> installments) {
+        this(title, merchant, totalAmount, purchaseDate, installmentsQty,
+                firstDueDate, categoryId, notes, installments, null);
+    }
+
     public record ManualInstallmentDTO(
             @NotNull(message = "Valor da parcela é obrigatório")
             @Positive(message = "Valor da parcela deve ser maior que zero")
