@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -127,6 +128,28 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDTO(
                         HttpStatus.BAD_REQUEST.value(),
                         ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(InvalidStatementFileException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidStatementFile(
+            InvalidStatementFileException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage().lines().toList()
+                ));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.PAYLOAD_TOO_LARGE.value(),
+                        List.of("O arquivo deve ter no máximo 5 MB.")
                 ));
     }
 

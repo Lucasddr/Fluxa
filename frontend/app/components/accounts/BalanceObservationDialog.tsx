@@ -395,7 +395,7 @@ export default function BalanceObservationDialog({
                     {formatCurrency(observation.observedBalance)}
                   </p>
                   <p className="text-xs text-ink-3">
-                    Válido em {formatDate(observation.balanceAsOf)} · informado {new Date(observation.recordedAt).toLocaleString("pt-BR")}
+                    Válido em {formatDate(observation.balanceAsOf)} · {observation.source === "STATEMENT" ? "importado do extrato" : "informado"} {new Date(observation.recordedAt).toLocaleString("pt-BR")}
                   </p>
                   {observation.difference !== 0 && (
                     <p className="text-xs text-ink-3 tabular-nums">

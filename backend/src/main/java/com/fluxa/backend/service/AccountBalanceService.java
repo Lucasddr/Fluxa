@@ -99,17 +99,33 @@ public class AccountBalanceService {
     @Transactional
     public BalanceObservationResponseDTO createManualObservation(
             UUID accountId, CreateBalanceObservationDTO dto) {
+        return createObservation(accountId, dto.observedBalance(), dto.balanceAsOf(),
+                BalanceObservationSource.MANUAL);
+    }
+
+    @Transactional
+    public BalanceObservationResponseDTO createStatementObservation(
+            UUID accountId, BigDecimal observedBalance, LocalDate balanceAsOf) {
+        return createObservation(accountId, observedBalance, balanceAsOf,
+                BalanceObservationSource.STATEMENT);
+    }
+
+    private BalanceObservationResponseDTO createObservation(
+            UUID accountId,
+            BigDecimal observedBalance,
+            LocalDate balanceAsOf,
+            BalanceObservationSource source) {
         UUID userId = UserContext.getUserId();
         Account account = findOwnedAccount(accountId, userId);
 
-        if (dto.balanceAsOf().isAfter(LocalDate.now())) {
+        if (balanceAsOf.isAfter(LocalDate.now())) {
             throw new InvalidBalanceObservationException(
                     "A data do saldo não pode estar no futuro.");
         }
 
         BigDecimal ledgerBalance = calculateLedgerBalanceAt(
-                accountId, userId, dto.balanceAsOf());
-        BigDecimal difference = dto.observedBalance().subtract(ledgerBalance);
+                accountId, userId, balanceAsOf);
+        BigDecimal difference = observedBalance.subtract(ledgerBalance);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(AccountNotFoundException::new);
@@ -117,10 +133,10 @@ public class AccountBalanceService {
         AccountBalanceObservation observation = new AccountBalanceObservation();
         observation.setUser(user);
         observation.setAccount(account);
-        observation.setObservedBalance(dto.observedBalance());
+        observation.setObservedBalance(observedBalance);
         observation.setLedgerBalance(ledgerBalance);
-        observation.setBalanceAsOf(dto.balanceAsOf());
-        observation.setSource(BalanceObservationSource.MANUAL);
+        observation.setBalanceAsOf(balanceAsOf);
+        observation.setSource(source);
         observation.setStatus(difference.signum() == 0
                 ? BalanceObservationStatus.RECONCILED
                 : BalanceObservationStatus.PENDING_REVIEW);

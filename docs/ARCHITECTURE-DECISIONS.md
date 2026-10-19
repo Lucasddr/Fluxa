@@ -64,3 +64,21 @@ O histórico inicial pode estar incompleto, então a soma das transações não 
 - Migration V10 cria observações de saldo, índices e restrições de estado sem alterar migrations aplicadas.
 - O dashboard expõe saldo calculado, saldo disponível, confiança/conferência e horizonte de projeção.
 - O histórico de transações continua sendo a base dos relatórios de entradas e saídas.
+
+## ADR-004: Importação de extrato com prévia e deduplicação por origem (2026-10-19)
+
+Status: aceito.
+
+### Contexto
+Extratos bancários têm formatos diferentes e podem conter movimentações que já foram lançadas manualmente ou importadas antes. A importação precisa preservar a escolha do usuário sem duplicar valores silenciosamente.
+
+### Decisão
+- Aceitar CSV e OFX para contas bancárias. Arquivos são processados em memória, com limite de 5 MB e 5.000 movimentações; nenhum extrato é enviado a um serviço externo.
+- Interpretar linhas com uma prévia antes da gravação. O usuário pode selecionar, corrigir data/valor/descrição e atribuir uma categoria por movimentação.
+- Determinar receita/despesa pelo sinal do valor e validar que a categoria pertence ao usuário e ao tipo correspondente. Método de pagamento importado fica como `OTHER` quando a origem não o informa.
+- Deduplicar por `source_reference` persistida por conta; OFX usa `FITID` quando disponível, CSV usa impressão digital dos campos normalizados com ocorrência para linhas iguais.
+- Não assumir um saldo final de CSV, pois esse campo não é padronizado. O usuário pode conferir o saldo depois da importação usando a observação de saldo existente.
+
+### Consequências
+- Migration V11 cria `imported_statement_entries` ligada à conta e à transação criada.
+- A importação atualiza as transações registradas e pode reabrir observações de saldo afetadas para revisão; não cria lançamentos de ajuste.

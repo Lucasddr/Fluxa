@@ -66,13 +66,17 @@ function handleSessionExpired(): void {
 }
 
 function rawFetch(path: string, options: RequestInit): Promise<Response> {
+    const isFormData =
+        typeof FormData !== "undefined" && options.body instanceof FormData;
+    const headers = new Headers(options.headers);
+    if (!isFormData && !headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+    }
+
     return fetch(`${BASE_URL}${path}`, {
         ...options,
         credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
+        headers,
     });
 }
 

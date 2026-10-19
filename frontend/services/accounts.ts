@@ -46,6 +46,28 @@ export type BalanceObservation = {
   reviewedAt: string | null;
 };
 
+export type StatementPreviewRow = {
+  rowNumber: number;
+  sourceReference: string;
+  occurredAt: string;
+  description: string;
+  signedAmount: number;
+  duplicate: boolean;
+};
+
+export type StatementPreview = {
+  format: "CSV" | "OFX";
+  rows: StatementPreviewRow[];
+  statementBalance: number | null;
+  statementBalanceAsOf: string | null;
+};
+
+export type StatementImportResult = {
+  importedCount: number;
+  duplicateCount: number;
+  statementBalanceRecorded: boolean;
+};
+
 function json(method: string, body: unknown): RequestInit {
   return {
     method,
@@ -81,6 +103,33 @@ export function resolveBalanceObservation(
   return api(
     `/accounts/${accountId}/balance-observations/${observationId}/resolve`,
     json("POST", { resolution })
+  );
+}
+
+export function previewStatementImport(accountId: string, file: File): Promise<Response> {
+  const form = new FormData();
+  form.append("file", file);
+  return api(`/accounts/${accountId}/statement-imports/preview`, {
+    method: "POST",
+    body: form,
+  });
+}
+
+export function importStatementRows(
+  accountId: string,
+  transactions: {
+    sourceReference: string;
+    occurredAt: string;
+    signedAmount: number;
+    description: string;
+    categoryId: string;
+  }[],
+  statementBalance: number | null = null,
+  statementBalanceAsOf: string | null = null
+): Promise<Response> {
+  return api(
+    `/accounts/${accountId}/statement-imports`,
+    json("POST", { transactions, statementBalance, statementBalanceAsOf })
   );
 }
 

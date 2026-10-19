@@ -49,4 +49,5 @@ public class AccountBalanceController {
         return ResponseEntity.ok(accountBalanceService.resolveObservation(
                 accountId, observationId, dto));
     }
+
 }

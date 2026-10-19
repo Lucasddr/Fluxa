@@ -6,6 +6,7 @@ import Badge from "@/app/components/ui/Badge";
 import Button from "@/app/components/ui/Button";
 import AppDialog from "@/app/components/ui/Dialog";
 import BalanceObservationDialog from "@/app/components/accounts/BalanceObservationDialog";
+import StatementImportDialog from "@/app/components/accounts/StatementImportDialog";
 import EmptyState from "@/app/components/ui/EmptyState";
 import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
@@ -37,6 +38,7 @@ function AccountActions({
   busy,
   onMakeDefault,
   onBalance,
+  onImport,
   balanceLabel,
   onEdit,
   onDelete,
@@ -45,6 +47,7 @@ function AccountActions({
   busy: boolean;
   onMakeDefault: () => void;
   onBalance: () => void;
+  onImport: () => void;
   balanceLabel: string;
   onEdit: () => void;
   onDelete: () => void;
@@ -76,6 +79,14 @@ function AccountActions({
       >
         {balanceLabel}
       </Button>
+      <Button
+        variant="secondary"
+        className="col-span-2 sm:col-auto"
+        onClick={onImport}
+        disabled={busy}
+      >
+        Importar extrato
+      </Button>
       <Button variant="ghost" className="sm:col-auto" onClick={onEdit} disabled={busy}>
         Editar
       </Button>
@@ -106,6 +117,7 @@ export default function BankAccountsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [balanceAccount, setBalanceAccount] = useState<Account | null>(null);
+  const [importAccount, setImportAccount] = useState<Account | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -389,6 +401,7 @@ export default function BankAccountsPage() {
                   busy={busyAccountId === account.id || saving || deleting}
                   onMakeDefault={() => void handleMakeDefault(account)}
                   onBalance={() => setBalanceAccount(account)}
+                  onImport={() => setImportAccount(account)}
                   balanceLabel={balanceByAccount.get(account.id)?.status === "PENDING_REVIEW"
                     ? "Revisar saldo"
                     : "Informar saldo"}
@@ -487,6 +500,13 @@ export default function BankAccountsPage() {
         summary={balanceAccount ? balanceByAccount.get(balanceAccount.id) ?? null : null}
         onClose={() => setBalanceAccount(null)}
         onChanged={() => setRetryKey((key) => key + 1)}
+      />
+
+      <StatementImportDialog
+        key={importAccount?.id ?? "import-closed"}
+        account={importAccount}
+        onClose={() => setImportAccount(null)}
+        onImported={() => setRetryKey((key) => key + 1)}
       />
     </div>
   );
