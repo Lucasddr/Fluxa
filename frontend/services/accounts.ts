@@ -53,6 +53,7 @@ export type StatementPreviewRow = {
   description: string;
   signedAmount: number;
   duplicate: boolean;
+  suggestedCategoryId: string | null;
 };
 
 export type StatementPreview = {
@@ -66,6 +67,7 @@ export type StatementImportResult = {
   importedCount: number;
   duplicateCount: number;
   statementBalanceRecorded: boolean;
+  categoryRulesSaved: number;
 };
 
 function json(method: string, body: unknown): RequestInit {
@@ -123,6 +125,7 @@ export function importStatementRows(
     signedAmount: number;
     description: string;
     categoryId: string;
+    rememberCategoryRule: boolean;
   }[],
   statementBalance: number | null = null,
   statementBalanceAsOf: string | null = null

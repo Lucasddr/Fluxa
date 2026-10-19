@@ -85,7 +85,7 @@ public class BankStatementParser {
                     ? fingerprint(date + "|" + amount.toPlainString() + "|" + description, repeatedReferences)
                     : "OFX:" + fingerprint(fitId.trim(), new HashMap<>());
             rows.add(new StatementPreviewRowDTO(rowNumber, reference, date.toString(), description,
-                    amount, false));
+                    amount, false, null));
             checkMaxRows(rows.size());
         }
         if (rows.isEmpty()) {
@@ -162,7 +162,8 @@ public class BankStatementParser {
 
             String canonical = date + "|" + amount.toPlainString() + "|" + normalizeHeader(description);
             String reference = "CSV:" + fingerprint(canonical, repeatedReferences);
-            rows.add(new StatementPreviewRowDTO(rowNumber, reference, date.toString(), description, amount, false));
+            rows.add(new StatementPreviewRowDTO(
+                    rowNumber, reference, date.toString(), description, amount, false, null));
             checkMaxRows(rows.size());
         }
         if (rows.isEmpty()) throw new InvalidStatementFileException("O CSV não contém movimentações.");

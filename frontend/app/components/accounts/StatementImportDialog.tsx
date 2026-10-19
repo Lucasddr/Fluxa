@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import AppDialog from "@/app/components/ui/Dialog";
+import Badge from "@/app/components/ui/Badge";
 import Button from "@/app/components/ui/Button";
 import EmptyState from "@/app/components/ui/EmptyState";
 import FormAlert from "@/app/components/ui/FormAlert";
@@ -37,6 +38,8 @@ type EditableStatementRow = StatementPreviewRow & {
   amountInput: string;
   descriptionInput: string;
   categoryId: string;
+  categorySuggested: boolean;
+  rememberCategoryRule: boolean;
 };
 
 type StatementImportDialogProps = {
@@ -78,7 +81,9 @@ function asEditableRow(
     dateInput: row.occurredAt,
     amountInput: String(row.signedAmount),
     descriptionInput: row.description,
-    categoryId: defaultCategoryId(categories, row.signedAmount),
+    categoryId: row.suggestedCategoryId ?? defaultCategoryId(categories, row.signedAmount),
+    categorySuggested: row.suggestedCategoryId !== null,
+    rememberCategoryRule: row.suggestedCategoryId !== null,
   };
 }
 
@@ -185,7 +190,14 @@ export default function StatementImportDialog({
         if (amount !== null && amount !== 0 && categoryKind(amount) !== categoryKind(row.signedAmount)) {
           next.categoryId = defaultCategoryId(categories, amount);
           next.signedAmount = amount;
+          next.categorySuggested = false;
+          next.rememberCategoryRule = false;
         }
+      }
+      if (patch.categoryId !== undefined) next.categorySuggested = false;
+      if (patch.descriptionInput !== undefined) {
+        next.categorySuggested = false;
+        next.rememberCategoryRule = false;
       }
       return next;
     }));
@@ -215,6 +227,7 @@ export default function StatementImportDialog({
           signedAmount: parseSignedAmount(row.amountInput)!,
           description: row.descriptionInput.trim(),
           categoryId: row.categoryId,
+          rememberCategoryRule: row.rememberCategoryRule,
         })),
         preview?.statementBalance ?? null,
         preview?.statementBalanceAsOf ?? null
@@ -358,7 +371,7 @@ export default function StatementImportDialog({
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      className="mt-1 h-5 w-5 shrink-0 accent-ink"
+                      className="mt-1 h-6 w-6 shrink-0 accent-ink"
                       aria-label={`Importar movimentação da linha ${row.rowNumber}`}
                       checked={row.selected && !row.duplicate}
                       disabled={row.duplicate || importLoading}
@@ -415,6 +428,23 @@ export default function StatementImportDialog({
                             <option key={category.id} value={category.id}>{category.name}</option>
                           ))}
                         </Select>
+                        {row.categorySuggested && (
+                          <div className="mt-1">
+                            <Badge variant="neutral">Sugestão por regra salva</Badge>
+                          </div>
+                        )}
+                        <label className="mt-2 flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-ink-2">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-ink"
+                            checked={row.rememberCategoryRule}
+                            disabled={row.duplicate || importLoading || !row.categoryId}
+                            onChange={(event) => updateRow(row.sourceReference, {
+                              rememberCategoryRule: event.target.checked,
+                            })}
+                          />
+                          <span>Guardar categoria para próximas importações parecidas</span>
+                        </label>
                       </div>
                       <p className={`mt-2 text-sm tabular-nums ${kind === "INCOME" ? "text-positive" : "text-ink-2"}`}>
                         {amount === null ? "Informe um valor válido" : formatCurrency(amount)}
@@ -438,6 +468,9 @@ export default function StatementImportDialog({
             <h2 className="font-medium text-ink">Importação concluída</h2>
             <p className="text-sm text-ink-2">
               {result.importedCount} movimentações adicionadas. {result.duplicateCount + duplicateCount} duplicadas foram ignoradas.
+              {result.categoryRulesSaved > 0
+                ? ` ${result.categoryRulesSaved} regra${result.categoryRulesSaved === 1 ? "" : "s"} de categoria ${result.categoryRulesSaved === 1 ? "salva ou atualizada" : "salvas ou atualizadas"}.`
+                : ""}
               {result.statementBalanceRecorded
                 ? " O saldo final do OFX também foi salvo para conferência."
                 : ""}

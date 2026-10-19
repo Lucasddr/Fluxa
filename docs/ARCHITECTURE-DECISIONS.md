@@ -77,8 +77,9 @@ Extratos bancários têm formatos diferentes e podem conter movimentações que 
 - Interpretar linhas com uma prévia antes da gravação. O usuário pode selecionar, corrigir data/valor/descrição e atribuir uma categoria por movimentação.
 - Determinar receita/despesa pelo sinal do valor e validar que a categoria pertence ao usuário e ao tipo correspondente. Método de pagamento importado fica como `OTHER` quando a origem não o informa.
 - Deduplicar por `source_reference` persistida por conta; OFX usa `FITID` quando disponível, CSV usa impressão digital dos campos normalizados com ocorrência para linhas iguais.
+- O usuário pode salvar uma regra por conta a partir de uma classificação confirmada. Regras normalizam acentos/caixa, pontuação e números; sugestões só preenchem a prévia e nunca importam sem confirmação.
 - Não assumir um saldo final de CSV, pois esse campo não é padronizado. O usuário pode conferir o saldo depois da importação usando a observação de saldo existente.
 
 ### Consequências
-- Migration V11 cria `imported_statement_entries` ligada à conta e à transação criada.
+- Migration V11 cria `imported_statement_entries` ligada à conta e à transação criada; V12 armazena regras de categoria determinísticas com escopo por conta.
 - A importação atualiza as transações registradas e pode reabrir observações de saldo afetadas para revisão; não cria lançamentos de ajuste.

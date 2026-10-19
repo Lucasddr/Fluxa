@@ -13,7 +13,7 @@
 |---|---|---|---|
 | Backend | `docker compose` `:8080` | Render `api.opsire.com.br` | Railway, root `backend/`, Dockerfile |
 | Frontend | `:3001` via nginx `:80` | Vercel (root `frontend/`) | Vercel (root `frontend/`) |
-| Banco | `postgres:17` local | Banco atual do serviço Render | Supabase (Flyway `V1–V11` no boot) |
+| Banco | `postgres:17` local | Banco atual do serviço Render | Supabase (Flyway `V1–V12` no boot) |
 | `NEXT_PUBLIC_API_URL` | `http://26.220.230.81/api` | `https://api.opsire.com.br/api` | `https://<service>.up.railway.app/api` |
 
 ## Backend no Render (produção atual)
@@ -45,7 +45,7 @@ novo deploy para embutir a URL no frontend.
    - `CORS_ALLOWED_ORIGINS` = URL pública da Vercel (ex.: `https://fluxa.vercel.app`), sem `localhost`, nunca `*` com credentials
    - `JWT_EXPIRATION` / `REFRESH_TOKEN_EXPIRATION` / `COOKIE_*_PATH` = padrões (ver `docs/VARIAVEIS-AMBIENTE.md`)
 3. Networking → gerar domínio público; a API passa a responder em `https://<service>.up.railway.app`.
-4. Primeiro boot: Flyway valida e aplica `V1–V11` (`ddl-auto=validate`, migrations nunca editadas).
+4. Primeiro boot: Flyway valida e aplica `V1–V12` (`ddl-auto=validate`, migrations nunca editadas).
 5. Deploy automático: conectado ao GitHub, cada push na `main` redeploya após o CI verde.
 
 ## Frontend na Vercel

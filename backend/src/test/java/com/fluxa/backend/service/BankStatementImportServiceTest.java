@@ -64,7 +64,7 @@ class BankStatementImportServiceTest {
     void previewsCsvAndImportsItOnlyOnce() {
         String csv = "Data;Descrição;Valor\n"
                 + LocalDate.now().minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + ";Farmácia;-42,90\n";
+                + ";Farmácia Loja 123;-42,90\n";
         MockMultipartFile file = new MockMultipartFile(
                 "file", "movimentos.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
 
@@ -72,7 +72,7 @@ class BankStatementImportServiceTest {
         var row = preview.rows().get(0);
         var item = new ImportedStatementTransactionDTO(
                 row.sourceReference(), LocalDate.parse(row.occurredAt()), row.signedAmount(),
-                row.description(), expenseCategoryId);
+                row.description(), expenseCategoryId, true);
         var request = new ImportStatementDTO(List.of(item), null, null);
 
         var firstImport = importService.importSelected(accountId, request);
@@ -81,10 +81,20 @@ class BankStatementImportServiceTest {
         assertEquals("CSV", preview.format());
         assertEquals(1, firstImport.importedCount());
         assertEquals(0, firstImport.duplicateCount());
+        assertEquals(1, firstImport.categoryRulesSaved());
         assertEquals(0, secondImport.importedCount());
         assertEquals(1, secondImport.duplicateCount());
+        assertEquals(0, secondImport.categoryRulesSaved());
         assertEquals(1, transactionRepository.count());
         assertTrue(importService.preview(accountId, file).rows().get(0).duplicate());
+
+        String recurringMerchantCsv = "Data;Descrição;Valor\n"
+                + LocalDate.now().minusDays(1).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + ";Farmácia Loja 456;-42,90\n";
+        MockMultipartFile recurringMerchantFile = new MockMultipartFile(
+                "file", "movimentos-2.csv", "text/csv", recurringMerchantCsv.getBytes(StandardCharsets.UTF_8));
+        assertEquals(expenseCategoryId.toString(),
+                importService.preview(accountId, recurringMerchantFile).rows().get(0).suggestedCategoryId());
     }
 
     @Test
@@ -102,7 +112,7 @@ class BankStatementImportServiceTest {
         var row = preview.rows().get(0);
         var request = new ImportStatementDTO(List.of(new ImportedStatementTransactionDTO(
                 row.sourceReference(), LocalDate.parse(row.occurredAt()), row.signedAmount(),
-                row.description(), expenseCategoryId)), preview.statementBalance(),
+                row.description(), expenseCategoryId, false)), preview.statementBalance(),
                 LocalDate.parse(preview.statementBalanceAsOf()));
 
         var result = importService.importSelected(accountId, request);

@@ -8,6 +8,7 @@ public record StatementPreviewRowDTO(
         String occurredAt,
         String description,
         BigDecimal signedAmount,
-        boolean duplicate
+        boolean duplicate,
+        String suggestedCategoryId
 ) {
 }

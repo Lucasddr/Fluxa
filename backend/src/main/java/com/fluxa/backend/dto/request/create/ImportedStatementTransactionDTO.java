@@ -26,6 +26,8 @@ public record ImportedStatementTransactionDTO(
         String description,
 
         @NotNull(message = "Categoria é obrigatória")
-        UUID categoryId
+        UUID categoryId,
+
+        boolean rememberCategoryRule
 ) {
 }

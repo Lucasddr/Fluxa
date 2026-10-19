@@ -3,6 +3,7 @@ package com.fluxa.backend.service;
 import com.fluxa.backend.domain.entity.Account;
 import com.fluxa.backend.domain.entity.Category;
 import com.fluxa.backend.domain.entity.ImportedStatementEntry;
+import com.fluxa.backend.domain.entity.StatementImportCategoryRule;
 import com.fluxa.backend.domain.entity.Transaction;
 import com.fluxa.backend.domain.entity.User;
 import com.fluxa.backend.domain.enums.CategoryKind;
@@ -18,6 +19,7 @@ import com.fluxa.backend.exception.InvalidStatementFileException;
 import com.fluxa.backend.repository.AccountRepository;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.ImportedStatementEntryRepository;
+import com.fluxa.backend.repository.StatementImportCategoryRuleRepository;
 import com.fluxa.backend.repository.TransactionRepository;
 import com.fluxa.backend.repository.UserRepository;
 import com.fluxa.backend.security.context.UserContext;
@@ -28,8 +30,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,6 +44,7 @@ public class BankStatementImportService {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final ImportedStatementEntryRepository importEntryRepository;
+    private final StatementImportCategoryRuleRepository categoryRuleRepository;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final AccountBalanceService accountBalanceService;
@@ -64,12 +69,24 @@ public class BankStatementImportService {
 
         Set<String> existingReferences = new HashSet<>(importEntryRepository.findExistingSourceReferences(
                 accountId, parsed.rows().stream().map(StatementPreviewRowDTO::sourceReference).toList()));
+        Map<String, Category> categoryRules = new HashMap<>();
+        categoryRuleRepository.findAllForAccount(accountId, userId).stream()
+                .filter(rule -> rule.getCategory().isActive())
+                .forEach(rule -> categoryRules.put(rule.getNormalizedDescription(), rule.getCategory()));
         Set<String> referencesInFile = new HashSet<>();
         List<StatementPreviewRowDTO> rows = parsed.rows().stream().map(row -> {
             boolean repeatedInFile = !referencesInFile.add(row.sourceReference());
+            Category suggestedCategory = categoryRules.get(
+                    StatementImportDescriptionNormalizer.normalize(row.description()));
+            CategoryKind rowKind = row.signedAmount().signum() > 0
+                    ? CategoryKind.INCOME
+                    : CategoryKind.EXPENSE;
             return new StatementPreviewRowDTO(
                     row.rowNumber(), row.sourceReference(), row.occurredAt(), row.description(),
-                    row.signedAmount(), repeatedInFile || existingReferences.contains(row.sourceReference()));
+                    row.signedAmount(), repeatedInFile || existingReferences.contains(row.sourceReference()),
+                    suggestedCategory != null && suggestedCategory.getKind() == rowKind
+                            ? suggestedCategory.getId().toString()
+                            : null);
         }).toList();
         return new StatementPreviewResponseDTO(
                 parsed.format(), rows, parsed.statementBalance(), parsed.statementBalanceAsOf());
@@ -92,6 +109,7 @@ public class BankStatementImportService {
 
         int imported = 0;
         int duplicates = 0;
+        int categoryRulesSaved = 0;
         Set<String> seenReferences = new HashSet<>(importEntryRepository.findExistingSourceReferences(
                 accountId, dto.transactions().stream()
                         .map(ImportedStatementTransactionDTO::sourceReference).toList()));
@@ -138,6 +156,22 @@ public class BankStatementImportService {
             importEntry.setSourceReference(item.sourceReference());
             importEntryRepository.saveAndFlush(importEntry);
 
+            if (item.rememberCategoryRule()) {
+                String normalizedDescription = StatementImportDescriptionNormalizer
+                        .normalize(item.description());
+                if (!normalizedDescription.isBlank()) {
+                    StatementImportCategoryRule categoryRule = categoryRuleRepository
+                            .findByAccountIdAndNormalizedDescription(accountId, normalizedDescription)
+                            .orElseGet(StatementImportCategoryRule::new);
+                    categoryRule.setUser(user);
+                    categoryRule.setAccount(account);
+                    categoryRule.setCategory(category);
+                    categoryRule.setNormalizedDescription(normalizedDescription);
+                    categoryRuleRepository.save(categoryRule);
+                    categoryRulesSaved++;
+                }
+            }
+
             accountBalanceService.markPendingReviewForLedgerChange(
                     accountId, userId, transaction.getOccurredAt(), transaction.getCreatedAt());
             imported++;
@@ -150,7 +184,8 @@ public class BankStatementImportService {
             statementBalanceRecorded = true;
         }
 
-        return new StatementImportResultDTO(imported, duplicates, statementBalanceRecorded);
+        return new StatementImportResultDTO(
+                imported, duplicates, statementBalanceRecorded, categoryRulesSaved);
     }
 
     private Account findOwnedAccount(UUID accountId, UUID userId) {
