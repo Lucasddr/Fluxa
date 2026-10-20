@@ -32,10 +32,10 @@ export default function Select({
             pl-3.5 pr-9 min-h-[48px]
             rounded-[var(--radius)] border
             text-sm bg-surface text-ink
-            focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_var(--focus-ring)]
+            focus:outline-none focus:border-ink-3
             transition-colors duration-[var(--dur-fast)]
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? "border-negative" : "border-line-strong"}
+            ${error ? "border-negative" : "border-line"}
             ${className}
           `}
           aria-invalid={error ? true : ariaInvalid}

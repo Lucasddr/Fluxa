@@ -376,8 +376,8 @@ export default function StatementImportDialog({
                   dragging
                     ? "border-ink bg-line-subtle"
                     : file
-                      ? "border-line-strong bg-surface"
-                      : "border-line-strong"
+                      ? "border-line bg-surface"
+                      : "border-line"
                 }`}
               >
                 <input
