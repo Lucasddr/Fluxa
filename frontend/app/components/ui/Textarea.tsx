@@ -16,10 +16,10 @@ export default function Textarea({
         rounded-[var(--radius)] border
         text-[15px] text-ink bg-surface resize-none
         placeholder:text-ink-3
-        focus:outline-none focus:border-ink-3
+        focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_var(--focus-ring)]
         transition-colors duration-[var(--dur-fast)]
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${error ? "border-negative" : "border-line"}
+        ${error ? "border-negative" : "border-line-strong"}
         ${className}
       `}
       aria-invalid={error ? true : undefined}

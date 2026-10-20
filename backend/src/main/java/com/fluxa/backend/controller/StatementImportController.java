@@ -1,6 +1,7 @@
 package com.fluxa.backend.controller;
 
 import com.fluxa.backend.dto.request.create.ImportStatementDTO;
+import com.fluxa.backend.dto.request.create.PreviewStatementTextDTO;
 import com.fluxa.backend.dto.response.StatementImportResultDTO;
 import com.fluxa.backend.dto.response.StatementPreviewResponseDTO;
 import com.fluxa.backend.service.BankStatementImportService;
@@ -30,6 +31,13 @@ public class StatementImportController {
             @PathVariable UUID accountId,
             @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(statementImportService.preview(accountId, file));
+    }
+
+    @PostMapping(value = "/preview-text", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<StatementPreviewResponseDTO> previewStatementText(
+            @PathVariable UUID accountId,
+            @Valid @RequestBody PreviewStatementTextDTO dto) {
+        return ResponseEntity.ok(statementImportService.previewText(accountId, dto.text()));
     }
 
     @PostMapping

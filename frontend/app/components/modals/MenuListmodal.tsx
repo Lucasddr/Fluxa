@@ -41,8 +41,8 @@ type MenuAction = {
                     flex items-center gap-3 px-4 min-h-[44px] text-sm cursor-pointer outline-none transition-colors duration-[var(--dur-fast)]
                     ${
                         action.danger
-                        ? "text-negative data-[highlighted]:bg-surface"
-                        : "text-ink-2 data-[highlighted]:text-ink data-[highlighted]:bg-surface"
+                        ? "text-negative data-[highlighted]:bg-line-subtle"
+                        : "text-ink-2 data-[highlighted]:text-ink data-[highlighted]:bg-line-subtle"
                     }
                     `}
                 >

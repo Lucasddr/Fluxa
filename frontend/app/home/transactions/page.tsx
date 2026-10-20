@@ -421,7 +421,7 @@ export default function TransactionsPage() {
           <button
             type="button"
             aria-label="Opções da transação"
-            className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
+            className="flex items-center justify-center w-11 h-11 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-line-subtle"
           >
             <MoreVertical className="w-[18px] h-[18px]" />
           </button>

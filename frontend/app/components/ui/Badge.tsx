@@ -9,7 +9,7 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-surface text-ink border border-line",
+  default: "bg-line-subtle text-ink border border-line",
   positive: "bg-positive-subtle text-positive border border-positive/20",
   negative: "bg-negative-subtle text-negative border border-negative/20",
   warn: "bg-warn-subtle text-warn border border-warn/20",

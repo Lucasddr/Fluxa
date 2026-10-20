@@ -8,6 +8,7 @@ import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
 import Select from "@/app/components/ui/Select";
+import CategorySelect from "@/app/components/categories/CategorySelect";
 import Textarea from "@/app/components/ui/Textarea";
 
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
@@ -41,7 +42,7 @@ export type TransactionFormData = {
 type CategoriesSelect = {
   id: string;
   name: string;
-  kind: string;
+  kind: "INCOME" | "EXPENSE";
 };
 
 const PaymentMethods = [
@@ -237,10 +238,6 @@ export default function TransactionModal({
     setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
-  const filteredCategories = categories.filter(
-    (category) => category.kind === form.kind
-  );
-
   return (
     <AppDialog
       open
@@ -356,39 +353,36 @@ export default function TransactionModal({
         <div>
           <Label htmlFor="transaction-category">Categoria</Label>
 
-          <Select
+          <CategorySelect
             id="transaction-category"
             value={form.categoryId}
-            onChange={(e) => {
-              const categoryId = e.target.value;
-              const selectedCategory = categories.find(
-                (category) => category.id === categoryId
-              );
+            kind={form.kind}
+            categories={categories}
+            placeholder={
+              loadingCategories
+                ? "Carregando categorias..."
+                : "Selecione uma categoria"
+            }
+            onChange={(categoryId, category) => {
+              const selectedCategory =
+                category ??
+                categories.find(
+                  (currentCategory) => currentCategory.id === categoryId
+                );
 
               setForm((f) => ({
                 ...f,
                 categoryId,
                 ...(selectedCategory && {
-                  kind: selectedCategory.kind as "EXPENSE" | "INCOME",
+                  kind: selectedCategory.kind,
                 }),
               }));
 
               setErrors((e) => ({ ...e, categoryId: undefined }));
             }}
+            onCategoriesChange={setCategories}
             error={errors.categoryId}
-          >
-            <option value="">
-              {loadingCategories
-                ? "Carregando categorias..."
-                : "Selecione uma categoria"}
-            </option>
-
-            {filteredCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
+          />
         </div>
 
         <div>

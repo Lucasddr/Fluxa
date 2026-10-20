@@ -265,7 +265,7 @@ export default function CategoriasPage() {
           <button
             type="button"
             aria-label="Abrir opções da categoria"
-            className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
+            className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-line-subtle"
           >
             <MoreVertical className="w-4 h-4" />
           </button>

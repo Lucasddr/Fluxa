@@ -57,7 +57,7 @@ export type StatementPreviewRow = {
 };
 
 export type StatementPreview = {
-  format: "CSV" | "OFX";
+  format: "CSV" | "OFX" | "PDF" | "TEXTO";
   rows: StatementPreviewRow[];
   statementBalance: number | null;
   statementBalanceAsOf: string | null;
@@ -115,6 +115,13 @@ export function previewStatementImport(accountId: string, file: File): Promise<R
     method: "POST",
     body: form,
   });
+}
+
+export function previewStatementText(accountId: string, text: string): Promise<Response> {
+  return api(
+    `/accounts/${accountId}/statement-imports/preview-text`,
+    json("POST", { text })
+  );
 }
 
 export function importStatementRows(

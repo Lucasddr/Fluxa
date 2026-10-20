@@ -45,7 +45,7 @@ Resumo da `main` em 2026-10-16 + progresso das branches locais em 2026-10-19:
 | **Compras no crédito parceladas (installments) — diferencial do produto** | 🟡 backend em andamento (service/repo/DTOs/V8); falta controller + UI |
 | **Módulo de Contas (multi-conta)** | ✅ implementado na branch local `feat/account-management`: CRUD, padrão e seleção nos lançamentos/parcelas |
 | **Saldo conferido + projeções 7/30/90 dias** | ✅ implementado na branch local `feat/balance-reconciliation`; importação ainda em andamento |
-| **Importação de extratos CSV/OFX** | ✅ implementada localmente na branch `feat/bank-statement-import`: prévia editável, deduplicação, regras de categoria e saldo final OFX |
+| **Importação de extratos CSV/OFX/PDF** | ✅ implementada localmente na branch `feat/bank-statement-import`: prévia editável, deduplicação, regras de categoria, saldo final OFX e PDF (texto extraído ou colado) |
 | **Navegação mobile** | ❌ pendente |
 | Insights/Reports/Configurações | 🟡 parcial/stub |
 

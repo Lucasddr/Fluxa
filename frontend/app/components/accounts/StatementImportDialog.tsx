@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { FileText, UploadCloud } from "lucide-react";
 
 import AppDialog from "@/app/components/ui/Dialog";
 import Badge from "@/app/components/ui/Badge";
 import Button from "@/app/components/ui/Button";
+import CategorySelect from "@/app/components/categories/CategorySelect";
+import CurrencyInput, {
+  formatAmountValue,
+} from "@/app/components/ui/CurrencyInput";
 import EmptyState from "@/app/components/ui/EmptyState";
 import FormAlert from "@/app/components/ui/FormAlert";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
-import Select from "@/app/components/ui/Select";
 import Skeleton from "@/app/components/ui/Skeleton";
+import Textarea from "@/app/components/ui/Textarea";
 import { formatCurrency } from "@/app/utils/Formatters";
 import { selectCategories } from "@/services/categories";
 import {
   importStatementRows,
   previewStatementImport,
+  previewStatementText,
   responseErrorMessage,
 } from "@/services/accounts";
 import type {
@@ -25,12 +31,9 @@ import type {
   StatementPreview,
   StatementPreviewRow,
 } from "@/services/accounts";
+import type { CategoryOption } from "@/app/components/categories/CategorySelect";
 
-type StatementCategory = {
-  id: string;
-  name: string;
-  kind: "INCOME" | "EXPENSE";
-};
+type StatementCategory = CategoryOption;
 
 type EditableStatementRow = StatementPreviewRow & {
   selected: boolean;
@@ -49,18 +52,32 @@ type StatementImportDialogProps = {
 };
 
 const PAGE_SIZE = 25;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 function parseSignedAmount(input: string): number | null {
   const cleaned = input.trim().replace(/R\$\s?/gi, "").replace(/\s/g, "");
   if (!cleaned) return null;
-  const normalized = cleaned.includes(",")
+  const withSeparators = cleaned.includes(",")
     ? cleaned.replace(/\./g, "").replace(",", ".")
     : /^-?\d{1,3}(?:\.\d{3})+$/.test(cleaned)
       ? cleaned.replace(/\./g, "")
       : cleaned;
+  const normalized = withSeparators.replace(/[.,]$/, "");
   if (!/^-?\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
   const amount = Number(normalized);
   return Number.isFinite(amount) ? amount : null;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < MAX_FILE_BYTES) {
+    return `${(bytes / 1024).toLocaleString("pt-BR", {
+      maximumFractionDigits: 1,
+    })} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", {
+    maximumFractionDigits: 1,
+  })} MB`;
 }
 
 function categoryKind(amount: number): StatementCategory["kind"] {
@@ -79,7 +96,7 @@ function asEditableRow(
     ...row,
     selected: !row.duplicate,
     dateInput: row.occurredAt,
-    amountInput: String(row.signedAmount),
+    amountInput: formatAmountValue(row.signedAmount),
     descriptionInput: row.description,
     categoryId: row.suggestedCategoryId ?? defaultCategoryId(categories, row.signedAmount),
     categorySuggested: row.suggestedCategoryId !== null,
@@ -92,7 +109,12 @@ export default function StatementImportDialog({
   onClose,
   onImported,
 }: StatementImportDialogProps) {
+  const [mode, setMode] = useState<"file" | "text">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pastedText, setPastedText] = useState("");
   const [categories, setCategories] = useState<StatementCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
@@ -153,18 +175,34 @@ export default function StatementImportDialog({
     setPage(0);
   }
 
-  async function handlePreview() {
-    if (!account || !file || previewLoading) return;
-    if (!categories.some((category) => category.kind === "INCOME")
-      || !categories.some((category) => category.kind === "EXPENSE")) {
-      setError("Crie ao menos uma categoria de receita e uma de despesa antes de importar.");
-      return;
+  function selectFile(nextFile: File | null) {
+    setFileError(null);
+    if (nextFile) {
+      const extension = nextFile.name.split(".").pop()?.toLowerCase();
+      if (!extension || !["csv", "ofx", "pdf"].includes(extension)) {
+        setFileError("Formato não suportado. Envie um arquivo CSV, OFX ou PDF.");
+        return;
+      }
+      if (nextFile.size > MAX_FILE_BYTES) {
+        setFileError("O arquivo deve ter no máximo 5 MB.");
+        return;
+      }
     }
+    setFile(nextFile);
+    resetPreview();
+  }
+
+  const sourceReady = mode === "file" ? file !== null : pastedText.trim().length > 0;
+
+  async function handlePreview() {
+    if (!account || !sourceReady || previewLoading) return;
     setPreviewLoading(true);
     setError(null);
     setResult(null);
     try {
-      const response = await previewStatementImport(account.id, file);
+      const response = mode === "file"
+        ? await previewStatementImport(account.id, file!)
+        : await previewStatementText(account.id, pastedText);
       if (!response.ok) throw new Error(await responseErrorMessage(response));
       const data = (await response.json()) as StatementPreview;
       setPreview(data);
@@ -261,7 +299,7 @@ export default function StatementImportDialog({
             Fechar
           </Button>
           {!preview && (
-            <Button onClick={() => void handlePreview()} loading={previewLoading} disabled={!file || categoriesLoading}>
+            <Button onClick={() => void handlePreview()} loading={previewLoading} disabled={!sourceReady || categoriesLoading}>
               Ver prévia
             </Button>
           )}
@@ -277,22 +315,146 @@ export default function StatementImportDialog({
         <section className="flex flex-col gap-3" aria-labelledby="statement-file-heading">
           <div>
             <h2 id="statement-file-heading" className="text-base font-medium text-ink">
-              Arquivo do extrato
+              Origem do extrato
             </h2>
-            <p className="mt-1 text-sm text-ink-3">CSV ou OFX, até 5 MB e 5.000 movimentações.</p>
+            <p className="mt-1 text-sm text-ink-3">
+              Arquivo CSV, OFX ou PDF (até 5 MB), ou texto copiado do PDF.
+            </p>
           </div>
-          <div>
-            <Label htmlFor="statement-file">Selecionar arquivo</Label>
-            <Input
-              id="statement-file"
-              type="file"
-              accept=".csv,.ofx,text/csv,application/x-ofx"
-              onChange={(event) => {
-                setFile(event.target.files?.[0] ?? null);
+          <div
+            role="group"
+            aria-label="Origem do extrato"
+            className="inline-flex self-start gap-1 rounded-[var(--radius)] border border-line p-1"
+          >
+            <button
+              type="button"
+              aria-pressed={mode === "file"}
+              onClick={() => {
+                setMode("file");
                 resetPreview();
               }}
-            />
+              className={`min-h-[44px] rounded-[calc(var(--radius)-4px)] px-3 text-[12px] font-medium transition-colors duration-[var(--dur-fast)] ${
+                mode === "file" ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"
+              }`}
+            >
+              Arquivo
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === "text"}
+              onClick={() => {
+                setMode("text");
+                resetPreview();
+              }}
+              className={`min-h-[44px] rounded-[calc(var(--radius)-4px)] px-3 text-[12px] font-medium transition-colors duration-[var(--dur-fast)] ${
+                mode === "text" ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"
+              }`}
+            >
+              Colar texto
+            </button>
           </div>
+          {mode === "file" ? (
+            <div>
+              <Label htmlFor="statement-file">Arquivo do extrato</Label>
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  if (!dragging) setDragging(true);
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                    setDragging(false);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  const dropped = event.dataTransfer.files?.[0];
+                  if (dropped) selectFile(dropped);
+                }}
+                className={`mt-1 rounded-[var(--radius)] border-2 border-dashed p-4 transition-colors duration-[var(--dur-fast)] ${
+                  dragging
+                    ? "border-ink bg-line-subtle"
+                    : file
+                      ? "border-line-strong bg-surface"
+                      : "border-line-strong"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  id="statement-file"
+                  type="file"
+                  accept=".csv,.ofx,.pdf,text/csv,application/x-ofx,application/pdf"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const picked = event.target.files?.[0] ?? null;
+                    event.target.value = "";
+                    selectFile(picked);
+                  }}
+                />
+                {file ? (
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-6 w-6 shrink-0 text-ink-3" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-ink">{file.name}</p>
+                      <p className="text-xs text-ink-3">{formatFileSize(file.size)}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={previewLoading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Trocar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={previewLoading}
+                        onClick={() => selectFile(null)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-3 text-center">
+                    <UploadCloud className="h-6 w-6 text-ink-3" aria-hidden />
+                    <p className="text-sm text-ink-2">
+                      Arraste o arquivo aqui <span className="text-ink-3">ou</span>
+                    </p>
+                    <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                      Escolher arquivo
+                    </Button>
+                    <p className="text-xs text-ink-3">CSV, OFX ou PDF · até 5 MB</p>
+                  </div>
+                )}
+              </div>
+              {fileError && (
+                <p role="alert" className="mt-2 text-sm text-negative">
+                  {fileError}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="statement-text">Texto do extrato</Label>
+              <Textarea
+                id="statement-text"
+                rows={8}
+                value={pastedText}
+                placeholder={"09/10/2026 Pix recebido -225,00\n06/10/2026 Salario 3.000,00"}
+                onChange={(event) => {
+                  setPastedText(event.target.value);
+                  resetPreview();
+                }}
+              />
+              <p className="mt-1 text-sm text-ink-3">
+                No PDF, use Ctrl+A e Ctrl+C e cole aqui. Serve também para extratos digitalizados com OCR.
+              </p>
+            </div>
+          )}
           {categoriesLoading && <Skeleton className="h-10" />}
           {categoryError && (
             <div className="flex flex-col gap-2">
@@ -302,14 +464,10 @@ export default function StatementImportDialog({
               </Button>
             </div>
           )}
-          {!categoriesLoading && (
-            (!categories.some((category) => category.kind === "INCOME")
-              || !categories.some((category) => category.kind === "EXPENSE"))
-            && !categoryError
-          ) && (
+          {!categoriesLoading && !categoryError && categories.length === 0 && (
             <EmptyState
-              title="Categorias necessárias"
-              description="Cadastre ao menos uma categoria de receita e uma de despesa para classificar as movimentações importadas."
+              title="Você ainda não tem categorias"
+              description="Ao revisar a prévia você pode criar uma categoria direto na linha, ou cadastrar antes."
               action={(
                 <Link
                   href="/home/categories"
@@ -341,7 +499,7 @@ export default function StatementImportDialog({
               )}
             </div>
             <Button variant="secondary" onClick={resetPreview} disabled={importLoading}>
-              Escolher outro arquivo
+              {mode === "file" ? "Trocar arquivo" : "Colar outro texto"}
             </Button>
           </div>
 
@@ -365,7 +523,6 @@ export default function StatementImportDialog({
               const kind = amount === null || amount === 0
                 ? categoryKind(row.signedAmount)
                 : categoryKind(amount);
-              const rowCategories = categories.filter((category) => category.kind === kind);
               return (
                 <li key={row.rowNumber} className="flex flex-col gap-3 py-4">
                   <div className="flex items-start gap-3">
@@ -394,13 +551,13 @@ export default function StatementImportDialog({
                         </div>
                         <div>
                           <Label htmlFor={`statement-amount-${row.rowNumber}`}>Valor (R$)</Label>
-                          <Input
+                          <CurrencyInput
                             id={`statement-amount-${row.rowNumber}`}
-                            type="text"
-                            inputMode="decimal"
                             value={row.amountInput}
                             disabled={row.duplicate || importLoading}
-                            onChange={(event) => updateRow(row.sourceReference, { amountInput: event.target.value })}
+                            onValueChange={(value) => {
+                              updateRow(row.sourceReference, { amountInput: value });
+                            }}
                           />
                         </div>
                       </div>
@@ -417,17 +574,17 @@ export default function StatementImportDialog({
                       </div>
                       <div className="mt-3">
                         <Label htmlFor={`statement-category-${row.rowNumber}`}>Categoria</Label>
-                        <Select
+                        <CategorySelect
                           id={`statement-category-${row.rowNumber}`}
                           value={row.categoryId}
-                          disabled={row.duplicate || importLoading || rowCategories.length === 0}
-                          onChange={(event) => updateRow(row.sourceReference, { categoryId: event.target.value })}
-                        >
-                          <option value="">Selecione uma categoria</option>
-                          {rowCategories.map((category) => (
-                            <option key={category.id} value={category.id}>{category.name}</option>
-                          ))}
-                        </Select>
+                          kind={kind}
+                          categories={categories}
+                          disabled={row.duplicate || importLoading}
+                          onChange={(categoryId) => {
+                            updateRow(row.sourceReference, { categoryId });
+                          }}
+                          onCategoriesChange={setCategories}
+                        />
                         {row.categorySuggested && (
                           <div className="mt-1">
                             <Badge variant="neutral">Sugestão por regra salva</Badge>

@@ -22,7 +22,7 @@ export default function NavLink({
         ${
           isActive
             ? "bg-ink text-paper font-medium"
-            : "text-ink-2 hover:text-ink hover:bg-surface"
+            : "text-ink-2 hover:text-ink hover:bg-line-subtle"
         }
       `}
     >

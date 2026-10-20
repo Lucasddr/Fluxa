@@ -67,6 +67,18 @@ public class BankStatementImportService {
             throw new InvalidStatementFileException("Não foi possível ler o arquivo enviado.");
         }
 
+        return buildPreview(accountId, userId, parsed);
+    }
+
+    @Transactional(readOnly = true)
+    public StatementPreviewResponseDTO previewText(UUID accountId, String text) {
+        UUID userId = UserContext.getUserId();
+        findOwnedAccount(accountId, userId);
+        return buildPreview(accountId, userId, parser.parseText(text, "TEXTO"));
+    }
+
+    private StatementPreviewResponseDTO buildPreview(UUID accountId, UUID userId,
+            BankStatementParser.ParsedStatement parsed) {
         Set<String> existingReferences = new HashSet<>(importEntryRepository.findExistingSourceReferences(
                 accountId, parsed.rows().stream().map(StatementPreviewRowDTO::sourceReference).toList()));
         Map<String, Category> categoryRules = new HashMap<>();

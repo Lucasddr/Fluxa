@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
@@ -30,8 +31,45 @@ import java.util.regex.Pattern;
 @Component
 public class BankStatementParser {
     private static final int MAX_ROWS = 5_000;
+    private static final int HEADER_SEARCH_ROWS = 20;
+    private static final List<String> DATE_ALIASES = List.of(
+            "data", "datalancamento", "dtlancamento", "datadalancamento",
+            "datamovimento", "datadomovimento", "datadatransacao",
+            "date", "posteddate", "transactiondate");
+    private static final List<String> DESCRIPTION_ALIASES = List.of(
+            "descricao", "descricaodamovimentacao", "historico", "lancamento",
+            "detalhe", "description", "memo", "name", "title");
+    private static final List<String> AMOUNT_ALIASES = List.of(
+            "valor", "valorbrl", "valorr", "valoremreais", "amount", "value", "montante");
+    private static final List<String> DEBIT_ALIASES = List.of(
+            "debito", "saida", "debit", "withdrawal");
+    private static final List<String> CREDIT_ALIASES = List.of(
+            "credito", "entrada", "credit", "deposit");
+    private static final List<String> TYPE_ALIASES = List.of(
+            "tipo", "natureza", "operacao", "type", "transactiontype");
+    private static final int MAX_TEXT_LENGTH = 1_000_000;
     private static final Pattern OFX_TRANSACTION = Pattern.compile(
             "(?is)<STMTTRN>(.*?)(?=<STMTTRN>|</BANKTRANLIST>|</STMTRS>|</CCSTMTRS>|$)");
+    private static final Pattern TEXT_MONEY = Pattern.compile(
+            "(?<![\\d.,])(?:R\\$\\s*)?-?\\d{1,3}(?:\\.\\d{3})*,\\d{2}-?(?:\\s*[DdCc])?(?![\\d.,])");
+    private static final Pattern TEXT_DATE_NUMERIC = Pattern.compile(
+            "^(\\d{1,2})[/.\\-](\\d{1,2})(?:[/.\\-](\\d{2,4}))?(?![\\d/.\\-])");
+    private static final Pattern TEXT_OPERATION_ID = Pattern.compile("\\b\\d[\\d.]{5,}\\b");
+    private static final List<String> OPERATION_PREFIXES = List.of(
+            "pix", "pagamento", "compra", "transferencia", "rendimento", "debito",
+            "credito", "boleto", "saque", "deposito", "tarifa", "estorno", "doc",
+            "ted", "resgate", "aplicacao", "recebimento", "envio", "cobranca",
+            "emprestimo", "devolucao", "ajuste", "correcao", "vencimento");
+    private static final Pattern TEXT_DATE_NAMED = Pattern.compile(
+            "^(\\d{1,2})\\s*(?:de\\s+)?([\\p{L}]{3,10})\\.?\\s*(?:de\\s+)?(\\d{4})\\b",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern TEXT_SEPARATOR = Pattern.compile("[\\s|;:–—+\\-]+$");
+    private static final List<String> IGNORED_TEXT_PREFIXES = List.of(
+            "extrato", "demonstrativo", "agencia", "periodo", "saldo",
+            "total", "subtotal", "data", "historico", "descricao", "lancamento",
+            "pagina", "page", "cpf", "cnpj", "ouvidoria", "centraldeatendimento",
+            "sac", "resumo", "informacoes", "solicitacoes", "geradoem",
+            "emitidoem", "internetbanking", "movimentacoes", "vencimento", "fechamento");
     private static final List<DateTimeFormatter> DATE_FORMATS = List.of(
             DateTimeFormatter.ISO_LOCAL_DATE,
             DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", Locale.ROOT),
@@ -49,15 +87,268 @@ public class BankStatementParser {
             throw new InvalidStatementFileException("O arquivo deve ter no máximo 5 MB.");
         }
 
-        String content = decode(bytes).replace("\u0000", "");
         String extension = extension(filename);
+        if (extension.equals("pdf") || looksLikePdf(bytes)) {
+            return parseText(PdfStatementTextExtractor.extract(bytes), "PDF");
+        }
+
+        String content = decode(bytes).replace("\u0000", "");
         if (extension.equals("ofx") || looksLikeOfx(content)) {
             return parseOfx(content);
         }
         if (!extension.equals("csv") && !extension.isEmpty()) {
-            throw new InvalidStatementFileException("Formato não suportado. Envie um arquivo CSV ou OFX.");
+            throw new InvalidStatementFileException(
+                    "Formato não suportado. Envie um arquivo CSV, OFX ou PDF.");
         }
         return new ParsedStatement("CSV", parseCsv(content), null, null);
+    }
+
+    public ParsedStatement parseText(String text, String format) {
+        String content = text == null ? "" : text.replace("\u0000", "").trim();
+        if (content.isEmpty()) {
+            throw new InvalidStatementFileException("Cole o texto do extrato.");
+        }
+        if (content.length() > MAX_TEXT_LENGTH) {
+            throw new InvalidStatementFileException("O texto do extrato deve ter no máximo 1 MB.");
+        }
+        List<StatementPreviewRowDTO> rows = parseFreeText(content);
+        if (rows.isEmpty()) {
+            throw new InvalidStatementFileException(
+                    "Não encontrei movimentações no texto. Cada linha precisa ter data, descrição e valor.");
+        }
+        return new ParsedStatement(format, rows, null, null);
+    }
+
+    private static List<StatementPreviewRowDTO> parseFreeText(String content) {
+        List<Draft> drafts = new ArrayList<>();
+        StringBuilder pendingDescription = new StringBuilder();
+        LocalDate pendingDate = null;
+        Draft lastDraft = null;
+        int lastDraftLine = -10;
+        boolean lastDraftExtended = false;
+        String[] lines = content.split("\\R", -1);
+
+        for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            int rowNumber = lineIndex + 1;
+            String line = lines[lineIndex].replaceAll("[\\t\\u00A0]", " ")
+                    .replaceAll("\\s{2,}", " ").trim();
+            if (line.isEmpty()) continue;
+
+            TextDate date = findTextDate(line, rowNumber);
+            String rest = date == null ? line : date.rest();
+            Matcher money = TEXT_MONEY.matcher(rest);
+            boolean hasMoney = money.find();
+
+            if (hasMoney && (date != null || pendingDate != null)) {
+                LocalDate occurredAt = date != null ? date.value() : pendingDate;
+                String inline = stripOperationIds(cleanDescription(rest.substring(0, money.start())));
+                String description = combineDescriptions(pendingDescription, inline);
+                pendingDate = null;
+                BigDecimal amount = parseMoneyToken(money.group(), rowNumber);
+                if (isValidDescription(description) && amount.signum() != 0) {
+                    if (occurredAt.isAfter(LocalDate.now())) {
+                        throw rowError(rowNumber, "a data está no futuro.");
+                    }
+                    Draft draft = new Draft(occurredAt, description, amount, rowNumber);
+                    drafts.add(draft);
+                    lastDraft = draft;
+                    lastDraftLine = rowNumber;
+                    lastDraftExtended = false;
+                    checkMaxRows(drafts.size());
+                }
+                continue;
+            }
+
+            if (date != null) {
+                pendingDate = date.value();
+                String raw = stripOperationIds(cleanDescription(rest));
+                pendingDescription.setLength(0);
+                if (!raw.isEmpty() && !isIgnoredTextLine(raw)) {
+                    pendingDescription.append(raw);
+                }
+                continue;
+            }
+
+            if (pendingDate != null) {
+                if (!isIgnoredTextLine(line) && pendingDescription.length() + line.length() <= 200) {
+                    if (!pendingDescription.isEmpty()) pendingDescription.append(' ');
+                    pendingDescription.append(line);
+                }
+                continue;
+            }
+
+            if (isIgnoredTextLine(line)) continue;
+
+            if (looksLikeOperationStart(line)) {
+                if (!pendingDescription.isEmpty()) pendingDescription.append(' ');
+                pendingDescription.append(line);
+                continue;
+            }
+
+            if (lastDraft != null && !lastDraftExtended && rowNumber - lastDraftLine <= 2
+                    && isDescriptionTail(line)) {
+                lastDraft.description = (lastDraft.description + " " + line).trim();
+                lastDraftExtended = true;
+            }
+        }
+
+        Map<String, Integer> repeatedReferences = new HashMap<>();
+        List<StatementPreviewRowDTO> rows = new ArrayList<>();
+        for (Draft draft : drafts) {
+            String canonical = draft.date + "|" + draft.amount.toPlainString()
+                    + "|" + normalizeHeader(draft.description);
+            String reference = "TXT:" + fingerprint(canonical, repeatedReferences);
+            rows.add(new StatementPreviewRowDTO(draft.rowNumber, reference, draft.date.toString(),
+                    draft.description, draft.amount, false, null));
+        }
+        return rows;
+    }
+
+    private static boolean isValidDescription(String description) {
+        return !description.isEmpty() && description.length() <= 200
+                && !isIgnoredTextDescription(description);
+    }
+
+    private static boolean isDescriptionTail(String line) {
+        return line.length() <= 60 && line.matches(".*[\\p{L}].*")
+                && !line.matches(".*[.!?:;].*");
+    }
+
+    private static boolean looksLikeOperationStart(String line) {
+        String normalized = normalizeHeader(line);
+        return OPERATION_PREFIXES.stream().anyMatch(normalized::startsWith);
+    }
+
+    private static String stripOperationIds(String value) {
+        return TEXT_OPERATION_ID.matcher(value).replaceAll(" ")
+                .replaceAll("\\s+", " ").trim();
+    }
+
+    private static String cleanDescription(String value) {
+        return TEXT_SEPARATOR.matcher(value).replaceAll("").replaceAll("\\s+", " ").trim();
+    }
+
+    private static String combineDescriptions(StringBuilder pending, String inline) {
+        String left = pending.toString().trim();
+        pending.setLength(0);
+        if (inline.isEmpty()) return left;
+        return left.isEmpty() ? inline : left + " " + inline;
+    }
+
+    private static final class Draft {
+        private final LocalDate date;
+        private final BigDecimal amount;
+        private final int rowNumber;
+        private String description;
+
+        private Draft(LocalDate date, String description, BigDecimal amount, int rowNumber) {
+            this.date = date;
+            this.description = description;
+            this.amount = amount;
+            this.rowNumber = rowNumber;
+        }
+    }
+
+    private static TextDate findTextDate(String line, int rowNumber) {
+        Matcher numeric = TEXT_DATE_NUMERIC.matcher(line);
+        if (numeric.find()) {
+            int day = Integer.parseInt(numeric.group(1));
+            int month = Integer.parseInt(numeric.group(2));
+            String yearGroup = numeric.group(3);
+            String remaining = line.substring(numeric.end());
+            if (day >= 1 && day <= 31 && month >= 1 && month <= 12
+                    && (yearGroup != null || !remaining.trim().isEmpty())) {
+                Integer year = yearGroup == null ? null
+                        : yearGroup.length() == 2 ? 2000 + Integer.parseInt(yearGroup)
+                                : Integer.parseInt(yearGroup);
+                LocalDate parsed = buildDate(day, month, year, rowNumber);
+                if (parsed != null) {
+                    return new TextDate(parsed, remaining);
+                }
+            }
+        }
+
+        Matcher named = TEXT_DATE_NAMED.matcher(line);
+        if (named.find()) {
+            Integer month = monthNumber(named.group(2));
+            if (month != null) {
+                int day = Integer.parseInt(named.group(1));
+                int year = Integer.parseInt(named.group(3));
+                LocalDate parsed = buildDate(day, month, year, rowNumber);
+                if (parsed != null) {
+                    return new TextDate(parsed, line.substring(named.end()));
+                }
+            }
+        }
+        return null;
+    }
+
+    private static LocalDate buildDate(int day, int month, Integer year, int rowNumber) {
+        try {
+            LocalDate today = LocalDate.now();
+            if (year == null) {
+                LocalDate candidate = LocalDate.of(today.getYear(), month, day);
+                return candidate.isAfter(today.plusDays(1)) ? candidate.minusYears(1) : candidate;
+            }
+            return LocalDate.of(year, month, day);
+        } catch (RuntimeException invalidDate) {
+            return null;
+        }
+    }
+
+    private static Integer monthNumber(String name) {
+        String normalized = normalizeHeader(name);
+        return switch (normalized) {
+            case "jan", "janeiro" -> 1;
+            case "fev", "fevereiro" -> 2;
+            case "mar", "marco" -> 3;
+            case "abr", "abril" -> 4;
+            case "mai", "maio" -> 5;
+            case "jun", "junho" -> 6;
+            case "jul", "julho" -> 7;
+            case "ago", "agosto" -> 8;
+            case "set", "setembro" -> 9;
+            case "out", "outubro" -> 10;
+            case "nov", "novembro" -> 11;
+            case "dez", "dezembro" -> 12;
+            default -> null;
+        };
+    }
+
+    private static BigDecimal parseMoneyToken(String token, int rowNumber) {
+        String cleaned = token.replaceAll("(?i)R\\$", "").replaceAll("\\s", "");
+        boolean negative = cleaned.startsWith("-") || cleaned.endsWith("-");
+        cleaned = cleaned.replace("-", "");
+        if (!cleaned.isEmpty()) {
+            char last = Character.toUpperCase(cleaned.charAt(cleaned.length() - 1));
+            if (last == 'D') {
+                negative = true;
+                cleaned = cleaned.substring(0, cleaned.length() - 1);
+            } else if (last == 'C') {
+                negative = false;
+                cleaned = cleaned.substring(0, cleaned.length() - 1);
+            }
+        }
+        try {
+            BigDecimal amount = new BigDecimal(cleaned.replace(".", "").replace(',', '.')).setScale(2);
+            return negative ? amount.negate() : amount;
+        } catch (NumberFormatException exception) {
+            throw rowError(rowNumber, "valor inválido.");
+        }
+    }
+
+    private static boolean isIgnoredTextLine(String line) {
+        String normalized = normalizeHeader(line);
+        return IGNORED_TEXT_PREFIXES.stream().anyMatch(normalized::startsWith);
+    }
+
+    private static boolean isIgnoredTextDescription(String description) {
+        String normalized = normalizeHeader(description);
+        return normalized.startsWith("saldo") || normalized.equals("total")
+                || normalized.startsWith("subtotal") || normalized.startsWith("limite");
+    }
+
+    private record TextDate(LocalDate value, String rest) {
     }
 
     private static ParsedStatement parseOfx(String content) {
@@ -108,35 +399,45 @@ public class BankStatementParser {
 
     private static List<StatementPreviewRowDTO> parseCsv(String content) {
         String withoutBom = content.startsWith("\uFEFF") ? content.substring(1) : content;
-        List<List<String>> records = readCsvRecords(withoutBom, detectDelimiter(withoutBom));
-        if (records.size() < 2) {
-            throw new InvalidStatementFileException("O CSV precisa ter cabeçalho e ao menos uma movimentação.");
+        List<List<String>> records = null;
+        CsvColumns columns = null;
+        for (char delimiter : delimiterCandidates(withoutBom)) {
+            List<List<String>> candidate;
+            try {
+                candidate = readCsvRecords(withoutBom, delimiter);
+            } catch (InvalidStatementFileException malformedWithThisDelimiter) {
+                continue;
+            }
+            CsvColumns found = findCsvColumns(candidate);
+            if (found != null) {
+                records = candidate;
+                columns = found;
+                break;
+            }
         }
-
-        List<String> headers = records.get(0).stream().map(BankStatementParser::normalizeHeader).toList();
-        int dateIndex = findColumn(headers, "data", "datadalancamento", "datamovimento",
-                "datadomovimento", "datadatransacao", "date", "posteddate", "transactiondate");
-        int descriptionIndex = findColumn(headers, "descricao", "descricaodamovimentacao", "historico",
-                "lancamento", "detalhe", "description", "memo", "name", "title");
-        int amountIndex = findColumn(headers, "valor", "valorbrl", "valorr", "valoremreais",
-                "amount", "value", "montante");
-        int debitIndex = findColumn(headers, "debito", "saida", "debit", "withdrawal");
-        int creditIndex = findColumn(headers, "credito", "entrada", "credit", "deposit");
-        int typeIndex = findColumn(headers, "tipo", "natureza", "operacao", "type", "transactiontype");
-
-        if (dateIndex < 0 || descriptionIndex < 0 || (amountIndex < 0 && debitIndex < 0 && creditIndex < 0)) {
+        if (columns == null || records == null) {
             throw new InvalidStatementFileException(
                     "Não reconheci as colunas do CSV. São necessárias data, descrição e valor (ou débito/crédito).");
         }
+        if (records.size() < columns.headerRow() + 2) {
+            throw new InvalidStatementFileException("O CSV precisa ter cabeçalho e ao menos uma movimentação.");
+        }
+
+        int dateIndex = columns.date();
+        int descriptionIndex = columns.description();
+        int amountIndex = columns.amount();
+        int debitIndex = columns.debit();
+        int creditIndex = columns.credit();
+        int typeIndex = columns.type();
 
         List<StatementPreviewRowDTO> rows = new ArrayList<>();
         Map<String, Integer> repeatedReferences = new HashMap<>();
-        for (int recordIndex = 1; recordIndex < records.size(); recordIndex++) {
+        for (int recordIndex = columns.headerRow() + 1; recordIndex < records.size(); recordIndex++) {
             List<String> cells = records.get(recordIndex);
             if (cells.stream().allMatch(String::isBlank)) continue;
             int rowNumber = recordIndex + 1;
             LocalDate date = parseDate(cell(cells, dateIndex), rowNumber);
-            String description = cell(cells, descriptionIndex).trim();
+            String description = cell(cells, descriptionIndex).replaceAll("\\s+", " ").trim();
             if (description.isBlank()) throw rowError(rowNumber, "a descrição está vazia.");
 
             BigDecimal amount;
@@ -168,6 +469,30 @@ public class BankStatementParser {
         }
         if (rows.isEmpty()) throw new InvalidStatementFileException("O CSV não contém movimentações.");
         return rows;
+    }
+
+    private static CsvColumns findCsvColumns(List<List<String>> records) {
+        int limit = Math.min(records.size(), HEADER_SEARCH_ROWS);
+        for (int recordIndex = 0; recordIndex < limit; recordIndex++) {
+            List<String> headers = records.get(recordIndex).stream()
+                    .map(BankStatementParser::normalizeHeader).toList();
+            int dateIndex = findColumn(headers, DATE_ALIASES);
+            int descriptionIndex = findColumn(headers, DESCRIPTION_ALIASES);
+            int amountIndex = findColumn(headers, AMOUNT_ALIASES);
+            int debitIndex = findColumn(headers, DEBIT_ALIASES);
+            int creditIndex = findColumn(headers, CREDIT_ALIASES);
+            int typeIndex = findColumn(headers, TYPE_ALIASES);
+            if (dateIndex >= 0 && descriptionIndex >= 0
+                    && (amountIndex >= 0 || debitIndex >= 0 || creditIndex >= 0)) {
+                return new CsvColumns(recordIndex, dateIndex, descriptionIndex,
+                        amountIndex, debitIndex, creditIndex, typeIndex);
+            }
+        }
+        return null;
+    }
+
+    private record CsvColumns(int headerRow, int date, int description,
+            int amount, int debit, int credit, int type) {
     }
 
     private static List<List<String>> readCsvRecords(String text, char delimiter) {
@@ -210,29 +535,33 @@ public class BankStatementParser {
         return records;
     }
 
-    private static char detectDelimiter(String content) {
-        String firstLine = content.lines().filter(line -> !line.isBlank()).findFirst().orElse("");
-        char selected = ',';
-        int maxCount = -1;
-        boolean quoted = false;
-        int[] counts = new int[3];
+    private static char[] delimiterCandidates(String content) {
         char[] delimiters = {',', ';', '\t'};
-        for (int i = 0; i < firstLine.length(); i++) {
-            char current = firstLine.charAt(i);
-            if (current == '"') quoted = !quoted;
-            if (!quoted) {
-                for (int d = 0; d < delimiters.length; d++) {
-                    if (current == delimiters[d]) counts[d]++;
+        int[] maxCounts = new int[delimiters.length];
+        for (String line : content.lines()
+                .filter(line -> !line.isBlank())
+                .limit(HEADER_SEARCH_ROWS)
+                .toList()) {
+            int[] counts = new int[delimiters.length];
+            boolean quoted = false;
+            for (int i = 0; i < line.length(); i++) {
+                char current = line.charAt(i);
+                if (current == '"') quoted = !quoted;
+                if (!quoted) {
+                    for (int d = 0; d < delimiters.length; d++) {
+                        if (current == delimiters[d]) counts[d]++;
+                    }
                 }
             }
-        }
-        for (int i = 0; i < counts.length; i++) {
-            if (counts[i] > maxCount) {
-                maxCount = counts[i];
-                selected = delimiters[i];
+            for (int d = 0; d < delimiters.length; d++) {
+                maxCounts[d] = Math.max(maxCounts[d], counts[d]);
             }
         }
-        return selected;
+        Integer[] order = {0, 1, 2};
+        Arrays.sort(order, (left, right) -> Integer.compare(maxCounts[right], maxCounts[left]));
+        char[] candidates = new char[delimiters.length];
+        for (int i = 0; i < order.length; i++) candidates[i] = delimiters[order[i]];
+        return candidates;
     }
 
     private static LocalDate parseDate(String value, int rowNumber) {
@@ -310,9 +639,11 @@ public class BankStatementParser {
                 .replaceAll("[^a-z0-9]", "");
     }
 
-    private static int findColumn(List<String> headers, String... aliases) {
-        for (int i = 0; i < headers.size(); i++) {
-            for (String alias : aliases) if (headers.get(i).equals(alias)) return i;
+    private static int findColumn(List<String> headers, List<String> aliases) {
+        for (String alias : aliases) {
+            for (int i = 0; i < headers.size(); i++) {
+                if (headers.get(i).equals(alias)) return i;
+            }
         }
         return -1;
     }
@@ -336,6 +667,10 @@ public class BankStatementParser {
         if (filename == null) return "";
         int dot = filename.lastIndexOf('.');
         return dot < 0 ? "" : filename.substring(dot + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean looksLikePdf(byte[] bytes) {
+        return bytes.length >= 4 && bytes[0] == '%' && bytes[1] == 'P' && bytes[2] == 'D' && bytes[3] == 'F';
     }
 
     private static boolean looksLikeOfx(String content) {

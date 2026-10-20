@@ -16,7 +16,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-accent text-accent-ink hover:bg-accent-hover active:scale-[0.98]",
   secondary:
-    "bg-surface text-ink border border-line hover:border-ink-3 hover:text-ink active:bg-line-subtle",
+    "bg-surface text-ink border border-line-strong hover:border-ink hover:text-ink active:bg-line-subtle",
   danger:
     "bg-negative text-white hover:opacity-90 active:scale-[0.98]",
   ghost:

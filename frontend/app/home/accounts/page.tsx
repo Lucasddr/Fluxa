@@ -430,7 +430,7 @@ export default function ContasPage() {
           <button
             type="button"
             aria-label="Abrir opções da compra"
-            className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-surface"
+            className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] text-ink-3 transition-colors hover:text-ink hover:bg-line-subtle"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -842,7 +842,7 @@ export default function ContasPage() {
                                 disabled={payingId === inst.id}
                                 aria-label={`Pagar parcela ${inst.number}`}
                                 title="Pagar (vira lançamento)"
-                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-line-subtle transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Check className="w-4 h-4" />
                               </button>
@@ -852,7 +852,7 @@ export default function ContasPage() {
                                 onClick={() => openEditInstallment(inst)}
                                 aria-label={`Editar parcela ${inst.number}`}
                                 title="Editar valor/vencimento"
-                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-surface transition-colors"
+                                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius)] border border-line text-ink-2 hover:text-ink hover:bg-line-subtle transition-colors"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>

@@ -38,7 +38,7 @@ import {
 
 type CategoryModalProps = {
   onClose: () => void;
-  onSave: () => Promise<void>;
+  onSave: (saved?: CategoryFormData) => Promise<void> | void;
   title: string;
   description: string;
   submitLabel: string;
@@ -158,7 +158,7 @@ export default function CategoryModal({
         throw new HttpError(response.status);
       }
 
-      await onSave();
+      await onSave(form);
       onClose();
     } catch (error) {
       console.error("Erro ao salvar categoria:", error);
