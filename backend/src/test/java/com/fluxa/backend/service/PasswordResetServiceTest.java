@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(CapturingNotificationService.class)
 @Transactional
 class PasswordResetServiceTest {
 
@@ -35,7 +37,7 @@ class PasswordResetServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private DevNotificationService notificationService;
+    private CapturingNotificationService notificationService;
 
     private static final String EMAIL = "reset@test.local";
     private static final String PASSWORD = "Teste1234";
@@ -43,7 +45,7 @@ class PasswordResetServiceTest {
 
     @BeforeEach
     void clearNotification() {
-        notificationService.lastToken = null;
+        notificationService.reset();
     }
 
     private void registerUser() {
@@ -56,21 +58,21 @@ class PasswordResetServiceTest {
 
         passwordResetService.requestReset(EMAIL);
 
-        assertNotNull(notificationService.lastToken);
+        assertNotNull(notificationService.lastPasswordResetToken);
     }
 
     @Test
     void requestResetNonexistentEmailDoesNotLeak() {
         passwordResetService.requestReset("nobody@test.local");
 
-        assertTrue(notificationService.lastToken == null);
+        assertTrue(notificationService.lastPasswordResetToken == null);
     }
 
     @Test
     void resetPasswordWithValidTokenChangesPassword() {
         registerUser();
         passwordResetService.requestReset(EMAIL);
-        String rawToken = notificationService.lastToken;
+        String rawToken = notificationService.lastPasswordResetToken;
 
         passwordResetService.resetPassword(rawToken, NEW_PASSWORD);
 
@@ -82,7 +84,7 @@ class PasswordResetServiceTest {
     void resetPasswordWithUsedTokenThrows() {
         registerUser();
         passwordResetService.requestReset(EMAIL);
-        String rawToken = notificationService.lastToken;
+        String rawToken = notificationService.lastPasswordResetToken;
 
         passwordResetService.resetPassword(rawToken, NEW_PASSWORD);
 
@@ -100,7 +102,7 @@ class PasswordResetServiceTest {
     void loginWorksAfterPasswordReset() {
         registerUser();
         passwordResetService.requestReset(EMAIL);
-        String rawToken = notificationService.lastToken;
+        String rawToken = notificationService.lastPasswordResetToken;
 
         passwordResetService.resetPassword(rawToken, NEW_PASSWORD);
 

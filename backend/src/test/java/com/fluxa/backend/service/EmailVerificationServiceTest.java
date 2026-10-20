@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(CapturingNotificationService.class)
 @Transactional
 class EmailVerificationServiceTest {
 
@@ -40,7 +42,7 @@ class EmailVerificationServiceTest {
     private UserRepository userRepository;
 
     @Autowired
-    private DevNotificationService notificationService;
+    private CapturingNotificationService notificationService;
 
     @Autowired
     private EmailVerificationTokenRepository tokenRepository;
@@ -49,7 +51,7 @@ class EmailVerificationServiceTest {
 
     @BeforeEach
     void clearLastToken() {
-        notificationService.lastToken = null;
+        notificationService.reset();
     }
 
     @AfterEach
@@ -86,7 +88,7 @@ class EmailVerificationServiceTest {
 
         emailVerificationService.sendVerification();
 
-        assertTrue(notificationService.lastToken != null);
+        assertTrue(notificationService.lastVerificationToken != null);
     }
 
     @Test
@@ -94,7 +96,7 @@ class EmailVerificationServiceTest {
         registerUser();
         authenticateAs(findUser());
         emailVerificationService.sendVerification();
-        String rawToken = notificationService.lastToken;
+        String rawToken = notificationService.lastVerificationToken;
 
         emailVerificationService.verifyEmail(rawToken);
 
@@ -106,7 +108,7 @@ class EmailVerificationServiceTest {
         registerUser();
         authenticateAs(findUser());
         emailVerificationService.sendVerification();
-        String rawToken = notificationService.lastToken;
+        String rawToken = notificationService.lastVerificationToken;
 
         emailVerificationService.verifyEmail(rawToken);
 
