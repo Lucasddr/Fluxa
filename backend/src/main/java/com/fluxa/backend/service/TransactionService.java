@@ -11,6 +11,7 @@ import com.fluxa.backend.dto.response.ListTransactionResponseDTO;
 import com.fluxa.backend.dto.response.TransactionDetailsResponseDTO;
 import com.fluxa.backend.exception.CategoryNotFoundException;
 import com.fluxa.backend.exception.AccountNotFoundException;
+import com.fluxa.backend.exception.CategoryInactiveException;
 import com.fluxa.backend.exception.InvalidInstallmentOperationException;
 import com.fluxa.backend.exception.TransactionNotFoundException;
 import com.fluxa.backend.repository.AccountRepository;
@@ -73,7 +74,10 @@ public class TransactionService {
                 .orElseThrow(AccountNotFoundException::new);
 
         Category category = categoryRepository.findByIdAndUserId(dto.categoryId(), userId)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(CategoryNotFoundException::new);
+        if (!category.isActive()) {
+            throw new CategoryInactiveException();
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

@@ -1,1 +1,4 @@
 .idea/
+
+# artefatos de execucao local (logs de E2E, saida de testes)
+*-e2e.log

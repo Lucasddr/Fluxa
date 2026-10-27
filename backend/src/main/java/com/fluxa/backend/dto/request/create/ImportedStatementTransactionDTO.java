@@ -28,6 +28,7 @@ public record ImportedStatementTransactionDTO(
         @NotNull(message = "Categoria é obrigatória")
         UUID categoryId,
 
-        boolean rememberCategoryRule
+        /** Optional opt-in. Missing or null values do not save a category rule. */
+        Boolean rememberCategoryRule
 ) {
 }

@@ -78,6 +78,7 @@ Backend (Railway) + frontend (Vercel) + banco (Supabase): `docs/DEPLOY.md`.
 | Documento | Conteúdo |
 |---|---|
 | `docs/ROADMAP-FECHAMENTO-PENDENCIAS.md` | **Roadmap atual e pendências verificadas** |
+| `docs/QA-ESTRATEGIA-E-COBERTURA.md` | Diagnóstico da suíte atual e plano de testes por nível |
 | `docs/DIAGNOSTICO-MVP.md` | Diagnóstico do MVP vs. visão do produto |
 | `docs/fluxa-requisitos.md` | Requisitos e conceitos de saldo |
 | `docs/ARCHITECTURE-DECISIONS.md` | ADRs (ex.: fonte oficial do saldo) |

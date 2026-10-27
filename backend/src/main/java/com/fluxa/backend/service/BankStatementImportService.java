@@ -168,7 +168,7 @@ public class BankStatementImportService {
             importEntry.setSourceReference(item.sourceReference());
             importEntryRepository.saveAndFlush(importEntry);
 
-            if (item.rememberCategoryRule()) {
+            if (Boolean.TRUE.equals(item.rememberCategoryRule())) {
                 String normalizedDescription = StatementImportDescriptionNormalizer
                         .normalize(item.description());
                 if (!normalizedDescription.isBlank()) {

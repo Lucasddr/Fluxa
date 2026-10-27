@@ -10,6 +10,7 @@ import com.fluxa.backend.exception.CreditPurchaseNotFoundException;
 import com.fluxa.backend.exception.InstallmentAlreadyPaidException;
 import com.fluxa.backend.exception.InvalidCategoryKindException;
 import com.fluxa.backend.exception.InvalidInstallmentsSumException;
+import com.fluxa.backend.exception.InvalidInstallmentOperationException;
 import com.fluxa.backend.repository.CategoryRepository;
 import com.fluxa.backend.repository.CreditPurchaseRepository;
 import com.fluxa.backend.repository.InstallmentRepository;
@@ -303,11 +304,14 @@ class CreditPurchaseServiceTest {
         UUID installmentId = creditPurchaseService
                 .getCreditPurchaseDetails(purchaseId).installments().get(0).id();
 
-        assertThrows(Exception.class,
+        InvalidInstallmentOperationException exception = assertThrows(
+                InvalidInstallmentOperationException.class,
                 () -> installmentService.updateInstallment(
                         installmentId,
                         new UpdateInstallmentDTO(null, null),
                         "ONE"));
+
+        assertEquals("Nada para atualizar: informe valor e/ou vencimento", exception.getMessage());
     }
 
     @Test

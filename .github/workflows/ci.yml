@@ -37,6 +37,55 @@ jobs:
       - name: Testes
         run: ./mvnw -B test
 
+  backend-postgres:
+    # Fase 3 do plano QA: os MESMOS testes da suite (perfil "test") executados
+    # contra PostgreSQL 17 (dialeto do producao/Supabase) com Flyway V1-V12
+    # aplicando de verdade as migrations e ddl-auto=validate garantindo que as
+    # entidades batem com o schema migrado. O job "backend" (H2) continua
+    # gate; este job e gate blocking tambem.
+    name: Backend (PostgreSQL 17 + Flyway)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: fluxa
+          POSTGRES_PASSWORD: fluxa
+          POSTGRES_DB: fluxa_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fluxa -d fluxa_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DB_URL: jdbc:postgresql://localhost:5432/fluxa_test
+      TEST_DB_DRIVER: org.postgresql.Driver
+      TEST_DB_USERNAME: fluxa
+      TEST_DB_PASSWORD: fluxa
+      TEST_FLYWAY_ENABLED: "true"
+      TEST_DDL_AUTO: validate
+      TEST_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Permissao de execucao do wrapper
+        run: chmod +x mvnw
+
+      - name: Testes (PostgreSQL 17 + migrations Flyway)
+        run: ./mvnw -B test
+
   frontend:
     name: Frontend (tipos + build)
     runs-on: ubuntu-latest
