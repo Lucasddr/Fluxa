@@ -1,13 +1,12 @@
 name: CI
 
 # Pipeline da Sprint 10 (P1-1): quality gates sobre a main.
-# Deploy e automatico por plataforma (Railway = backend, Vercel = frontend)
+# Deploy e automatico por plataforma (Render = backend, Vercel = frontend)
 # a cada push na main - ver docs/DEPLOY.md. Este workflow so valida.
 #
-# Gates bloqueantes: testes do backend (H2) + tipos + build do frontend.
-# Lint e informativo (continue-on-error): ha 4 erros e 9 warnings
-# pre-existentes (react-hooks/set-state-in-effect no fetch inicial das
-# paginas + unused vars) registrados como divida tecnica - nao derrubam o CI.
+# Gates bloqueantes: testes backend em H2 e em PostgreSQL 17 + Flyway,
+# tipos, lint, testes Vitest e build do frontend. Playwright E2E roda
+# localmente (stack Docker completa) e ainda nao e gate de CI.
 
 on:
   push:
@@ -108,14 +107,16 @@ jobs:
       - name: Tipos (tsc)
         run: npx tsc --noEmit
 
-      - name: Lint (informativo - divida tecnica aberta)
+      - name: Testes (Vitest)
+        run: npm test
+
+      - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Build de producao
         run: npm run build
         env:
           # Valor ficticio so para o build passar; o deploy real injeta a
-          # URL do backend da Railway (ver docs/DEPLOY.md). A variavel e
+          # URL do backend na Render (ver docs/DEPLOY.md). A variavel e
           # embutida no build - rebuildar ao trocar.
           NEXT_PUBLIC_API_URL: http://localhost:8080/api

@@ -386,7 +386,22 @@ O projeto ganhou suíte **E2E Playwright** de ponta a ponta sobre o stack local 
 
 **Itens do inventário fechados:** "E2E críticos (auth, transações, importação, saldo, crédito)" e "rodar o stack completo local (docker compose) antes de cada release" - o `npx playwright test` agora faz exatamente isso com um comando.
 
-**Próxima fase recomendada:** Fase 6 do plano (revisão/decisões) - revisar os deltas das fases 1-5 com o usuário e decidir pendências (ex.: segredo dev `ld0423` commitado no compose, `COOKIE_REFRESH_PATH` em produção, CI ainda sem job E2E).
+**Próxima fase recomendada:** Fase 6 do plano (revisão/decisões) - revisar os deltas das fases 1-5 com o usuário e decidir pendências estruturais (ex.: `COOKIE_REFRESH_PATH` em produção, job E2E no CI, provedor de e-mail).
+
+### Atualização da Fase 6 (27/10/2026)
+
+Revisão de fechamento sobre as fases 1-5 e correções de segurança que ainda estavam abertas no código:
+
+- **Rate limit atrás de proxy (OPSIRE-CTRL-005) corrigido.** O `RateLimitFilter` usava `request.getRemoteAddr()`, que atrás do nginx/Render devolve o IP do proxy - todos os usuários compartilhavam o mesmo bucket (na prática, 3 registros ou 5 logins por minuto para o site inteiro). `application.properties` agora define `server.forward-headers-strategy=native`; o Tomcat aceita `X-Forwarded-For` apenas de proxy interno e passa a expor o IP real. Dois testes novos provam o comportamento: um unitário do filtro e um de integração com servidor real e header encaminhado.
+- **Cobertura de rate limit ampliada:** `POST /accounts/{id}/statement-imports` (10/min), `preview` e `preview-text` (20/min, bucket compartilhado) e `POST /accounts/{id}/balance-observations` (20/min). Antes, só autenticação, transação, compra e pagamento tinham limite.
+- **SEC-003 (credencial hardcoded) resolvido no código rastreado:** `docker-compose.yml` e `backend/docker-compose.yml` usam `${POSTGRES_PASSWORD:-fluxa_local_dev}`; a credencial antiga foi rotacionada no volume local e as referências nos docs foram trocadas pelo estado corrigido (`ANALISE-DO-PROJETO`, `DIAGNOSTICO-MVP`, `ROADMAP-FECHAMENTO-PENDENCIAS`, `VARIAVEIS-AMBIENTE`, auditoria técnica). Nenhum segredo real foi adicionado.
+- **Headers de segurança no frontend:** `next.config.ts` envia `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS em todas as rotas. CSP estrita continua pendente: o bootstrap inline de tema em `app/layout.tsx` exige nonce/hash e uma estratégia validada, então não foi aberta exceção `unsafe-inline`.
+- **Lint virou gate bloqueante no CI.** A dívida de warnings foi zerada (incluindo os testes novos); o workflow agora roda `npm test` (Vitest) e `npm run lint` sem `continue-on-error`, além dos jobs H2 e PostgreSQL/Flyway.
+- **Docs de status corrigidos:** `/auth/test-500` foi removido e `/auth/registerAdmin` já exige `ROLE_ADMIN`; o diagnóstico que dizia o contrário foi atualizado.
+
+**Verificação desta fase:** backend `.\mvnw.cmd -B test` → **147/147** (141 anteriores + 6 de rate limit); frontend `npm test` → **39/39**, `npm run lint` → 0 erros/0 warnings, `npx tsc --noEmit` → OK e `npm run build` → prerender completo. `git diff --check` limpo.
+
+**Ainda fora do código ou pendente de decisão:** confirmar no Render o deploy de `c9f02ac`/descendente e Flyway V12, cookies e dashboard autenticado; provedor real de e-mail para reset/verificação (SEC-001 funcional); política de retenção/exclusão de conta (SEC-005); anti-enumeração (SEC-006); revogação de access token/role (SEC-007); CSP com nonce; revisão jurídica LGPD; job Playwright no CI; e a refatoração global Fluxa → Opsire (P1.6).
 
 ---
 

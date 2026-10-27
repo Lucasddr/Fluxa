@@ -14,8 +14,8 @@
 > (V6).
 >
 > **Ainda ABERTOS:**
-> - **3.1 `X-Forwarded-For`** no `RateLimitFilter` — segue usando `getRemoteAddr()` (P2).
-> - **3.3 senha do Postgres hardcoded** no `docker-compose.yml` (`ld0423`) — **continua** (P2).
+> - **3.1 `X-Forwarded-For`** no `RateLimitFilter` — **resolvido em 2026-10-27** (`server.forward-headers-strategy=native` + testes de IP encaminhado).
+> - **3.3 senha do Postgres hardcoded** no `docker-compose.yml` — **resolvido em 2026-10-27** (`POSTGRES_PASSWORD` via env, default local não sensível; credencial antiga rotacionada).
 > - **2.2 `AccountRepository` assume uma conta por usuário** — **continua** (`findByUserId` retorna
 >   um único valor; `AccountController` vazio) (P0).
 > - **4 código morto** — `AccountService.createCustomAccount`, `CreateAccountDTO` e

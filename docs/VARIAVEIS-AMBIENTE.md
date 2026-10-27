@@ -40,6 +40,7 @@ Notas de produção:
 
 ## Banco (docker-compose)
 
-- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` no `backend/docker-compose.yml`
-  (**hoje com senha hardcoded `ld0423` — mover para env antes de qualquer deploy compartilhado**).
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` no compose. A senha vem de
+  `${POSTGRES_PASSWORD:-fluxa_local_dev}`; para qualquer ambiente compartilhado, defina
+  `POSTGRES_PASSWORD` no `.env` (não rastreado) e o mesmo valor em `DB_PASSWORD` do backend.
 - Migrations Flyway `V1`–`V12` aplicadas automaticamente no boot; nunca editar migration já aplicada.

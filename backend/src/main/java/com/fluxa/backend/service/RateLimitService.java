@@ -95,6 +95,33 @@ public class RateLimitService {
         );
     }
 
+    public boolean isStatementImportPreviewAllowed(String ip) {
+        return tryConsume(
+                "statement-import-preview:" + ip,
+                20,
+                20,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isStatementImportAllowed(String ip) {
+        return tryConsume(
+                "statement-import:" + ip,
+                10,
+                10,
+                Duration.ofMinutes(1)
+        );
+    }
+
+    public boolean isBalanceObservationAllowed(String ip) {
+        return tryConsume(
+                "balance-observation:" + ip,
+                20,
+                20,
+                Duration.ofMinutes(1)
+        );
+    }
+
     public boolean tryConsume(String key, int capacity, int refillTokens, Duration refillDuration) {
 
         Bucket bucket = buckets.computeIfAbsent(

@@ -20,9 +20,9 @@
 > - **Paginação de categorias está quebrada**: `CategoriesService.listCategories()` faz
 >   `PageRequest.of(0, 10)` fixo e ignora `page`/`size` (P1).
 > - **Página de Insights** tem o `fetch` comentado e espera um contrato que o backend não retorna (P1).
-> - **`X-Forwarded-For`** segue não tratado no `RateLimitFilter` (P2).
-> - **`docker-compose.yml`** ainda tem senha hardcoded (`POSTGRES_PASSWORD: ld0423`) (P2).
-> - **Endpoints de debug** `/auth/test-500` e `/auth/registerAdmin` continuam expostos (P2).
+> - ~~**`X-Forwarded-For`** segue não tratado no `RateLimitFilter` (P2).~~ Resolvido em 2026-10-27 com `server.forward-headers-strategy=native` e teste de IP encaminhado.
+> - ~~**`docker-compose.yml`** ainda tem senha hardcoded (`POSTGRES_PASSWORD: ld0423`) (P2).~~ Resolvido em 2026-10-27: senha via env e credencial antiga rotacionada.
+> - **Endpoints de debug** `/auth/test-500` removido em 2026-10-27; `/auth/registerAdmin` exige `ROLE_ADMIN` no `SecurityConfig` (verificado no código atual).
 
 ---
 

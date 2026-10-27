@@ -14,11 +14,19 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final Pattern STATEMENT_IMPORT_PREVIEW =
+            Pattern.compile("^/accounts/[^/]+/statement-imports/(preview|preview-text)$");
+    private static final Pattern STATEMENT_IMPORT =
+            Pattern.compile("^/accounts/[^/]+/statement-imports$");
+    private static final Pattern BALANCE_OBSERVATION =
+            Pattern.compile("^/accounts/[^/]+/balance-observations$");
 
     private final RateLimitService rateLimitService;
     private final ObjectMapper objectMapper;
@@ -107,6 +115,30 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 sendTooManyRequests(response);
                 return;
 
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+
+            if (STATEMENT_IMPORT_PREVIEW.matcher(uri).matches()
+                    && !rateLimitService.isStatementImportPreviewAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+            }
+
+            if (STATEMENT_IMPORT.matcher(uri).matches()
+                    && !rateLimitService.isStatementImportAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+            }
+
+            if (BALANCE_OBSERVATION.matcher(uri).matches()
+                    && !rateLimitService.isBalanceObservationAllowed(ip)) {
+
+                sendTooManyRequests(response);
+                return;
+            }
         }
 
         filterChain.doFilter(request, response);

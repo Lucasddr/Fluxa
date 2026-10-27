@@ -230,7 +230,7 @@ Não versionados:
 5. ~~**Transações sem categoria são invisíveis** (JOIN interno + NPE em `getCategory().getName()`).~~ ✅ Resolvido (BKL-001: backend bloqueia delete com 409 + mapping null-safe com fallback "Sem categoria").
 
 ### 🟡 Divergências código × documentação
-6. `docker-compose.yml` ainda tem senha hardcoded (`POSTGRES_PASSWORD: ld0423`), embora a auditoria 3.17 afirme que foi movida para env.
+6. ~~`docker-compose.yml` ainda tem senha hardcoded (`POSTGRES_PASSWORD: ld0423`)~~ — resolvido em 2026-10-27: compose usa `${POSTGRES_PASSWORD:-fluxa_local_dev}` e a credencial antiga foi rotacionada no volume local.
 7. `docs/fluxa-banco-de-dados-v2-ledger-saldo.md` descreve saldo materializado, mas o código removeu essas colunas (V3).
 8. `README.md` marca Dashboard e Insight Cards como `[x]`, mas insights não busca dados.
 9. Docs de frontend (`teste2/readmes`) descrevem mocks que já não existem.

@@ -81,10 +81,10 @@
 
 | # | Pendência | Evidência no código | Impacto |
 |---|---|---|---|
-| **P2‑1** | `X-Forwarded-For` no rate limit | `RateLimitFilter` usa `request.getRemoteAddr()`; `application.properties` sem `server.forward-headers-strategy`. | Atrás de proxy/Railway o IP é sempre o do proxy → rate limit inefetivo (item 3.15, adiado). |
-| **P2‑2** | Senha do Postgres hardcoded no compose | `backend/docker-compose.yml`: `POSTGRES_PASSWORD: ld0423`. | Contradiz o doc que afirma ter movido para env. |
-| **P2‑3** | Endpoints de debug/privilegiados | `AuthController`: `GET /auth/test-500` e `POST /auth/registerAdmin` abertos conforme `SecurityConfig`. | Superfície desnecessária em produção. |
-| **P2‑4** | Sem suíte E2E automatizada | Existem 3 testes de service (auth/reset/verify). Nenhum teste de controller/contrato/E2E. | Regressões nos 6 fluxos críticos só são pegas manualmente. |
+| **P2‑1** | `X-Forwarded-For` no rate limit | Resolvido em 2026-10-27: `server.forward-headers-strategy=native` + testes de bucket por IP encaminhado. | Atrás de proxy o IP do cliente é usado; XFF de origem não confiável não é aceito. |
+| **P2‑2** | Senha do Postgres hardcoded no compose | Resolvido em 2026-10-27: `${POSTGRES_PASSWORD:-fluxa_local_dev}` nos composes; credencial antiga rotacionada no volume local. | Nenhum segredo real no arquivo rastreado. |
+| **P2‑3** | Endpoints de debug/privilegiados | Resolvido: `/auth/test-500` removido em 2026-10-27; `/auth/registerAdmin` exige `ROLE_ADMIN`. | Superfície reduzida. |
+| **P2‑4** | Sem suíte E2E automatizada | Resolvido em 2026-10-27: 14 testes Playwright + 39 Vitest + 147 backend. | Fluxos críticos com regressão automatizada. |
 | **P2‑5** | Lint não bloqueante com dívida aberta | CI: `npm run lint` em `continue-on-error`, com 4 erros + 9 warnings (`react-hooks/set-state-in-effect`, unused vars). | Dívida escondida no verde do CI. |
 
 ### P3 — Limpeza, dívida técnica e documentação
