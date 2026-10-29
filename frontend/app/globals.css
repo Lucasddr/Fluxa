@@ -57,6 +57,13 @@
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* VIEW TRANSITIONS — troca de páginas (React <ViewTransition>) */
+  --vt-exit: 140ms;    /* tela antiga sai rápido, sem competir por atenção */
+  --vt-enter: 260ms;   /* tela nova chega com calma, depois da antiga */
+  --vt-move: 440ms;    /* desliza horizontal entre seções */
+  --vt-slide-y: 12px;  /* subida suave na entrada (default) */
+  --vt-slide-x: 48px;  /* deslocamento horizontal direcional */
+
   color-scheme: light;
 }
 
@@ -222,4 +229,117 @@ body {
 .skip-link:focus {
   left: 1rem;
   top: 1rem;
+}
+
+/* ─── View transitions entre páginas ────────────────────────────────
+   Pseudo-elementos do View Transitions API. As classes page-enter/
+   page-exit/nav-forward/nav-back vêm de <PageTransition> (page.tsx).
+   Suporte: Chromium 125+, Safari e Firefox recentes; sem suporte,
+   a troca fica instantânea (comportamento atual). */
+
+/* O overlay não rouba cliques enquanto anima. */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Default sem direção: antiga esvai rápido em fade; nova sobe suave. */
+::view-transition-old(.page-exit) {
+  animation:
+    var(--vt-exit) var(--ease) both fade-reveal reverse;
+}
+
+::view-transition-new(.page-enter) {
+  animation:
+    var(--vt-enter) var(--ease) var(--vt-exit) both fade-reveal,
+    var(--vt-move) var(--ease-out) both slide-y;
+}
+
+/* Navegação direcional: encadeia esquerda→direita como um livro. */
+::view-transition-old(.page-exit-forward) {
+  --slide-offset: calc(-1 * var(--vt-slide-x));
+  animation:
+    var(--vt-exit) var(--ease) both fade-reveal reverse,
+    var(--vt-move) var(--ease) both slide-x reverse;
+}
+
+::view-transition-new(.page-enter-forward) {
+  --slide-offset: var(--vt-slide-x);
+  animation:
+    var(--vt-enter) var(--ease) var(--vt-exit) both fade-reveal,
+    var(--vt-move) var(--ease-out) both slide-x;
+}
+
+::view-transition-old(.page-exit-back) {
+  --slide-offset: var(--vt-slide-x);
+  animation:
+    var(--vt-exit) var(--ease) both fade-reveal reverse,
+    var(--vt-move) var(--ease) both slide-x reverse;
+}
+
+::view-transition-new(.page-enter-back) {
+  --slide-offset: calc(-1 * var(--vt-slide-x));
+  animation:
+    var(--vt-enter) var(--ease) var(--vt-exit) both fade-reveal,
+    var(--vt-move) var(--ease-out) both slide-x;
+}
+
+/* Conchas persistentes: TopBar (mobile) e SideNav (desktop) não fazem
+   parte da animação — são âncoras espaciais do usuário. */
+::view-transition-group(topbar) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(topbar) {
+  display: none;
+}
+
+::view-transition-new(topbar) {
+  animation: none;
+}
+
+::view-transition-group(sidenav) {
+  animation: none;
+}
+
+::view-transition-old(sidenav),
+::view-transition-new(sidenav) {
+  animation: none;
+}
+
+@keyframes fade-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-y {
+  from {
+    transform: translateY(var(--vt-slide-y));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-x {
+  from {
+    translate: var(--slide-offset, 0px);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+/* prefers-reduced-motion: troca fica instantânea (sem deslizar). */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }

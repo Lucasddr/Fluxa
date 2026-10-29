@@ -24,6 +24,7 @@ import ErrorState from "@/app/components/ui/ErrorState";
 import FormAlert from "@/app/components/ui/FormAlert";
 import Skeleton from "@/app/components/ui/Skeleton";
 import PageHeader from "@/app/components/ui/PageHeader";
+import PageTransition from "@/app/components/transitions/PageTransition";
 import Button from "@/app/components/ui/Button";
 import Pagination from "@/app/components/ui/Pagination";
 import Badge from "@/app/components/ui/Badge";
@@ -397,6 +398,7 @@ export default function ContasPage() {
   }
 
   return (
+    <PageTransition>
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Parcelas"
@@ -973,5 +975,6 @@ export default function ContasPage() {
         </AppDialog>
       )}
     </div>
+    </PageTransition>
   );
 }

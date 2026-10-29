@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { sendVerification, verifyEmail } from "@/services/auth";
 import Button from "@/app/components/ui/Button";
 import FormAlert from "@/app/components/ui/FormAlert";
+import PageTransition from "@/app/components/transitions/PageTransition";
 
 type Status = "loading" | "ok" | "error" | "none";
 
@@ -145,8 +146,10 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
+    <PageTransition>
     <Suspense>
       <VerifyEmailContent />
     </Suspense>
+    </PageTransition>
   );
 }

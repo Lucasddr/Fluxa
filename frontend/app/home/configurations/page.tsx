@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, Moon, Sun } from "lucide-react";
 
 import PageHeader from "@/app/components/ui/PageHeader";
+import PageTransition from "@/app/components/transitions/PageTransition";
 import { useTheme } from "@/app/components/ui/ThemeProvider";
 
 // ─── page ──────────────────────────────────────────────────────
@@ -12,6 +13,7 @@ export default function ConfigurationsPage() {
   const { theme, toggle } = useTheme();
 
   return (
+    <PageTransition>
     <div className="space-y-6 max-w-3xl">
       <PageHeader
         title="Configurações"
@@ -76,5 +78,6 @@ export default function ConfigurationsPage() {
         </Link>
       </section>
     </div>
+    </PageTransition>
   );
 }

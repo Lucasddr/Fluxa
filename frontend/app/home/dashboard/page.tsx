@@ -13,6 +13,7 @@ import TransactionList from "@/app/components/TransactionList";
 import MenuListModal from "@/app/components/modals/MenuListmodal";
 import Skeleton from "@/app/components/ui/Skeleton";
 import PageHeader from "@/app/components/ui/PageHeader";
+import PageTransition from "@/app/components/transitions/PageTransition";
 import Badge from "@/app/components/ui/Badge";
 
 import { logout } from "@/services/auth";
@@ -168,6 +169,7 @@ export default function DashboardPage() {
   // ─── render ─────────────────────────────────────────────────
 
   return (
+    <PageTransition>
     <div className="flex flex-col gap-8 w-full">
       <PageHeader
         title={`Olá, ${cardsData.user}`}
@@ -359,6 +361,7 @@ export default function DashboardPage() {
         </section>
       </div>
     </div>
+    </PageTransition>
   );
 }
 

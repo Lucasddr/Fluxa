@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { navItems } from "./NavItems";
+import { navOrder as sectionOrder } from "./types";
 
 export default function BottomNav() {
   const segment = useSelectedLayoutSegment();
@@ -16,10 +17,20 @@ export default function BottomNav() {
         {navItems.map(({ href, slug, icon: Icon, label, mobileLabel }) => {
           const isActive = segment === slug;
 
+          const currentIndex = segment ? sectionOrder.indexOf(segment) : -2;
+          const targetIndex = slug ? sectionOrder.indexOf(slug) : -1;
+          const transitionTypes =
+            currentIndex === -2 || targetIndex === -1 || currentIndex === targetIndex
+              ? undefined
+              : targetIndex > currentIndex
+                ? "nav-forward"
+                : "nav-back";
+
           return (
             <Link
               key={slug}
               href={href}
+              transitionTypes={transitionTypes ? [transitionTypes] : undefined}
               aria-label={mobileLabel ? `${mobileLabel}, ${label}` : label}
               aria-current={isActive ? "page" : undefined}
               className={`flex w-full min-w-0 flex-col items-center justify-center gap-1 min-h-[56px] px-0.5 text-[10px] font-medium transition-colors duration-[var(--dur-fast)] sm:px-2 sm:text-[11px] ${

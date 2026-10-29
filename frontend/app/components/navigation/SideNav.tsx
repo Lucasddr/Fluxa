@@ -10,6 +10,7 @@ type SideNavProps = {
 export default function SideNav({ className }: SideNavProps) {
   return (
     <aside
+      style={{ viewTransitionName: "sidenav" }}
       className={`w-60 shrink-0 border-r border-line bg-paper px-5 py-6 flex flex-col justify-between ${className ?? ""}`}
     >
       <div>

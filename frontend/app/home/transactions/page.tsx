@@ -26,6 +26,7 @@ import Button from "@/app/components/ui/Button";
 import FilterSelect from "@/app/components/ui/FilterSelect";
 import Pagination from "@/app/components/ui/Pagination";
 import TransactionFilters from "./TransactionFilters";
+import PageTransition from "@/app/components/transitions/PageTransition";
 import Badge from "@/app/components/ui/Badge";
 import EmptyState from "@/app/components/ui/EmptyState";
 
@@ -398,6 +399,7 @@ export default function TransactionsPage() {
   }
 
   return (
+    <PageTransition>
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Transações"
@@ -813,5 +815,6 @@ export default function TransactionsPage() {
         </AppDialog>
       )}
     </div>
+    </PageTransition>
   );
 }

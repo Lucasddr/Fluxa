@@ -7,6 +7,7 @@ import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
 import FormAlert from "@/app/components/ui/FormAlert";
+import PageTransition from "@/app/components/transitions/PageTransition";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -44,6 +45,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
       <main id="main" className="w-full max-w-sm" tabIndex={-1}>
         <p className="text-center text-[13px] text-ink-3 mb-2">
@@ -114,5 +116,6 @@ export default function ForgotPasswordPage() {
         )}
       </main>
     </div>
+    </PageTransition>
   );
 }

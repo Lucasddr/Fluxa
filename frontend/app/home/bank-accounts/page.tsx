@@ -15,6 +15,7 @@ import FormAlert from "@/app/components/ui/FormAlert";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
 import PageHeader from "@/app/components/ui/PageHeader";
+import PageTransition from "@/app/components/transitions/PageTransition";
 import Skeleton from "@/app/components/ui/Skeleton";
 import { useToast } from "@/app/components/ui/Toaster";
 import { formatCurrency } from "@/app/utils/Formatters";
@@ -277,6 +278,7 @@ export default function BankAccountsPage() {
   }
 
   return (
+    <PageTransition>
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -483,5 +485,6 @@ export default function BankAccountsPage() {
         onImported={refreshBankAccounts}
       />
     </div>
+    </PageTransition>
   );
 }

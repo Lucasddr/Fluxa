@@ -1,7 +1,9 @@
 import Link from "next/link";
+import PageTransition from "../components/transitions/PageTransition";
 
 export default function TermsPage() {
   return (
+    <PageTransition>
     <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
       <main id="main" className="w-full max-w-2xl" tabIndex={-1}>
         <div className="text-center mb-8">
@@ -68,5 +70,6 @@ export default function TermsPage() {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 }

@@ -8,6 +8,7 @@ import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
 import FormAlert from "@/app/components/ui/FormAlert";
+import PageTransition from "@/app/components/transitions/PageTransition";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -149,8 +150,10 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
+    <PageTransition>
     <Suspense>
       <ResetPasswordForm />
     </Suspense>
+    </PageTransition>
   );
 }

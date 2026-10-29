@@ -9,6 +9,7 @@ import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import Label from "@/app/components/ui/Label";
 import FormAlert from "@/app/components/ui/FormAlert";
+import PageTransition from "@/app/components/transitions/PageTransition";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -97,6 +98,7 @@ export default function RegisterPage() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-dvh flex flex-col bg-paper text-ink">
       <div className="flex justify-end p-4">
         <ThemeToggle />
@@ -206,5 +208,6 @@ export default function RegisterPage() {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 }

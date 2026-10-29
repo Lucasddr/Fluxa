@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Button from "./components/ui/Button";
+import PageTransition from "./components/transitions/PageTransition";
 
 export default function HomePage() {
   return (
+    <PageTransition>
     <div className="min-h-dvh flex flex-col bg-paper text-ink">
       <header className="flex items-center justify-between px-6 py-4 border-b border-line">
         <span className="text-lg font-medium tracking-tight">Fluxa</span>
@@ -98,5 +100,6 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+    </PageTransition>
   );
 }
