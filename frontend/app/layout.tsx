@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ToasterProvider from "./components/ui/Toaster";
 import { ThemeProvider } from "./components/ui/ThemeProvider";
+import { QueryProvider } from "./providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fluxa",
+  title: "Opsire",
   description: "Gestão financeira pessoal — saldo real e compromissos futuros",
 };
 
@@ -41,7 +42,11 @@ export default function RootLayout({
         </a>
 
         <ThemeProvider>
-          <ToasterProvider>{children}</ToasterProvider>
+          <QueryProvider>
+            <ToasterProvider>
+              {children}
+            </ToasterProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

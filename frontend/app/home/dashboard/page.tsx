@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, LogOut, User } from "lucide-react";
@@ -16,75 +17,14 @@ import Badge from "@/app/components/ui/Badge";
 
 import { logout } from "@/services/auth";
 import {
-  buildDashboard,
-  insightCards as fetchInsightCards,
-  recentTransactions,
+  fetchDashboard,
+  fetchInsightCards,
+  fetchRecentTransactions,
+  type DashboardDTO,
 } from "@/services/dashboard";
 
 import { formatCurrency } from "@/app/utils/Formatters";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
-
-// ─── types ─────────────────────────────────────────────────────
-
-type DashboardDTO = {
-  user: string;
-  accountName: string;
-  entry: number;
-  expenses: number;
-  accountsPayable: number;
-  monthlyBalance: number;
-  currentBalance: number;
-  availableBalance: number;
-  forecastDays: number;
-  balanceStatus: "NOT_RECONCILED" | "PENDING_REVIEW" | "RECONCILED" | "USER_ACCEPTED";
-  balanceDifference: number;
-  balanceAsOf: string | null;
-  pendingBalanceReviews: number;
-};
-
-type Transaction = {
-  id: string;
-  amount: number;
-  title: string;
-  kind: "EXPENSE" | "INCOME";
-  date: string;
-};
-
-type PageResponse<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
-
-type EconomyCardDTO = {
-  type: "economy";
-  savingsPercentage: number;
-  savedAmount: number;
-  totalIncome: number;
-  goalPercentage: number;
-};
-
-type MostExpenseCategoryDTO = {
-  type: "most_expense_category";
-  categoryName: string;
-  totalSpent: number;
-  percentageOfExpenses: number;
-  suggestedReduction: number;
-  savingIfReduced: number;
-};
-
-type InstallmentsAmountDTO = {
-  type: "installments_amount";
-  totalAmount: number;
-  hasInstallments: boolean;
-};
-
-type InsightCardDTO =
-  | EconomyCardDTO
-  | MostExpenseCategoryDTO
-  | InstallmentsAmountDTO;
 
 // ─── período ───────────────────────────────────────────────────
 
@@ -111,15 +51,8 @@ function toISODate(d: Date): string {
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [cardsData, setCardsData] = useState<DashboardDTO | null>(null);
-  const [transactionList, setTransactionList] =
-    useState<PageResponse<Transaction> | null>(null);
-  const [insightCards, setInsightCards] = useState<InsightCardDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [forecastDays, setForecastDays] = useState<(typeof FORECAST_HORIZONS)[number]>(30);
-  const [retryKey, setRetryKey] = useState(0);
 
   const { start, end } = useMemo(() => {
     const days = PERIODS.find((p) => p.key === period)?.days ?? 30;
@@ -144,69 +77,48 @@ export default function DashboardPage() {
     }
   }
 
-  // ─── fetch dashboard ────────────────────────────────────────
+  // ─── cache do react-query ───────────────────────────────────
+  //
+  // Uma única query com chave composta por período/projeção:
+  // alternar 7D→30D→7D reusa o cache sem refetch (staleTime do
+  // provider). keepPreviousData mantém o dado do período anterior
+  // na tela enquanto o novo carrega, então os indicadores
+  // "Atualizando..." funcionam como antes. Promise.all dentro
+  // preserva a semântica all-or-nothing do carregamento original.
 
-  useEffect(() => {
-    let cancelled = false;
+  const dashboardQuery = useQuery({
+    queryKey: ["dashboard", start, end, forecastDays],
+    queryFn: async () => {
+      const [dashData, transactionsData, insightsData] = await Promise.all([
+        fetchDashboard(start, end, forecastDays),
+        fetchRecentTransactions(start, end),
+        fetchInsightCards(start, end),
+      ]);
 
-    async function loadDashboard() {
-      try {
-        setLoading(true);
-        setLoadError(null);
+      return {
+        cards: dashData,
+        transactions: transactionsData,
+        insights: insightsData,
+      };
+    },
+    placeholderData: keepPreviousData,
+  });
 
-        const [
-          dashboardResponse,
-          transactionResponse,
-          insightsResponse,
-        ] = await Promise.all([
-          buildDashboard(start, end, forecastDays),
-          recentTransactions(start, end),
-          fetchInsightCards(start, end),
-        ]);
+  const cardsData = dashboardQuery.data?.cards;
+  const transactionList = dashboardQuery.data?.transactions;
+  const insightCards = dashboardQuery.data?.insights;
 
-        const failed = [
-          dashboardResponse,
-          transactionResponse,
-          insightsResponse,
-        ].find((r) => !r.ok);
+  const loading = dashboardQuery.isFetching;
 
-        if (failed) {
-          throw new HttpError(failed.status);
-        }
+  const loadError = dashboardQuery.error
+    ? dashboardQuery.error instanceof HttpError
+      ? friendlyHttpError(dashboardQuery.error.status)
+      : "Não foi possível carregar o dashboard. Tente novamente."
+    : null;
 
-        const dashboardData: DashboardDTO = await dashboardResponse.json();
-        const transactionsData: PageResponse<Transaction> =
-          await transactionResponse.json();
-        const insightsData: InsightCardDTO[] = await insightsResponse.json();
-
-        if (!cancelled) {
-          setCardsData(dashboardData);
-          setTransactionList(transactionsData);
-          setInsightCards(insightsData);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
-
-        if (!cancelled) {
-          setLoadError(
-            error instanceof HttpError
-              ? friendlyHttpError(error.status)
-              : "Não foi possível carregar o dashboard. Tente novamente."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadDashboard();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [start, end, forecastDays, retryKey]);
+  function handleRetry() {
+    void dashboardQuery.refetch();
+  }
 
   // ─── loading / erro ─────────────────────────────────────────
 
@@ -240,7 +152,7 @@ export default function DashboardPage() {
 
         <button
           type="button"
-          onClick={() => setRetryKey((k) => k + 1)}
+          onClick={handleRetry}
           className="px-5 min-h-[44px] rounded-[var(--radius)] text-sm font-medium text-accent-ink bg-accent transition-opacity disabled:opacity-40"
         >
           Tentar novamente
@@ -296,7 +208,7 @@ export default function DashboardPage() {
         {loadError && cardsData && (
           <button
             type="button"
-            onClick={() => setRetryKey((k) => k + 1)}
+            onClick={handleRetry}
             className="text-xs font-medium text-negative hover:underline"
           >
             Falha ao atualizar. Tentar novamente
@@ -419,7 +331,7 @@ export default function DashboardPage() {
             />
           </section>
 
-          <InsightCards cards={insightCards} />
+          {insightCards && <InsightCards cards={insightCards} />}
         </div>
 
         {/* transações */}
