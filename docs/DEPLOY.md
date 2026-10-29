@@ -25,7 +25,7 @@ same-site com o frontend, configure o domínio customizado `api.opsire.com.br`
 no serviço Render e crie o CNAME indicado pelo painel do Render.
 
 No serviço Render, configure `PORT=10000`, `COOKIE_SECURE=true`,
-`COOKIE_SAME_SITE=None` e `CORS_ALLOWED_ORIGINS=https://www.opsire.com.br`.
+`COOKIE_SAME_SITE=Lax` e `CORS_ALLOWED_ORIGINS=https://opsire.com.br,https://www.opsire.com.br`.
 Mantenha `COOKIE_REFRESH_PATH=/auth`: o Nginx muda o caminho do cookie para
 `/api/auth` apenas nas respostas da rota com proxy. As rotas atuais sem `/api`
 continuam recebendo `Path=/auth`.
@@ -33,7 +33,7 @@ continuam recebendo `Path=/auth`.
 Na Vercel, defina `NEXT_PUBLIC_API_URL=https://api.opsire.com.br/api` e faça um
 novo deploy para embutir a URL no frontend.
 
-## Backend na Railway (prod futura)
+## Backend na Railway (alternativa histórica, não é o alvo atual)
 
 1. Novo service a partir do repo, **Root Directory = `backend`**, builder Dockerfile.
 2. Variáveis (Service → Variables) — mesmos nomes de `backend/.env.example`:
@@ -64,12 +64,13 @@ novo deploy para embutir a URL no frontend.
 - Dev local continua no `docker-compose` (`DB_URL=jdbc:postgresql://postgres:5432/fluxa` dentro da rede do compose).
 - Nunca apontar dev para o Supabase de prod (risco de sujar dados reais).
 
-## Ordem de subida (migração futura para Railway/Supabase)
+## Ordem de subida (Render + Vercel + Supabase, cenário atual)
 
-1. Supabase → anotar URL/usuário/senha.
-2. Railway (backend) com as variáveis → aguardar boot + Flyway OK nos logs.
-3. Vercel (frontend) com `NEXT_PUBLIC_API_URL` apontando para a Railway.
-4. Smoke test: cadastro → login → dashboard → CRUD transação → logout.
+1. Supabase → confirmar backup/restauração antes de qualquer migration nova.
+2. Render (backend, root `backend/`) com as variáveis de produção → aguardar boot + Flyway (`Successfully validated 12 migrations`).
+3. Vercel (frontend, root `frontend/`) com `NEXT_PUBLIC_API_URL=https://api.opsire.com.br/api`.
+4. Smoke automatizado: `node scripts/smoke-prod.mjs` (frontend, headers de segurança, CORS permitido/negado, rota protegida, login inválido, JSON malformado e `refresh` sem cookie; falha em qualquer 5xx). Para o fluxo autenticado, rodar com `SMOKE_EMAIL`/`SMOKE_PASSWORD` — o script não imprime token nem cookie.
+5. Smoke manual complementar: login → dashboard → CRUD transação → importação de extrato → logout.
 
 ## Rollback
 

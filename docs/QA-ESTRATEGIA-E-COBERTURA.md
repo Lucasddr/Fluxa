@@ -401,6 +401,8 @@ Revisão de fechamento sobre as fases 1-5 e correções de segurança que ainda 
 
 **Verificação desta fase:** backend `.\mvnw.cmd -B test` → **147/147** (141 anteriores + 6 de rate limit); frontend `npm test` → **39/39**, `npm run lint` → 0 erros/0 warnings, `npx tsc --noEmit` → OK e `npm run build` → prerender completo. `git diff --check` limpo.
 
+**Complemento 2026-10-28 (CTRL-010):** `LogTokenLeakRegressionTest` fecha o teste de regressão do SEC-001 — falha se um token de reset/verificação aparecer em qualquer log da aplicação. Tem um autocontrole que planta um token no log e exige que o detector o encontre, para o teste não passar por appender quebrado. Verificado em vermelho (reintroduzir o log do token faz o teste falhar) e em verde. Backend passou a **151/151**. Também entrou `scripts/smoke-prod.mjs`: smoke de produção sem dependências que falha em qualquer 5xx, confere CORS permitido/negado, rota protegida, login inválido, JSON malformado, `refresh` sem cookie, headers de segurança do frontend e, opcionalmente, o fluxo autenticado via `SMOKE_EMAIL`/`SMOKE_PASSWORD` sem imprimir tokens ou cookies.
+
 **Ainda fora do código ou pendente de decisão:** confirmar no Render o deploy de `c9f02ac`/descendente e Flyway V12, cookies e dashboard autenticado; provedor real de e-mail para reset/verificação (SEC-001 funcional); política de retenção/exclusão de conta (SEC-005); anti-enumeração (SEC-006); revogação de access token/role (SEC-007); CSP com nonce; revisão jurídica LGPD; job Playwright no CI; e a refatoração global Fluxa → Opsire (P1.6).
 
 ---
