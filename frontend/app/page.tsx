@@ -8,7 +8,7 @@ export default function HomePage() {
     <PageTransition>
     <div className="min-h-dvh flex flex-col bg-paper text-ink">
       <header className="flex items-center justify-between px-6 py-4 border-b border-line">
-        <span className="text-lg font-medium tracking-tight">Fluxa</span>
+        <span className="text-lg font-medium tracking-tight">Opsire</span>
 
         <nav className="flex shrink-0 items-center gap-4">
           <Link
@@ -87,7 +87,7 @@ export default function HomePage() {
 
       <footer className="px-6 py-6 border-t border-line">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-3">
-          <span>© {new Date().getFullYear()} Fluxa — todos os direitos reservados</span>
+          <span>© {new Date().getFullYear()} Opsire — todos os direitos reservados</span>
 
           <div className="flex items-center gap-4">
             <Link href="/terms" className="hover:text-ink transition-colors">

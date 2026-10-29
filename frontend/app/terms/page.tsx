@@ -7,7 +7,7 @@ export default function TermsPage() {
     <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
       <main id="main" className="w-full max-w-2xl" tabIndex={-1}>
         <div className="text-center mb-8">
-          <p className="text-[13px] text-ink-3 mb-2">Fluxa</p>
+          <p className="text-[13px] text-ink-3 mb-2">Opsire</p>
 
           <h1 className="text-3xl font-light tracking-tight mb-2">
             Termos de Uso
@@ -22,7 +22,7 @@ export default function TermsPage() {
           <section>
             <h2 className="font-medium text-ink mb-1">1. O serviço</h2>
             <p>
-              O Fluxa é uma aplicação de gestão financeira pessoal (MVP): registro
+              O Opsire é uma aplicação de gestão financeira pessoal (MVP): registro
               de receitas, despesas, categorias e compras parceladas, com dashboard
               e insights. Funcionalidades podem mudar durante o piloto.
             </p>

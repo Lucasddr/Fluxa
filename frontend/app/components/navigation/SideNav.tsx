@@ -15,7 +15,7 @@ export default function SideNav({ className }: SideNavProps) {
     >
       <div>
         <p className="text-lg font-medium tracking-tight text-ink px-2 mb-8">
-          Fluxa
+          Opsire
         </p>
 
         <nav aria-label="Principal" className="flex flex-col gap-1">

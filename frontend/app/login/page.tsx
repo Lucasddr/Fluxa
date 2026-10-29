@@ -100,7 +100,7 @@ export default function LoginPage() {
       <main id="main" className="flex-1 flex items-center justify-center px-4 pb-16" tabIndex={-1}>
         <div className="w-full max-w-sm">
           <p className="text-center text-[13px] text-ink-3 mb-2">
-            Fluxa
+            Opsire
           </p>
 
           <h1 className="text-center text-3xl font-light tracking-tight mb-8">

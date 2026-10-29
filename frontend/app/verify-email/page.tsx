@@ -83,7 +83,7 @@ function VerifyEmailContent() {
     <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
       <main id="main" className="w-full max-w-sm text-center space-y-4" tabIndex={-1}>
         <p className="text-[13px] text-ink-3 mb-2">
-          Fluxa
+          Opsire
         </p>
 
         <h1 className="text-2xl font-light tracking-tight">

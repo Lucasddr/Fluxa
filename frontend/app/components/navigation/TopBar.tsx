@@ -10,7 +10,7 @@ export default function TopBar() {
     >
       <div className="flex items-center justify-between px-4 min-h-[56px]">
         <p className="text-[17px] font-medium tracking-tight text-ink">
-          Fluxa
+          Opsire
         </p>
 
         <ThemeToggle />

@@ -17,7 +17,7 @@ export default function ConfigurationsPage() {
     <div className="space-y-6 max-w-3xl">
       <PageHeader
         title="Configurações"
-        subtitle="Personalize sua experiência no Fluxa."
+        subtitle="Personalize sua experiência no Opsire."
       />
 
       <section className="rounded-[var(--radius)] border border-line bg-surface">

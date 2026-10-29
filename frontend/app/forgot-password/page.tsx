@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-dvh flex items-center justify-center bg-paper text-ink px-4 py-10">
       <main id="main" className="w-full max-w-sm" tabIndex={-1}>
         <p className="text-center text-[13px] text-ink-3 mb-2">
-          Fluxa
+          Opsire
         </p>
 
         <h1 className="text-center text-3xl font-light tracking-tight mb-2">
