@@ -6,7 +6,6 @@ import com.fluxa.backend.domain.enums.Role;
 import com.fluxa.backend.dto.internal.TokenPair;
 import com.fluxa.backend.dto.request.LoginDTO;
 import com.fluxa.backend.dto.request.RegisterDTO;
-import com.fluxa.backend.exception.EmailAlreadyExistsException;
 import com.fluxa.backend.exception.InvalidCredentialsException;
 import com.fluxa.backend.repository.RefreshTokenRepository;
 import com.fluxa.backend.repository.UserRepository;
@@ -60,11 +59,19 @@ class AuthServiceTest {
     }
 
     @Test
-    void registerDuplicateThrows() {
+    void registerDuplicateIsAbsorbedWithoutDisclosure() {
         authService.register(registerDto());
+        long usersBefore = userRepository.count();
 
-        assertThrows(EmailAlreadyExistsException.class,
-                () -> authService.register(registerDto()));
+        var response = authService.register(registerDto());
+
+        assertEquals(200, response.getStatusCode().value());
+        assertTrue(userRepository.count() == usersBefore,
+                "duplicate signup must not create a second user");
+        assertTrue(userRepository.findAll().stream()
+                        .filter(user -> user.getEmail().equals(EMAIL))
+                        .count() == 1,
+                "duplicate signup must not touch the existing user");
     }
 
     @Test

@@ -117,7 +117,7 @@ export default function RegisterPage() {
               role="status"
               className="mb-5 px-4 py-3 rounded-[var(--radius)] border border-positive/30 text-positive text-sm bg-positive-subtle"
             >
-              Conta criada com sucesso! Redirecionando...
+              Se o e-mail estiver disponível, a conta foi criada. Redirecionando...
             </div>
           )}
 

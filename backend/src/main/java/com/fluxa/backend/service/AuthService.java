@@ -34,7 +34,10 @@ public class AuthService {
     @Transactional
     public ResponseEntity<?> register(RegisterDTO dto){
         if (userRepository.existsByEmail(dto.email())){
-            throw new EmailAlreadyExistsException();
+            // SEC-006 (decisao do usuario): resposta generica para nao revelar
+            // quem tem conta. Nao logar o email aqui tampouco.
+            log.info("[REGISTER] duplicate signup absorbed without disclosure");
+            return ResponseEntity.ok("ok");
         }
 
         User user = new User();
