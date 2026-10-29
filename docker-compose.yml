@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: fluxa
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fluxa_local_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ld0423}
     ports:
       - "5433:5432"
     volumes:
