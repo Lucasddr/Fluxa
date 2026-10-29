@@ -2,6 +2,11 @@
 
 import { Fragment, useEffect, useState } from "react";
 import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
   Plus,
   Pencil,
   MoreVertical,
@@ -39,29 +44,12 @@ import { useToast } from "@/app/components/ui/Toaster";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
   deleteCategory,
-  listCategories,
+  fetchCategories,
   updateCategory,
+  type Category,
 } from "@/services/categories";
 
 // ─── types ─────────────────────────────────────────────────────
-
-type Category = {
-  id: string;
-  name: string;
-  kind: "INCOME" | "EXPENSE";
-  icon: string;
-  color: string;
-  description: string;
-  status: boolean;
-};
-
-type PageResponse<C> = {
-  content: C[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
 
 // ─── icon map ──────────────────────────────────────────────────
 
@@ -115,16 +103,40 @@ function StatusBadge({ status }: { status: boolean }) {
 
 export default function CategoriasPage() {
   const { toast } = useToast();
-
-  const [categories, setCategories] =
-    useState<PageResponse<Category> | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [loaded, setLoaded] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // ─── cache do react-query ───────────────────────────────────
+
+  const categoriesQuery = useQuery({
+    queryKey: ["categories", page, itemsPerPage],
+    queryFn: () => fetchCategories(page, itemsPerPage),
+    placeholderData: keepPreviousData,
+  });
+
+  const categories = categoriesQuery.data ?? null;
+  const loading = categoriesQuery.isFetching;
+  const listError = categoriesQuery.isError
+    ? categoriesQuery.error instanceof HttpError
+      ? friendlyHttpError(categoriesQuery.error.status)
+      : "Não foi possível carregar as categorias. Tente novamente."
+    : null;
+  const loaded = categoriesQuery.isSuccess;
+
+  function refreshCategories() {
+    // prefixo: invalida qualquer página/tamanho em cache
+    void queryClient.invalidateQueries({ queryKey: ["categories"] });
+  }
+
+  // Aviso de erro na busca da lista (efeito para não repetir toast
+  // em cada rerender; mensagem só muda quando muda o erro).
+  useEffect(() => {
+    if (listError) {
+      toast(listError, "error");
+    }
+  }, [listError, toast]);
 
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -134,56 +146,6 @@ export default function CategoriasPage() {
 
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const [retryKey, setRetryKey] = useState(0);
-
-  // ─── fetch ───────────────────────────────────────────────────
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCategories() {
-      try {
-        setLoading(true);
-        setListError(null);
-
-        const response = await listCategories(page, itemsPerPage);
-
-        if (!response.ok) {
-          throw new HttpError(response.status);
-        }
-
-        const data: PageResponse<Category> = await response.json();
-
-        if (!cancelled) {
-          setCategories(data);
-          setLoaded(true);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar categorias:", error);
-
-        const message =
-          error instanceof HttpError
-            ? friendlyHttpError(error.status)
-            : "Não foi possível carregar as categorias. Tente novamente.";
-
-        if (!cancelled) {
-          setListError(message);
-          toast(message, "error");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadCategories();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page, itemsPerPage, toast, retryKey]);
 
   // ─── delete ─────────────────────────────────────────────────
 
@@ -211,7 +173,7 @@ export default function CategoriasPage() {
         throw new HttpError(res.status);
       }
 
-      setRetryKey((k) => k + 1);
+      refreshCategories();
 
       setDeletingCat(null);
       setDetailsCat(null);
@@ -247,7 +209,7 @@ export default function CategoriasPage() {
         );
       }
 
-      setRetryKey((k) => k + 1);
+      refreshCategories();
       toast(cat.status ? "Categoria desativada." : "Categoria ativada.");
     } catch (error) {
       console.error("Erro ao atualizar categoria:", error);
@@ -359,10 +321,7 @@ export default function CategoriasPage() {
             <Skeleton className="h-16" />
           </div>
         ) : listError && !loaded ? (
-          <ErrorState
-            message={listError}
-            onRetry={() => setRetryKey((k) => k + 1)}
-          />
+          <ErrorState message={listError} onRetry={refreshCategories} />
         ) : categories?.content.length === 0 ? (
           <EmptyState
             title="Nenhuma categoria encontrada"
@@ -451,7 +410,7 @@ export default function CategoriasPage() {
           submitLabel="Salvar Categoria"
           onClose={() => setModalOpen(false)}
           onSave={async () => {
-            setRetryKey((k) => k + 1);
+            refreshCategories();
             toast("Categoria criada com sucesso.");
           }}
         />
@@ -475,7 +434,7 @@ export default function CategoriasPage() {
           }}
           onClose={() => setEditingCat(null)}
           onSave={async () => {
-            setRetryKey((k) => k + 1);
+            refreshCategories();
             toast("Categoria atualizada com sucesso.");
           }}
         />

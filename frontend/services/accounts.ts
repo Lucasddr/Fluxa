@@ -86,6 +86,32 @@ export function listAccountBalanceSummaries(): Promise<Response> {
   return api("/accounts/balances");
 }
 
+// ─── fetchers tipados para o react-query ───────────────────────
+// Preservam o comportamento antigo: erro de resposta carrega a
+// primeira mensagem vinda do servidor (responseErrorMessage).
+
+export async function fetchAccounts(): Promise<Account[]> {
+  const response = await listAccounts();
+
+  if (!response.ok) {
+    throw new Error(await responseErrorMessage(response));
+  }
+
+  return (await response.json()) as Account[];
+}
+
+export async function fetchAccountBalanceSummaries(): Promise<
+  AccountBalanceSummary[]
+> {
+  const response = await listAccountBalanceSummaries();
+
+  if (!response.ok) {
+    throw new Error(await responseErrorMessage(response));
+  }
+
+  return (await response.json()) as AccountBalanceSummary[];
+}
+
 export function listBalanceObservations(accountId: string): Promise<Response> {
   return api(`/accounts/${accountId}/balance-observations`);
 }

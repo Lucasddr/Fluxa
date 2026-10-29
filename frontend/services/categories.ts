@@ -1,4 +1,18 @@
 import { api } from "./api";
+import { getJson } from "@/app/utils/http";
+import { PageResponse } from "./types";
+
+// ─── tipos compartilhados com a página ─────────────────────────
+
+export type Category = {
+  id: string;
+  name: string;
+  kind: "INCOME" | "EXPENSE";
+  icon: string;
+  color: string;
+  description: string;
+  status: boolean;
+};
 
 function json(method: string, body: unknown): RequestInit {
   return {
@@ -15,6 +29,13 @@ export function listCategories(
   size: number
 ): Promise<Response> {
   return api(`/categories?page=${page}&size=${size}`);
+}
+
+export function fetchCategories(
+  page: number,
+  size: number
+): Promise<PageResponse<Category>> {
+  return getJson<PageResponse<Category>>(listCategories(page, size));
 }
 
 export function selectCategories(): Promise<Response> {

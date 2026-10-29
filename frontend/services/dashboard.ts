@@ -1,5 +1,6 @@
 import { api } from "./api";
-import { HttpError } from "@/app/utils/http";
+import { getJson } from "@/app/utils/http";
+import { PageResponse } from "./types";
 
 // ─── tipos compartilhados com a página ─────────────────────────
 
@@ -25,14 +26,6 @@ export type Transaction = {
   title: string;
   kind: "EXPENSE" | "INCOME";
   date: string;
-};
-
-export type PageResponse<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
 };
 
 export type EconomyCardDTO = {
@@ -95,16 +88,6 @@ export function insightCards(
 // Usados como queryFn: garantem res.ok e devolvem o JSON já
 // convertido, para que o cache do QueryClient guarde dados
 // prontos para render (e não uma Response).
-
-async function getJson<T>(pending: Promise<Response>): Promise<T> {
-  const res = await pending;
-
-  if (!res.ok) {
-    throw new HttpError(res.status);
-  }
-
-  return (await res.json()) as T;
-}
 
 export function fetchDashboard(
   start: string,

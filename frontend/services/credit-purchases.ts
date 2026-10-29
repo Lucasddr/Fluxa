@@ -1,4 +1,41 @@
 import { api } from "./api";
+import { getJson } from "@/app/utils/http";
+import { PageResponse } from "./types";
+
+// ─── tipos compartilhados com a página ─────────────────────────
+
+export type InstallmentStatus = "PENDING" | "OVERDUE" | "PAID" | "CANCELED";
+
+export type Installment = {
+  id: string;
+  creditPurchaseId: string;
+  creditPurchaseTitle: string;
+  number: number;
+  installmentsQty: number;
+  dueDate: string;
+  amount: number;
+  status: InstallmentStatus;
+};
+
+export type Purchase = {
+  id: string;
+  title: string;
+  merchant: string | null;
+  totalAmount: number;
+  purchaseDate: string;
+  installmentsQty: number;
+  firstDueDate: string;
+  categoryId: string;
+  categoryName: string;
+  pendingCount: number;
+  paidCount: number;
+};
+
+export type PurchaseDetails = Purchase & {
+  notes: string | null;
+  generatedTransactionsCount: number;
+  installments: Installment[];
+};
 
 function json(method: string, body: unknown): RequestInit {
   return {
@@ -19,6 +56,19 @@ export function listCreditPurchases(
 
 export function getCreditPurchase(id: string): Promise<Response> {
   return api(`/credit-purchases/${id}`);
+}
+
+// ─── fetchers tipados para o react-query ───────────────────────
+
+export function fetchCreditPurchases(
+  page: number,
+  size: number
+): Promise<PageResponse<Purchase>> {
+  return getJson<PageResponse<Purchase>>(listCreditPurchases(page, size));
+}
+
+export function fetchCreditPurchase(id: string): Promise<PurchaseDetails> {
+  return getJson<PurchaseDetails>(getCreditPurchase(id));
 }
 
 export function createCreditPurchase(

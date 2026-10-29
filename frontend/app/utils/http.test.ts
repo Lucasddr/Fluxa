@@ -1,4 +1,4 @@
-import { HttpError, friendlyHttpError } from "@/app/utils/http";
+import { HttpError, friendlyHttpError, getJson } from "@/app/utils/http";
 
 describe("friendlyHttpError", () => {
     it("mapeia status de cliente", () => {
@@ -47,5 +47,26 @@ describe("HttpError", () => {
 
     it("tem mensagem padrão", () => {
         expect(new HttpError(500).message).toBe("Request failed (500)");
+    });
+});
+
+describe("getJson", () => {
+    it("devolve o JSON convertido quando a resposta é ok", async () => {
+        const response = new Response(JSON.stringify({ a: 1 }), { status: 200 });
+
+        await expect(getJson(Promise.resolve(response))).resolves.toEqual({ a: 1 });
+    });
+
+    it("lança HttpError com o status quando a resposta falha", async () => {
+        const response = new Response("{}", { status: 404 });
+
+        await expect(getJson(Promise.resolve(response))).rejects.toMatchObject({
+            status: 404,
+        });
+    });
+
+    it("propaga o erro da rede", async () => {
+        await expect(getJson(Promise.reject(new TypeError("failed"))))
+            .rejects.toBeInstanceOf(TypeError);
     });
 });

@@ -7,6 +7,20 @@ export class HttpError extends Error {
   }
 }
 
+// Busca um JSON com garantia de res.ok: usado como queryFn das
+// queries do react-query, para que o cache do QueryClient guarde
+// dado já convertido (e nunca uma Response bruta).
+export async function getJson<T>(pending: Promise<Response>): Promise<T> {
+  const response = await pending;
+
+  if (!response.ok) {
+    throw new HttpError(response.status);
+  }
+
+  return (await response.json()) as T;
+}
+
+
 export function friendlyHttpError(
   status: number,
   fallback = "Algo deu errado. Tente novamente."

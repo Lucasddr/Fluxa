@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   MoreVertical,
@@ -31,51 +32,15 @@ import EmptyState from "@/app/components/ui/EmptyState";
 import {
   createTransaction,
   deleteTransaction,
-  getTransaction,
-  listTransactions,
+  fetchTransaction,
+  fetchTransactions,
   updateTransaction,
+  type Transaction,
+  type TransactionDetails,
 } from "@/services/transactions";
 import { useToast } from "@/app/components/ui/Toaster";
 import { formatCurrency, formatPaymentMethod } from "@/app/utils/Formatters";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
-
-// ─── tipos ────────────────────────────────────────────────────────────────────
-
-type Transaction = {
-  id: string;
-  amount: number;
-  title: string;
-  category: string | null;
-  categoryColor: string | null;
-  subtitle: string | null;
-  kind: "EXPENSE" | "INCOME";
-  date: string;
-  paymentMethod: string;
-  dateLabel: string;
-  accountName: string;
-};
-
-type PageResponse<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
-
-type TransactionDetails = {
-  id: string;
-  description: string;
-  observation: string | null;
-  amount: number;
-  kind: "EXPENSE" | "INCOME";
-  categoryId: string | null;
-  categoryName: string | null;
-  paymentMethod: string;
-  occurredAt: string;
-  recurring: boolean;
-  accountName: string;
-};
 
 // ─── constantes ───────────────────────────────────────────────────────────────
 
@@ -155,15 +120,45 @@ function newIdempotencyKey(): string {
   });
 }
 
+// chave única da lista; mutations invalidam por prefixo
+const TRANSACTIONS_KEY = ["transactions", "list"] as const;
+
 // ─── página ──────────────────────────────────────────────────────────────────
 
 export default function TransactionsPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loaded, setLoaded] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
+  const transactionsQuery = useQuery({
+    queryKey: TRANSACTIONS_KEY,
+    queryFn: fetchTransactions,
+    placeholderData: keepPreviousData,
+  });
+
+  const transactions = useMemo(
+    () => transactionsQuery.data ?? [],
+    [transactionsQuery.data]
+  );
+  const loading = transactionsQuery.isFetching;
+  const listError = transactionsQuery.isError
+    ? transactionsQuery.error instanceof HttpError
+      ? friendlyHttpError(transactionsQuery.error.status)
+      : "Não foi possível carregar as transações. Tente novamente."
+    : null;
+  const loaded = transactionsQuery.isSuccess;
+
+  function refreshList() {
+    void queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+  }
+
+  // Aviso de erro na busca da lista (efeito e não render para não
+  // repetir toast a cada rerender; a mensagem só muda junto com o
+  // erro real).
+  useEffect(() => {
+    if (listError) {
+      toast(listError, "error");
+    }
+  }, [listError, toast]);
 
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todas as categorias");
@@ -188,60 +183,10 @@ export default function TransactionsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const [retryKey, setRetryKey] = useState(0);
-
   function openCreateModal() {
     setCreateKey(newIdempotencyKey());
     setModalOpen(true);
   }
-
-  // ─── fetch ────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadTransactions() {
-      try {
-        setLoading(true);
-        setListError(null);
-
-        const response = await listTransactions();
-
-        if (!response.ok) {
-          throw new HttpError(response.status);
-        }
-
-        const data: PageResponse<Transaction> = await response.json();
-
-        if (!cancelled) {
-          setTransactions(data.content);
-          setLoaded(true);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar transações:", error);
-
-        const message =
-          error instanceof HttpError
-            ? friendlyHttpError(error.status)
-            : "Não foi possível carregar as transações. Tente novamente.";
-
-        if (!cancelled) {
-          setListError(message);
-          toast(message, "error");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadTransactions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [toast, retryKey]);
 
   // ─── filtros ──────────────────────────────────────────────────────────────
 
@@ -309,7 +254,7 @@ export default function TransactionsPage() {
       throw new HttpError(res.status);
     }
 
-    setRetryKey((k) => k + 1);
+    refreshList();
 
     setModalOpen(false);
     toast("Transação criada com sucesso.");
@@ -319,14 +264,7 @@ export default function TransactionsPage() {
     id: string
   ): Promise<TransactionDetails | null> {
     try {
-      const res = await getTransaction(id);
-
-      if (!res.ok) {
-        console.error("Erro ao buscar transação:", res.status);
-        return null;
-      }
-
-      return (await res.json()) as TransactionDetails;
+      return await fetchTransaction(id);
     } catch (error) {
       console.error("Erro ao buscar transação:", error);
       return null;
@@ -374,7 +312,7 @@ export default function TransactionsPage() {
       throw new HttpError(res.status);
     }
 
-    setRetryKey((k) => k + 1);
+    refreshList();
 
     setEditingTx(null);
     setDetailsTx(null);
@@ -396,7 +334,7 @@ export default function TransactionsPage() {
         throw new HttpError(res.status);
       }
 
-      setRetryKey((k) => k + 1);
+      refreshList();
 
       setDeletingTx(null);
       setDetailsTx(null);
@@ -529,10 +467,7 @@ export default function TransactionsPage() {
             <Skeleton className="h-16" />
           </div>
         ) : listError && !loaded ? (
-          <ErrorState
-            message={listError}
-            onRetry={() => setRetryKey((k) => k + 1)}
-          />
+          <ErrorState message={listError} onRetry={refreshList} />
         ) : paginated.length === 0 ? (
           <EmptyState
             title={

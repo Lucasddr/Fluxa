@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Badge from "@/app/components/ui/Badge";
 import Button from "@/app/components/ui/Button";
@@ -17,10 +19,10 @@ import Skeleton from "@/app/components/ui/Skeleton";
 import { useToast } from "@/app/components/ui/Toaster";
 import { formatCurrency } from "@/app/utils/Formatters";
 import {
-  listAccountBalanceSummaries,
   createAccount,
   deleteAccount,
-  listAccounts,
+  fetchAccountBalanceSummaries,
+  fetchAccounts,
   responseErrorMessage,
   setDefaultAccount,
   updateAccount,
@@ -99,12 +101,43 @@ function AccountActions({
 
 export default function BankAccountsPage() {
   const { toast } = useToast();
-  const [accounts, setAccounts] = useState<Account[] | null>(null);
-  const [balanceSummaries, setBalanceSummaries] = useState<AccountBalanceSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [balanceLoadError, setBalanceLoadError] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
+  const queryClient = useQueryClient();
+
+  // ─── cache do react-query ───────────────────────────────────
+  // Contas e saldos em chaves separadas: falha ao carregar saldos
+  // não derruba a lista (como no loader antigo).
+
+  const accountsQuery = useQuery({
+    queryKey: ["bank-accounts"],
+    queryFn: fetchAccounts,
+    placeholderData: keepPreviousData,
+  });
+
+  const balanceSummariesQuery = useQuery({
+    queryKey: ["bank-accounts", "balances"],
+    queryFn: fetchAccountBalanceSummaries,
+    placeholderData: keepPreviousData,
+  });
+
+  const accounts = accountsQuery.data ?? null;
+  const balanceSummaries = balanceSummariesQuery.data ?? [];
+  const loading = accountsQuery.isFetching || balanceSummariesQuery.isFetching;
+  const loadError = accountsQuery.isError
+    ? accountsQuery.error instanceof Error
+      ? accountsQuery.error.message
+      : "Não foi possível carregar as contas. Tente novamente."
+    : null;
+  const balanceLoadError = balanceSummariesQuery.isError
+    ? balanceSummariesQuery.error instanceof Error
+      ? balanceSummariesQuery.error.message
+      : "Não foi possível carregar os saldos das contas."
+    : null;
+
+  function refreshBankAccounts() {
+    // prefixo: invalida contas e saldos de uma vez
+    void queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
+  }
+
   const [busyAccountId, setBusyAccountId] = useState<string | null>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -118,65 +151,6 @@ export default function BankAccountsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [balanceAccount, setBalanceAccount] = useState<Account | null>(null);
   const [importAccount, setImportAccount] = useState<Account | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        setLoading(true);
-        setLoadError(null);
-
-        const response = await listAccounts();
-        if (!response.ok) {
-          throw new Error(await responseErrorMessage(response));
-        }
-
-        const data = (await response.json()) as Account[];
-        if (!cancelled) {
-          setAccounts(data);
-        }
-
-        try {
-          const balanceResponse = await listAccountBalanceSummaries();
-          if (!balanceResponse.ok) {
-            throw new Error(await responseErrorMessage(balanceResponse));
-          }
-          const summaries = (await balanceResponse.json()) as AccountBalanceSummary[];
-          if (!cancelled) {
-            setBalanceSummaries(summaries);
-            setBalanceLoadError(null);
-          }
-        } catch (error) {
-          if (!cancelled) {
-            setBalanceSummaries([]);
-            setBalanceLoadError(
-              error instanceof Error
-                ? error.message
-                : "Não foi possível carregar os saldos das contas."
-            );
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setLoadError(
-            error instanceof Error
-              ? error.message
-              : "Não foi possível carregar as contas. Tente novamente."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [retryKey]);
 
   function openCreate() {
     setEditingAccount(null);
@@ -219,7 +193,7 @@ export default function BankAccountsPage() {
       }
 
       setDialogOpen(false);
-      setRetryKey((current) => current + 1);
+      refreshBankAccounts();
       toast(editingAccount ? "Conta atualizada." : "Conta criada.");
     } catch (error) {
       setFormError(
@@ -239,7 +213,7 @@ export default function BankAccountsPage() {
       if (!response.ok) {
         throw new Error(await responseErrorMessage(response));
       }
-      setRetryKey((current) => current + 1);
+      refreshBankAccounts();
       toast(`${account.name} agora é a conta padrão.`);
     } catch (error) {
       toast(
@@ -265,7 +239,7 @@ export default function BankAccountsPage() {
       }
       const deletedName = accountToDelete.name;
       setAccountToDelete(null);
-      setRetryKey((current) => current + 1);
+      refreshBankAccounts();
       toast(`${deletedName} foi excluída.`);
     } catch (error) {
       setDeleteError(
@@ -323,7 +297,7 @@ export default function BankAccountsPage() {
       {loadError && accounts !== null && (
         <div className="flex flex-wrap items-center gap-3" role="alert">
           <p className="text-sm text-negative">{loadError}</p>
-          <Button variant="secondary" onClick={() => setRetryKey((key) => key + 1)}>
+          <Button variant="secondary" onClick={refreshBankAccounts}>
             Tentar novamente
           </Button>
         </div>
@@ -332,14 +306,14 @@ export default function BankAccountsPage() {
       {balanceLoadError && accounts !== null && (
         <div className="flex flex-wrap items-center gap-3" role="alert">
           <p className="text-sm text-warn">{balanceLoadError}</p>
-          <Button variant="secondary" onClick={() => setRetryKey((key) => key + 1)}>
+          <Button variant="secondary" onClick={refreshBankAccounts}>
             Atualizar saldos
           </Button>
         </div>
       )}
 
       {loadError && accounts === null ? (
-        <ErrorState message={loadError} onRetry={() => setRetryKey((key) => key + 1)} />
+        <ErrorState message={loadError} onRetry={refreshBankAccounts} />
       ) : contentLoading ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Carregando contas">
           <Skeleton className="h-20" />
@@ -499,14 +473,14 @@ export default function BankAccountsPage() {
         account={balanceAccount}
         summary={balanceAccount ? balanceByAccount.get(balanceAccount.id) ?? null : null}
         onClose={() => setBalanceAccount(null)}
-        onChanged={() => setRetryKey((key) => key + 1)}
+        onChanged={refreshBankAccounts}
       />
 
       <StatementImportDialog
         key={importAccount?.id ?? "import-closed"}
         account={importAccount}
         onClose={() => setImportAccount(null)}
-        onImported={() => setRetryKey((key) => key + 1)}
+        onImported={refreshBankAccounts}
       />
     </div>
   );

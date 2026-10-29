@@ -2,6 +2,11 @@
 
 import { Fragment, useEffect, useState } from "react";
 import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
   Plus,
   Pencil,
   MoreVertical,
@@ -28,54 +33,18 @@ import { useToast } from "@/app/components/ui/Toaster";
 import { friendlyHttpError, HttpError } from "@/app/utils/http";
 import {
   deleteCreditPurchase,
-  getCreditPurchase,
-  listCreditPurchases,
+  fetchCreditPurchase,
+  fetchCreditPurchases,
   payInstallment,
   updateInstallment,
+  type Installment,
+  type Purchase,
+  type PurchaseDetails,
 } from "@/services/credit-purchases";
 
 // ─── types ─────────────────────────────────────────────────────
 
 type InstallmentStatus = "PENDING" | "OVERDUE" | "PAID" | "CANCELED";
-
-type Installment = {
-  id: string;
-  creditPurchaseId: string;
-  creditPurchaseTitle: string;
-  number: number;
-  installmentsQty: number;
-  dueDate: string;
-  amount: number;
-  status: InstallmentStatus;
-};
-
-type Purchase = {
-  id: string;
-  title: string;
-  merchant: string | null;
-  totalAmount: number;
-  purchaseDate: string;
-  installmentsQty: number;
-  firstDueDate: string;
-  categoryId: string;
-  categoryName: string;
-  pendingCount: number;
-  paidCount: number;
-};
-
-type PurchaseDetails = Purchase & {
-  notes: string | null;
-  generatedTransactionsCount: number;
-  installments: Installment[];
-};
-
-type PageResponse<C> = {
-  content: C[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-};
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", {
@@ -118,15 +87,40 @@ function InstallmentBadge({ status }: { status: InstallmentStatus }) {
 
 export default function ContasPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [purchases, setPurchases] =
-    useState<PageResponse<Purchase> | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [loaded, setLoaded] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // ─── cache do react-query ───────────────────────────────────
+
+  const purchasesQuery = useQuery({
+    queryKey: ["credit-purchases", page, itemsPerPage],
+    queryFn: () => fetchCreditPurchases(page, itemsPerPage),
+    placeholderData: keepPreviousData,
+  });
+
+  const purchases = purchasesQuery.data ?? null;
+  const loading = purchasesQuery.isFetching;
+  const listError = purchasesQuery.isError
+    ? purchasesQuery.error instanceof HttpError
+      ? friendlyHttpError(purchasesQuery.error.status)
+      : "Não foi possível carregar as compras parceladas. Tente novamente."
+    : null;
+  const loaded = purchasesQuery.isSuccess;
+
+  function refreshPurchases() {
+    // prefixo: invalida qualquer página/tamanho em cache
+    void queryClient.invalidateQueries({ queryKey: ["credit-purchases"] });
+  }
+
+  // Aviso de erro na busca da lista (efeito para não repetir toast
+  // em cada rerender; mensagem só muda quando o muda o erro).
+  useEffect(() => {
+    if (listError) {
+      toast(listError, "error");
+    }
+  }, [listError, toast]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [details, setDetails] = useState<PurchaseDetails | null>(null);
@@ -150,67 +144,11 @@ export default function ContasPage() {
   const [installmentSaving, setInstallmentSaving] = useState(false);
   const [installmentError, setInstallmentError] = useState<string | null>(null);
 
-  const [retryKey, setRetryKey] = useState(0);
-
-  // ─── fetch ───────────────────────────────────────────────────
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadPurchases() {
-      try {
-        setLoading(true);
-        setListError(null);
-
-        const response = await listCreditPurchases(page, itemsPerPage);
-
-        if (!response.ok) {
-          throw new HttpError(response.status);
-        }
-
-        const data: PageResponse<Purchase> = await response.json();
-
-        if (!cancelled) {
-          setPurchases(data);
-          setLoaded(true);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar compras parceladas:", error);
-
-        const message =
-          error instanceof HttpError
-            ? friendlyHttpError(error.status)
-            : "Não foi possível carregar as compras parceladas. Tente novamente.";
-
-        if (!cancelled) {
-          setListError(message);
-          toast(message, "error");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadPurchases();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [page, itemsPerPage, toast, retryKey]);
-
   async function openDetails(purchase: Purchase) {
     setDetailsLoading(true);
 
     try {
-      const response = await getCreditPurchase(purchase.id);
-
-      if (!response.ok) {
-        throw new HttpError(response.status);
-      }
-
-      const data: PurchaseDetails = await response.json();
+      const data = await fetchCreditPurchase(purchase.id);
       setDetails(data);
 
       if (pendingDeleteId === purchase.id) {
@@ -234,13 +172,7 @@ export default function ContasPage() {
 
   async function refreshDetails(purchaseId: string) {
     try {
-      const response = await getCreditPurchase(purchaseId);
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data: PurchaseDetails = await response.json();
+      const data = await fetchCreditPurchase(purchaseId);
       setDetails(data);
     } catch {
       // lista principal já foi atualizada; detalhes ficam como estão
@@ -282,7 +214,7 @@ export default function ContasPage() {
         `Parcela ${installment.number}/${installment.installmentsQty} paga. Virou lançamento no extrato.`
       );
 
-      setRetryKey((k) => k + 1);
+      refreshPurchases();
 
       if (details) {
         await refreshDetails(details.id);
@@ -368,7 +300,7 @@ export default function ContasPage() {
           : "Parcela atualizada."
       );
 
-      setRetryKey((k) => k + 1);
+      refreshPurchases();
 
       if (details) {
         await refreshDetails(details.id);
@@ -405,7 +337,7 @@ export default function ContasPage() {
         throw new HttpError(res.status);
       }
 
-      setRetryKey((k) => k + 1);
+      refreshPurchases();
 
       setDeletingPurchase(null);
       setDetails(null);
@@ -514,10 +446,7 @@ export default function ContasPage() {
             <Skeleton className="h-16" />
           </div>
         ) : listError && !loaded ? (
-          <ErrorState
-            message={listError}
-            onRetry={() => setRetryKey((k) => k + 1)}
-          />
+          <ErrorState message={listError} onRetry={refreshPurchases} />
         ) : purchases?.content.length === 0 ? (
           <EmptyState
             title="Nenhuma compra parcelada"
@@ -648,7 +577,7 @@ export default function ContasPage() {
           onClose={() => setModalOpen(false)}
           onSave={async () => {
             setPage(0);
-            setRetryKey((k) => k + 1);
+            refreshPurchases();
             toast("Compra parcelada criada com sucesso.");
           }}
         />
@@ -670,7 +599,7 @@ export default function ContasPage() {
           }}
           onClose={() => setEditingPurchase(null)}
           onSave={async () => {
-            setRetryKey((k) => k + 1);
+            refreshPurchases();
 
             if (details && details.id === editingPurchase.id) {
               await refreshDetails(details.id);
